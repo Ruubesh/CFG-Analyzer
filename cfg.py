@@ -1,3 +1,13 @@
+class NonTerminals:
+    def __init__(self):
+        self.nonterminals = ["A", "B", "C"]
+
+
+class Terminals:
+    def __init__(self):
+        self.terminals = ["a", "b"]
+
+
 class CFG:
     def __init__(self):
         self.rules = {}
@@ -24,10 +34,20 @@ class CFG:
 
 def main():
     grammar = CFG()
-    grammar.add_rule("A", [["a", "B", "B", "b"], ["A", "a", "A"]])
-    grammar.add_rule("B", [[""], ["b", "C", "A"]])
-    grammar.add_rule("C", [["A", "B"], ["a"], ["b"]])
-    result = grammar.expand("A")
+    nonterminals = NonTerminals().nonterminals
+    terminals = Terminals().terminals
+
+    grammar.add_rule(nonterminals[0],
+                     [[terminals[0], nonterminals[1], nonterminals[1], terminals[1]],
+                      [nonterminals[0], terminals[0], nonterminals[0]]])
+    grammar.add_rule(nonterminals[1],
+                     [[""],
+                      [terminals[1], nonterminals[2], nonterminals[0]]])
+    grammar.add_rule(nonterminals[2],
+                     [[nonterminals[0], nonterminals[1]],
+                      [terminals[0]],
+                      [terminals[1]]])
+    result = grammar.expand(nonterminals[0])
     print(result)
 
 
