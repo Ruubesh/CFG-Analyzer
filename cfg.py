@@ -1,10 +1,9 @@
 class Stack:
     def __init__(self):
         self.data = []
-        self.index = -1  # Current position in the stack
+        self.index = -1
 
     def push(self, item):
-        # When a new item is pushed, remove any redo data
         self.data = self.data[:self.index + 1]
         self.data.append(item)
         self.index += 1
@@ -64,21 +63,37 @@ class CFG:
             self.rules[nonterminal] = []
         self.rules[nonterminal].extend(expansions)
 
+    def create_sentential_form(self, st, nt, exp):
+        new_st = Stack()
+        if len(st) > 1:
+            for i in range(len(st)-2):
+                 new_st.push(st[i])
+            nt_elem = st[-2].replace(nt, f"[{nt}]",1)
+            if exp == "":
+                exp_elem = st[-2].replace(nt, "[]",1)
+            else:
+                exp_elem = st[-2].replace(nt, f"[{exp}]",1)
+            new_st.push(nt_elem)
+            new_st.push(exp_elem)
+        new_st.printst()
+
     def expand(self, initial_nonterminal, stack):
         if initial_nonterminal not in self.rules:
             return initial_nonterminal
 
         print(f"\n Choose the next expansion for '{initial_nonterminal}':")
         for i, option in enumerate(self.rules[initial_nonterminal], 1):
-            print(f"{i}: {' '.join(option)}")
+            if option[0] == '':
+                print(f"{i}: \u03B5")
+            else:
+                print(f"{i}: {' '.join(option)}")
         choice = input("Enter the number of your choice: \n ")
 
         selected_expansion = self.rules[initial_nonterminal][int(choice) - 1]
 
         ldata = (stack.current()).replace(initial_nonterminal, "".join(selected_expansion), 1)
         stack.push(ldata)
-        stack.printst()
-        expansion = ""
+        self.create_sentential_form(stack.data, initial_nonterminal, "".join(selected_expansion))
         non_terminal = ''
         nonterminals = NonTerminals().nonterminals
         while True:
@@ -97,8 +112,8 @@ class CFG:
             else:
                 break
         if non_terminal in val:
-            expansion = self.expand(non_terminal, stack)
-        return "".join(expansion)
+            self.expand(non_terminal, stack)
+        return stack.data[-1]
 
 
 def main():
@@ -110,7 +125,7 @@ def main():
                      [[terminals[0], nonterminals[1], nonterminals[1], terminals[1]],
                       [nonterminals[0], terminals[0], nonterminals[0]]])
     grammar.add_rule(nonterminals[1],
-                     [[""],
+                     [[''],
                       [terminals[1], nonterminals[2], nonterminals[0]]])
     grammar.add_rule(nonterminals[2],
                      [[nonterminals[0], nonterminals[1]],
@@ -122,7 +137,7 @@ def main():
     if nt in nonterminals:
         stack.push(nt)
         result = grammar.expand(nt, stack)
-        print(f'\n {result}')
+        print(f'{result}')
     else:
         print(f"Invalid choice")
 
