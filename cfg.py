@@ -1,3 +1,6 @@
+import re
+
+
 class Stack:
     def __init__(self):
         self.data = []
@@ -63,16 +66,24 @@ class CFG:
             self.rules[nonterminal] = []
         self.rules[nonterminal].extend(expansions)
 
-    def create_sentential_form(self, st, nt, exp):
+    def replacer(self, string, sub, wanted, n):
+        where = [m.start() for m in re.finditer(sub, string)][n - 1]
+        before = string[:where]
+        after = string[where:]
+        after = after.replace(sub, wanted, 1)
+        newString = before + after
+        return newString
+
+    def create_sentential_form(self, st, nt, exp, pos):
         new_st = Stack()
         if len(st) > 1:
             for i in range(len(st)-2):
                  new_st.push(st[i])
-            nt_elem = st[-2].replace(nt, f"[{nt}]",1)
+            nt_elem = self.replacer(st[-2], nt, f"[{nt}]", pos)
             if exp == "":
-                exp_elem = st[-2].replace(nt, "[]",1)
+                exp_elem = self.replacer(st[-2], nt, "[]", pos)
             else:
-                exp_elem = st[-2].replace(nt, f"[{exp}]",1)
+                exp_elem = self.replacer(st[-2], nt, f"[{exp}]", pos)
             new_st.push(nt_elem)
             new_st.push(exp_elem)
         new_st.printst()
@@ -91,9 +102,13 @@ class CFG:
 
         selected_expansion = self.rules[initial_nonterminal][int(choice) - 1]
 
-        ldata = (stack.current()).replace(initial_nonterminal, "".join(selected_expansion), 1)
+        if stack.current().count(initial_nonterminal) > 1:
+            position = int(input("Enter the occurrence of non-terminal to expand : \n "))
+        else:
+            position = 1
+        ldata = self.replacer(stack.current(), initial_nonterminal, "".join(selected_expansion), position)
         stack.push(ldata)
-        self.create_sentential_form(stack.data, initial_nonterminal, "".join(selected_expansion))
+        self.create_sentential_form(stack.data, initial_nonterminal, "".join(selected_expansion), position)
         non_terminal = ''
         nonterminals = NonTerminals().nonterminals
         while True:
