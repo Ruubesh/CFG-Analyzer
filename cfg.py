@@ -106,13 +106,14 @@ class CFG:
             position = int(input("Enter the occurrence of non-terminal to expand : \n "))
         else:
             position = 1
-        ldata = self.replacer(stack.current(), initial_nonterminal, "".join(selected_expansion), position)
+        ldata = self.replacer(stack.current(), initial_nonterminal, " ".join(selected_expansion), position)
+        ldata = " ".join(ldata.split())
         stack.push(ldata)
         self.create_sentential_form(stack.data, initial_nonterminal, "".join(selected_expansion), position)
         non_terminal = ''
         nonterminals = NonTerminals().nonterminals
         while True:
-            val = [elem for elem in nonterminals if elem in list(ldata)]
+            val = [elem for elem in nonterminals if elem in ldata.split(" ")]
             if val:
                 non_terminal = input(f"\n Last expansion : {ldata} \n Choose the next non terminal for expansion or 'u' to undo or 'r' to redo : \n")
                 if non_terminal == 'u' or non_terminal == 'r':
@@ -152,7 +153,7 @@ def main():
     if nt in nonterminals:
         stack.push(nt)
         result = grammar.expand(nt, stack)
-        print(f'{result}')
+        print(f'\n{result}')
     else:
         print(f"Invalid choice")
 
