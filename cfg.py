@@ -36,7 +36,8 @@ class Stack:
                 CFG().build_tree(new_st)
             return self.data[self.index]
         else:
-            print("Nothing to redo")
+            if format == "S":
+                print("Nothing to redo")
             return None
 
     def current(self):
@@ -185,22 +186,33 @@ class CFG:
         if initial_nonterminal not in self.rules:
             return initial_nonterminal
 
-        print(f"\n Choose the next expansion for '{initial_nonterminal}':")
-        for i, option in enumerate(self.rules[initial_nonterminal], 1):
-            if option[0] == '':
-                print(f"{i}: \u03B5")
-            else:
-                print(f"{i}: {' '.join(option)}")
-        choice = input("Enter the number of your choice: \n ")
+        while True:
+            try:
+                print(f"\nChoose the next expansion for '{initial_nonterminal}':")
+                for i, option in enumerate(self.rules[initial_nonterminal], 1):
+                    if option[0] == '':
+                        print(f"{i}: \u03B5")
+                    else:
+                        print(f"{i}: {' '.join(option)}")
 
-        selected_expansion = self.rules[initial_nonterminal][int(choice) - 1]
+                choice = int(input("Enter the number of your choice: \n "))
+                selected_expansion = self.rules[initial_nonterminal][choice - 1]
+                break
+            except:
+                print("Invalid choice!")
 
-        if stack.current().count(initial_nonterminal) > 1:
-            position = int(input("Enter the occurrence of non-terminal to expand : \n "))
-        else:
-            position = 1
+        while True:
+            try:
+                if stack.current().count(initial_nonterminal) > 1:
+                    position = int(input(f"Enter the occurrence of '{initial_nonterminal}' to expand in '{stack.current()}' : \n "))
+                else:
+                    position = 1
 
-        ldata = self.replacer(stack.current(), initial_nonterminal, " ".join(selected_expansion), position)
+                ldata = self.replacer(stack.current(), initial_nonterminal, " ".join(selected_expansion), position)
+                break
+            except:
+                print("Invalid choice!")
+
         ldata = " ".join(ldata.split())
         stack.push(ldata)
         self.create_sentential_form(stack.data, initial_nonterminal, "".join(selected_expansion), position)
@@ -214,8 +226,14 @@ class CFG:
                 if len(val) == 1:
                     non_terminal = val[0]
                 else:
-                    non_terminal = input(
-                        f"\n Last expansion : {ldata} \nChoose the next non terminal for expansion or 'u' to undo or 'r' to redo : \n")
+                    while True:
+                        non_terminal = input(
+                            f"\nLast expansion : {ldata} \nChoose the next non terminal for expansion or 'u' to undo or 'r' to redo : \n ")
+                        if non_terminal in val or non_terminal == 'u' or non_terminal == 'r':
+                            break
+                        else:
+                            print("Invalid choice!")
+
                 if non_terminal == 'u' or non_terminal == 'r':
                     if non_terminal == 'u':
                         dt = stack.undo('S')
