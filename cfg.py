@@ -74,8 +74,11 @@ class TreeNode:
 
     def print_tree(self):
         spaces = ' ' * self.get_level() * 3
-        prefix = spaces + "|__" if self.parent else ""
-        print(prefix + self.data)
+        prefix = spaces + "|__" if self.parent else "   "
+        if self.data == "":
+            print(f'{prefix}\u03B5')
+        else:
+            print(prefix + self.data)
         for child in self.children:
             child.print_tree()
 
@@ -188,7 +191,7 @@ class CFG:
 
         while True:
             try:
-                print(f"\nChoose the next expansion for '{initial_nonterminal}':")
+                print(f"Choose the next expansion for '{initial_nonterminal}':")
                 for i, option in enumerate(self.rules[initial_nonterminal], 1):
                     if option[0] == '':
                         print(f"{i}: \u03B5")
@@ -224,7 +227,15 @@ class CFG:
             val = [elem for elem in nonterminals if elem in ldata.split(" ")]
             if val:
                 if len(val) == 1:
-                    non_terminal = val[0]
+                    while True:
+                        non_terminal = input(
+                            f"\nChosen nonterminal : {val[0]} \nPress 'ENTER' to continue or 'u' to undo or 'r' to redo : \n ")
+                        if non_terminal == '':
+                            non_terminal = val[0]
+                        if non_terminal in val or non_terminal == 'u' or non_terminal == 'r':
+                            break
+                        else:
+                            print("Invalid choice!")
                 else:
                     while True:
                         non_terminal = input(
