@@ -1,4 +1,10 @@
 import re
+import configparser
+
+
+class CaseSensitiveConfigParser(configparser.ConfigParser):
+    def optionxform(self, optionstr):
+        return optionstr
 
 
 class Stack:
@@ -114,6 +120,10 @@ class CFG:
         newString = before + after
         return newString
 
+    def create_class(self, class_names):
+        for class_name in class_names:
+            globals()[class_name] = type(class_name, (), {'attribute': class_name})
+
     def create_sentential_form(self, st, nt, exp, pos):
         new_st = Stack()
         if len(st) > 1:
@@ -184,6 +194,67 @@ class CFG:
                         d = self.replacer(node_st.current(), p_node, " ".join(value), 1)
                         node_st.push(d)
         root.print_tree()
+
+    def write_to_config(self, config):
+        with open('grammar.txt', 'w') as cf:
+            config.write(cf)
+
+    def add_rule_to_config(self, config, val):
+        nt, rule = val.split("=")
+        if nt in config['rules']:
+            nt_rule = config['rules'][nt].split(',')
+            nt_rule.append(rule)
+            nt_rule = ",".join(nt_rule)
+        else:
+            nt_rule = rule
+        config.set('rules', nt, nt_rule)
+        self.write_to_config(config)
+
+    def add_value(self, config, val_type, val):
+        data = config['input'][val_type].split(',')
+        if val not in data:
+            data.append(val)
+            new_val = ','.join(data)
+            config.set('input', val_type, new_val)
+            self.write_to_config(config)
+        else:
+            print(f'{val_type} {val} already exists')
+
+    def get_dependent_rules(self, val):
+        dlist = []
+        for nt in self.rules:
+            for rlist in self.rules[nt]:
+                if val in rlist:
+                    print(f'Rule {nt} has dependency on {val}: {"".join(rlist)}')
+                    dlist.append("".join(rlist))
+        return dlist
+
+    def remove_rule(self, config, val):
+        if val in config['rules']:
+            config.remove_option('rules', val)
+            self.write_to_config(config)
+        for nt in config['rules']:
+            if val in config['rules'][nt].split(','):
+                data = config['rules'][nt].split(',')
+                data.remove(val)
+                new_val = ','.join(data)
+                config.set('rules', nt, new_val)
+                self.write_to_config(config)
+
+    def remove_value(self, config, val_type, val):
+        data = config['input'][val_type].split(',')
+        if val in data:
+            dlist = self.get_dependent_rules(val)
+            for rule in dlist:
+                self.remove_rule(config, rule)
+
+            self.remove_rule(config, val)
+            data.remove(val)
+            new_val = ','.join(data)
+            config.set('input', val_type, new_val)
+            self.write_to_config(config)
+        else:
+            print(f'{val_type} {val} does not exist')
 
     def expand(self, initial_nonterminal, stack, stack_tree):
         if initial_nonterminal not in self.rules:
@@ -264,20 +335,24 @@ class CFG:
 
 
 def main():
+    config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
+    config.read('grammar.txt')
+    nonterminals = (config['input']['nonterminals']).split(',')
+    terminals = (config['input']['terminals']).split(',')
+    initial_nonterminal = config['input']['initial_nonterminal']
     grammar = CFG()
-    nonterminals = NonTerminals().nonterminals
-    terminals = Terminals().terminals
-
-    grammar.add_rule(nonterminals[0],
-                     [[terminals[0], nonterminals[1], nonterminals[1], terminals[1]],
-                      [nonterminals[0], terminals[0], nonterminals[0]]])
-    grammar.add_rule(nonterminals[1],
-                     [[''],
-                      [terminals[1], nonterminals[2], nonterminals[0]]])
-    grammar.add_rule(nonterminals[2],
-                     [[nonterminals[0], nonterminals[1]],
-                      [terminals[0]],
-                      [terminals[1]]])
+    grammar.create_class(nonterminals)
+    grammar.create_class(terminals)
+    for nt in nonterminals:
+        nlist = []
+        if nt in config['rules']:
+            for elem in (config['rules'][nt]).split(','):
+                if elem == 'epsilon':
+                    elem = ['']
+                else:
+                    elem = list(elem)
+                nlist.append(elem)
+            grammar.add_rule(globals()[nt]().attribute, nlist)
 
     stack = Stack()
     stack_tree = Stack()
