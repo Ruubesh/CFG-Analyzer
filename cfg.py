@@ -78,15 +78,15 @@ class TreeNode:
             p = p.parent
         return level
 
-    def print_tree(self):
-        spaces = ' ' * self.get_level() * 3
-        prefix = spaces + "|__" if self.parent else "   "
+    def print_tree(self, indent=""):
+        prefix = indent[:-3] + "|_ "*bool(indent)
         if self.data == "":
             print(f'{prefix}\u03B5')
         else:
             print(prefix + self.data)
-        for child in self.children:
-            child.print_tree()
+        for more, child in enumerate(self.children, 1-len(self.children)):
+            childIndent = "|  " if more else "   "
+            child.print_tree(indent+childIndent)
 
     def add_child(self, child):
         child.parent = self
