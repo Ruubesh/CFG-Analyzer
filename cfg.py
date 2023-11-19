@@ -93,16 +93,6 @@ class TreeNode:
         self.children.append(child)
 
 
-class NonTerminals:
-    def __init__(self):
-        self.nonterminals = ["A", "B", "C"]
-
-
-class Terminals:
-    def __init__(self):
-        self.terminals = ["a", "b"]
-
-
 class CFG:
     def __init__(self):
         self.rules = {}
@@ -138,8 +128,7 @@ class CFG:
             new_st.push(exp_elem)
         new_st.printst()
 
-    def build_tree(self, stack_tree):
-        nonterminals = NonTerminals().nonterminals
+    def build_tree(self, stack_tree, nonterminals):
         root_nt = list(stack_tree.data[0].keys())
         root = TreeNode(root_nt[0])
         nt_dict = {}
@@ -256,7 +245,7 @@ class CFG:
         else:
             print(f'{val_type} {val} does not exist')
 
-    def expand(self, initial_nonterminal, stack, stack_tree):
+    def expand(self, initial_nonterminal, stack, stack_tree, nonterminals):
         if initial_nonterminal not in self.rules:
             return initial_nonterminal
 
@@ -291,9 +280,8 @@ class CFG:
         stack.push(ldata)
         self.create_sentential_form(stack.data, initial_nonterminal, "".join(selected_expansion), position)
         stack_tree.push({initial_nonterminal: selected_expansion, "position": position})
-        self.build_tree(stack_tree)
+        self.build_tree(stack_tree, nonterminals)
         non_terminal = ''
-        nonterminals = NonTerminals().nonterminals
         while True:
             val = [elem for elem in nonterminals if elem in ldata.split(" ")]
             if val:
@@ -330,7 +318,7 @@ class CFG:
             else:
                 break
         if non_terminal in val:
-            self.expand(non_terminal, stack, stack_tree)
+            self.expand(non_terminal, stack, stack_tree, nonterminals)
         return stack.data[-1]
 
 
@@ -359,7 +347,7 @@ def main():
     nt = input(f"Choose the first non-terminal from the given list to expand \n {nonterminals} \n ")
     if nt in nonterminals:
         stack.push(nt)
-        result = grammar.expand(nt, stack, stack_tree)
+        result = grammar.expand(nt, stack, stack_tree, nonterminals)
         print(f"\n{result.replace(' ', '')}")
     else:
         print(f"Invalid choice")
