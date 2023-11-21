@@ -17,7 +17,7 @@ class Stack:
         self.data.append(item)
         self.index += 1
 
-    def undo(self, format):
+    def undo(self, format, nonterminals):
         if self.index > 0:
             self.index -= 1
             if format == "S":
@@ -25,13 +25,13 @@ class Stack:
             if format == "T":
                 new_st = Stack()
                 new_st.data = self.data[0:self.index + 1]
-                CFG().build_tree(new_st)
+                CFG().build_tree(new_st, nonterminals)
             return self.data[self.index]
         else:
             print("Nothing to undo")
             return None
 
-    def redo(self, format):
+    def redo(self, format, nonterminals):
         if self.index < len(self.data) - 1:
             self.index += 1
             if format == "S":
@@ -39,7 +39,7 @@ class Stack:
             if format == "T":
                 new_st = Stack()
                 new_st.data = self.data[0:self.index + 1]
-                CFG().build_tree(new_st)
+                CFG().build_tree(new_st, nonterminals)
             return self.data[self.index]
         else:
             if format == "S":
@@ -306,11 +306,11 @@ class CFG:
 
                 if non_terminal == 'u' or non_terminal == 'r':
                     if non_terminal == 'u':
-                        dt = stack.undo('S')
-                        stack_tree.undo('T')
+                        dt = stack.undo('S', nonterminals)
+                        stack_tree.undo('T', nonterminals)
                     elif non_terminal == 'r':
-                        dt = stack.redo('S')
-                        stack_tree.redo('T')
+                        dt = stack.redo('S', nonterminals)
+                        stack_tree.redo('T', nonterminals)
                     if dt:
                         ldata = dt
                 else:
@@ -344,13 +344,9 @@ def main():
 
     stack = Stack()
     stack_tree = Stack()
-    nt = input(f"Choose the first non-terminal from the given list to expand \n {nonterminals} \n ")
-    if nt in nonterminals:
-        stack.push(nt)
-        result = grammar.expand(nt, stack, stack_tree, nonterminals)
-        print(f"\n{result.replace(' ', '')}")
-    else:
-        print(f"Invalid choice")
+    stack.push(initial_nonterminal)
+    result = grammar.expand(initial_nonterminal, stack, stack_tree, nonterminals)
+    print(f"\n{result.replace(' ', '')}")
 
 
 if __name__ == "__main__":
