@@ -96,6 +96,9 @@ class TreeNode:
 class CFG:
     def __init__(self):
         self.rules = {}
+        self.nonterminals = []
+        self.terminals = []
+        self.initial_nonterminal = ''
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
