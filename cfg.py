@@ -99,6 +99,8 @@ class CFG:
         self.nonterminals = []
         self.terminals = []
         self.initial_nonterminal = ''
+        self.stack = Stack()
+        self.stack_tree = Stack()
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
@@ -328,13 +330,13 @@ class CFG:
 def main():
     config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
     config.read('grammar.txt')
-    nonterminals = (config['input']['nonterminals']).split(',')
-    terminals = (config['input']['terminals']).split(',')
-    initial_nonterminal = config['input']['initial_nonterminal']
     grammar = CFG()
-    grammar.create_class(nonterminals)
-    grammar.create_class(terminals)
-    for nt in nonterminals:
+    grammar.nonterminals = (config['input']['nonterminals']).split(',')
+    grammar.terminals = (config['input']['terminals']).split(',')
+    grammar.initial_nonterminal = config['input']['initial_nonterminal']
+    grammar.create_class(grammar.nonterminals)
+    grammar.create_class(grammar.terminals)
+    for nt in grammar.nonterminals:
         nlist = []
         if nt in config['rules']:
             for elem in (config['rules'][nt]).split(','):
@@ -345,10 +347,8 @@ def main():
                 nlist.append(elem)
             grammar.add_rule(globals()[nt]().attribute, nlist)
 
-    stack = Stack()
-    stack_tree = Stack()
-    stack.push(initial_nonterminal)
-    result = grammar.expand(initial_nonterminal, stack, stack_tree, nonterminals)
+    grammar.stack.push(grammar.initial_nonterminal)
+    result = grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)
     print(f"\n{result.replace(' ', '')}")
 
 
