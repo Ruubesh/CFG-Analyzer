@@ -214,10 +214,10 @@ class CFG:
         else:
             print(f'{val_type} {val} already exists')
 
-    def get_dependent_rules(self, val):
+    def get_dependent_rules(self, config, val):
         dlist = []
-        for nt in self.rules:
-            for rlist in self.rules[nt]:
+        for nt in config['rules']:
+            for rlist in config['rules'][nt].split(','):
                 if val in rlist:
                     print(f'Rule {nt} has dependency on {val}: {"".join(rlist)}')
                     dlist.append("".join(rlist))
@@ -238,7 +238,7 @@ class CFG:
     def remove_value(self, config, val_type, val):
         data = config['input'][val_type].split(',')
         if val in data:
-            dlist = self.get_dependent_rules(val)
+            dlist = self.get_dependent_rules(config, val)
             for rule in dlist:
                 self.remove_rule(config, rule)
 
@@ -327,9 +327,9 @@ class CFG:
         return stack.data[-1]
 
 
-def main():
+def main(file_variable):
     config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
-    config.read('grammar.txt')
+    config.read(file_variable)
     grammar = CFG()
     grammar.nonterminals = (config['input']['nonterminals']).split(',')
     grammar.terminals = (config['input']['terminals']).split(',')
@@ -348,8 +348,10 @@ def main():
             grammar.add_rule(globals()[nt]().attribute, nlist)
 
     grammar.stack.push(grammar.initial_nonterminal)
-    result = grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)
-    print(f"\n{result.replace(' ', '')}")
+    return grammar
+
+    # result = grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)
+    # print(f"\n{result.replace(' ', '')}")
 
 
 if __name__ == "__main__":

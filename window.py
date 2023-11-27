@@ -1,5 +1,6 @@
 import tkinter as tk
 import functions
+import cfg
 
 
 def clear_widgets(frame):
@@ -39,7 +40,7 @@ def load_page1():
     submit_btn.pack(side="left", padx=5)
     # submit_btn.config(state="disabled")
 
-    run_btn = tk.Button(master=select_f2, text="Run", width=5, command=lambda: load_page2())
+    run_btn = tk.Button(master=select_f2, text="Run", width=5, command=lambda: load_page2(file_variable))
     run_btn.pack(side="left", padx=10)
     # run_btn.config(state="disabled")
 
@@ -86,10 +87,12 @@ def load_page1():
     grammar_l1.pack()
 
 
-def load_page2():
+def load_page2(file_variable):
     clear_widgets(page1_frame)
     page1_frame.pack_forget()
     page2_frame.pack(fill="both", expand=1)
+
+    grammar = cfg.main(file_variable.get())
 
     # top_frame
     top_frame = tk.Frame(master=page2_frame, height=500, width=1300)
