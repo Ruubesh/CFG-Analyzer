@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import functions
 import cfg
 
@@ -40,7 +41,8 @@ def load_page1():
     submit_btn.pack(side="left", padx=5)
     # submit_btn.config(state="disabled")
 
-    run_btn = tk.Button(master=select_f2, text="Run", width=5, command=lambda: load_page2(file_variable))
+    run_btn = tk.Button(master=select_f2, text="Run", width=5,
+                        command=lambda: load_page2(file_variable))
     run_btn.pack(side="left", padx=10)
     # run_btn.config(state="disabled")
 
@@ -117,10 +119,15 @@ def load_page2(file_variable):
     execute_l1.pack()
 
     input_str = tk.StringVar()
-    execute_e1 = tk.Entry(master=execute_frame, textvariable=input_str)
+    options = ['Choose an option']
+    execute_e1 = ttk.Combobox(master=execute_frame, textvariable=input_str, values=options, state='readonly')
+    execute_e1.current(0)
+    # execute_e1.bind("<<ComboboxSelected>>", functions.comboclick)
     execute_e1.pack()
 
-    execute_btn = tk.Button(master=execute_frame, text="Execute")
+    execute_btn = tk.Button(master=execute_frame, text="Execute",
+                            command=lambda: functions.execute(output_str, input_str, sentential_str, tree_str,
+                                                              execute_e1, grammar, grammar.initial_nonterminal))
     execute_btn.pack()
 
     # tree_frame
@@ -129,7 +136,7 @@ def load_page2(file_variable):
 
     tree_str = tk.StringVar()
     tree_l1 = tk.Label(master=tree_frame, textvariable=tree_str)
-    tree_l1.pack
+    tree_l1.pack()
 
     # sentential_frame
     sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=150, width=900)
@@ -137,7 +144,7 @@ def load_page2(file_variable):
 
     sentential_str = tk.StringVar()
     sentential_l1 = tk.Label(master=sentential_frame, textvariable=sentential_str)
-    sentential_l1.pack
+    sentential_l1.pack()
 
 
 # window

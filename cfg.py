@@ -57,11 +57,16 @@ class Stack:
             endval = ind + 1
         else:
             endval = len(self.data)
+        sentence = ''
         for i in range(endval):
             if i == endval - 1:
                 print(f"{self.data[i]}")
+                sentence += f"{self.data[i]}"
             else:
                 print(f"{self.data[i]} -->", end=" ")
+                sentence += f"{self.data[i]} -->"
+
+        return sentence
 
 
 class TreeNode:
@@ -78,15 +83,19 @@ class TreeNode:
             p = p.parent
         return level
 
-    def print_tree(self, indent=""):
+    def print_tree(self, tree, indent=""):
         prefix = indent[:-3] + "|_ "*bool(indent)
         if self.data == "":
             print(f'{prefix}\u03B5')
+            tree += f'{prefix}\u03B5'
         else:
             print(prefix + self.data)
+            tree += prefix + self.data
         for more, child in enumerate(self.children, 1-len(self.children)):
             childIndent = "|  " if more else "   "
-            child.print_tree(indent+childIndent)
+            child.print_tree(tree, indent+childIndent)
+
+        return tree
 
     def add_child(self, child):
         child.parent = self
@@ -131,7 +140,8 @@ class CFG:
                 exp_elem = self.replacer(st[-2], nt, f"[{exp}]", pos)
             new_st.push(nt_elem)
             new_st.push(exp_elem)
-        new_st.printst()
+        sentence = new_st.printst()
+        return sentence
 
     def build_tree(self, stack_tree, nonterminals):
         root_nt = list(stack_tree.data[0].keys())
@@ -187,7 +197,8 @@ class CFG:
 
                         d = self.replacer(node_st.current(), p_node, " ".join(value), 1)
                         node_st.push(d)
-        root.print_tree()
+        tree = root.print_tree('')
+        return tree
 
     def write_to_config(self, config):
         with open('grammar.txt', 'w') as cf:
