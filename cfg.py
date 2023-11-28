@@ -21,12 +21,12 @@ class Stack:
         if self.index > 0:
             self.index -= 1
             if format == "S":
-                self.printst(self.index)
+                return self.printst(self.index), self.data[self.index]
             if format == "T":
                 new_st = Stack()
                 new_st.data = self.data[0:self.index + 1]
-                CFG().build_tree(new_st, nonterminals)
-            return self.data[self.index]
+                return CFG().build_tree(new_st, nonterminals)
+            # return self.data[self.index]
         else:
             print("Nothing to undo")
             return None
@@ -35,12 +35,12 @@ class Stack:
         if self.index < len(self.data) - 1:
             self.index += 1
             if format == "S":
-                self.printst(self.index)
+                return self.printst(self.index), self.data[self.index]
             if format == "T":
                 new_st = Stack()
                 new_st.data = self.data[0:self.index + 1]
-                CFG().build_tree(new_st, nonterminals)
-            return self.data[self.index]
+                return CFG().build_tree(new_st, nonterminals)
+            # return self.data[self.index]
         else:
             if format == "S":
                 print("Nothing to redo")

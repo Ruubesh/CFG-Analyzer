@@ -108,10 +108,12 @@ def load_page2(file_variable):
     back_btn = tk.Button(master=execute_frame, text="Back", command=lambda: load_page1())
     back_btn.pack()
 
-    undo_btn = tk.Button(master=execute_frame, text="<--")
+    undo_btn = tk.Button(master=execute_frame, text="<--",
+                         command=lambda: functions.undo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, undo_btn))
     undo_btn.pack()
 
-    redo_btn = tk.Button(master=execute_frame, text="-->")
+    redo_btn = tk.Button(master=execute_frame, text="-->",
+                         command=lambda: functions.redo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn))
     redo_btn.pack()
 
     output_str = tk.StringVar()
