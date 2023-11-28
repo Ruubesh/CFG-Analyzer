@@ -50,9 +50,15 @@ def update_options(combobox, options):
 def undo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, undo_btn):
     sentence, ldata = grammar.stack.undo('S', grammar.nonterminals)
     tree = grammar.stack_tree.undo('T', grammar.nonterminals)
-    update_label(sentential_str, sentence)
-    update_label(tree_str, tree)
-    get_nonterminal(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, ldata)
+    if ldata == grammar.stack.data[0]:
+        undo_btn.config(state="disabled")
+        update_label(sentential_str, grammar.stack.data[0])
+        update_label(tree_str, grammar.stack.data[0])
+        execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, ldata, execute_btn)
+    else:
+        update_label(sentential_str, sentence)
+        update_label(tree_str, tree)
+        get_nonterminal(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, ldata)
 
 
 def redo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn):
@@ -102,17 +108,6 @@ def process_data(output_str, input_str, sentential_str, tree_str, execute_e1, gr
     update_label(tree_str, tree)
 
     get_nonterminal(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, ldata)
-
-    # val = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
-    # if val:
-    #     if len(val) == 1:
-    #         non_terminal = val[0]
-    #         execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, non_terminal, execute_btn)
-    #     else:
-    #         update_label(output_str,
-    #                      f"\nLast expansion : {ldata} \nChoose the next non terminal for expansion: \n ")
-    #         update_options(execute_e1, val)
-    #         execute_btn.config(command=lambda: choose_nonterminal(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn))
 
 
 def get_occurrence(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn):

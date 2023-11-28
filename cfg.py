@@ -26,7 +26,12 @@ class Stack:
                 new_st = Stack()
                 new_st.data = self.data[0:self.index + 1]
                 return CFG().build_tree(new_st, nonterminals)
-            # return self.data[self.index]
+        elif self.index == 0:
+            if format == 'S':
+                return self.data[self.index], self.data[self.index]
+            if format == 'T':
+                self.index = -1
+                return self.data[self.index]
         else:
             print("Nothing to undo")
             return None
@@ -40,7 +45,6 @@ class Stack:
                 new_st = Stack()
                 new_st.data = self.data[0:self.index + 1]
                 return CFG().build_tree(new_st, nonterminals)
-            # return self.data[self.index]
         else:
             if format == "S":
                 print("Nothing to redo")
@@ -365,9 +369,6 @@ def main(file_variable):
 
     grammar.stack.push(grammar.initial_nonterminal)
     return grammar
-
-    # result = grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)
-    # print(f"\n{result.replace(' ', '')}")
 
 
 if __name__ == "__main__":

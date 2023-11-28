@@ -105,16 +105,21 @@ def load_page2(file_variable):
     execute_frame.pack(side="left")
     execute_frame.pack_propagate(0)
 
-    back_btn = tk.Button(master=execute_frame, text="Back", command=lambda: load_page1())
-    back_btn.pack()
+    # button_frame
+    button_frame = tk.Frame(master=execute_frame)
+    button_frame.pack(fill='x')
 
-    undo_btn = tk.Button(master=execute_frame, text="<--",
+    back_btn = tk.Button(master=button_frame, text="Back", command=lambda: load_page1())
+    back_btn.pack(side='left', padx=10)
+
+    redo_btn = tk.Button(master=button_frame, text="-->",
+                         command=lambda: functions.redo(output_str, input_str, sentential_str, tree_str, execute_e1,
+                                                        grammar, execute_btn))
+    redo_btn.pack(side='right', padx=10)
+
+    undo_btn = tk.Button(master=button_frame, text="<--",
                          command=lambda: functions.undo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, undo_btn))
-    undo_btn.pack()
-
-    redo_btn = tk.Button(master=execute_frame, text="-->",
-                         command=lambda: functions.redo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn))
-    redo_btn.pack()
+    undo_btn.pack(side='right')
 
     output_str = tk.StringVar()
     execute_l1 = tk.Label(master=execute_frame, textvariable=output_str, justify='left')
@@ -129,7 +134,7 @@ def load_page2(file_variable):
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, tree_str,
                                                               execute_e1, grammar, grammar.initial_nonterminal, execute_btn))
-    execute_btn.pack()
+    execute_btn.pack(pady=10)
 
     # tree_frame
     tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree", height=500, width=650)
