@@ -85,7 +85,7 @@ def load_page1():
     # grammar_frame.pack_propagate(0)
 
     grammar_str = tk.StringVar()
-    grammar_l1 = tk.Label(master=grammar_frame, textvariable=grammar_str)
+    grammar_l1 = tk.Label(master=grammar_frame, textvariable=grammar_str, justify='left')
     grammar_l1.pack()
 
 
@@ -115,27 +115,27 @@ def load_page2(file_variable):
     redo_btn.pack()
 
     output_str = tk.StringVar()
-    execute_l1 = tk.Label(master=execute_frame, textvariable=output_str)
+    execute_l1 = tk.Label(master=execute_frame, textvariable=output_str, justify='left')
     execute_l1.pack()
 
     input_str = tk.StringVar()
-    options = ['Choose an option']
+    options = [grammar.initial_nonterminal]
     execute_e1 = ttk.Combobox(master=execute_frame, textvariable=input_str, values=options, state='readonly')
     execute_e1.current(0)
-    # execute_e1.bind("<<ComboboxSelected>>", functions.comboclick)
     execute_e1.pack()
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, tree_str,
-                                                              execute_e1, grammar, grammar.initial_nonterminal))
+                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn))
     execute_btn.pack()
 
     # tree_frame
     tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree", height=500, width=650)
     tree_frame.pack(side="left")
+    tree_frame.pack_propagate(0)
 
     tree_str = tk.StringVar()
-    tree_l1 = tk.Label(master=tree_frame, textvariable=tree_str)
+    tree_l1 = tk.Label(master=tree_frame, textvariable=tree_str, justify='left')
     tree_l1.pack()
 
     # sentential_frame

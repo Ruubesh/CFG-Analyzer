@@ -83,17 +83,17 @@ class TreeNode:
             p = p.parent
         return level
 
-    def print_tree(self, tree, indent=""):
+    def print_tree(self, tree='', indent=""):
         prefix = indent[:-3] + "|_ "*bool(indent)
         if self.data == "":
             print(f'{prefix}\u03B5')
-            tree += f'{prefix}\u03B5'
+            tree += f'{prefix}\u03B5\n'
         else:
             print(prefix + self.data)
-            tree += prefix + self.data
+            tree += prefix + self.data + "\n"
         for more, child in enumerate(self.children, 1-len(self.children)):
-            childIndent = "|  " if more else "   "
-            child.print_tree(tree, indent+childIndent)
+            childIndent = " |  " if more else "    "
+            tree = child.print_tree(tree, indent+childIndent)
 
         return tree
 
@@ -197,8 +197,13 @@ class CFG:
 
                         d = self.replacer(node_st.current(), p_node, " ".join(value), 1)
                         node_st.push(d)
-        tree = root.print_tree('')
+        tree = root.print_tree()
         return tree
+
+    def read_config(self, file):
+        config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
+        config.read(file)
+        return config
 
     def write_to_config(self, config):
         with open('grammar.txt', 'w') as cf:

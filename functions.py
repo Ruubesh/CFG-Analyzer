@@ -44,9 +44,59 @@ def update_label(label, text):
 
 def update_options(combobox, options):
     combobox['values'] = options
+    combobox.current(0)
 
 
-def execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal):
+def choose_nonterminal(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn):
+    non_terminal = input_str.get()
+    execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, non_terminal, execute_btn)
+
+
+def process_data(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn, selected_expansion):
+    if grammar.stack.current().count(initial_nonterminal) > 1:
+        position = int(input_str.get())
+    else:
+        position = 1
+
+    if "\u03B5" in selected_expansion:
+        selected_expansion[0] = ''
+
+    ldata = grammar.replacer(grammar.stack.current(), initial_nonterminal, " ".join(selected_expansion), position)
+    ldata = " ".join(ldata.split())
+    grammar.stack.push(ldata)
+    sentence = grammar.create_sentential_form(grammar.stack.data, initial_nonterminal, "".join(selected_expansion),
+                                              position)
+    update_label(sentential_str, sentence)
+    grammar.stack_tree.push({initial_nonterminal: selected_expansion, "position": position})
+    tree = grammar.build_tree(grammar.stack_tree, grammar.nonterminals)
+    update_label(tree_str, tree)
+
+    val = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
+    if val:
+        if len(val) == 1:
+            non_terminal = val[0]
+            execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, non_terminal, execute_btn)
+        else:
+            update_label(output_str,
+                         f"\nLast expansion : {ldata} \nChoose the next non terminal for expansion: \n ")
+            update_options(execute_e1, val)
+            execute_btn.config(command=lambda: choose_nonterminal(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn))
+
+
+def get_occurrence(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn):
+    selected_expansion = input_str.get().split()
+    if grammar.stack.current().count(initial_nonterminal) > 1:
+        update_label(output_str, f"Enter the occurrence of '{initial_nonterminal}' to expand in '{grammar.stack.current()}' : \n ")
+        occurrences = []
+        for i in range(1, grammar.stack.current().count(initial_nonterminal) + 1):
+            occurrences.append(i)
+        update_options(execute_e1, occurrences)
+        execute_btn.config(command=lambda: process_data(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn, selected_expansion))
+    else:
+        process_data(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn, selected_expansion)
+
+
+def execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn):
     if initial_nonterminal not in grammar.rules:
         return initial_nonterminal
 
@@ -60,36 +110,4 @@ def execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar
 
     update_options(execute_e1, options)
 
-    selected_expansion = input_str.get().split()
-
-    if grammar.stack.current().count(initial_nonterminal) > 1:
-        update_label(output_str, f"Enter the occurrence of '{initial_nonterminal}' to expand in '{grammar.stack.current()}' : \n ")
-        occurrences = []
-        for i in range(1, grammar.stack.current().count(initial_nonterminal) + 1):
-            occurrences.append(i)
-        update_options(execute_e1, occurrences)
-        position = int(input_str.get())
-    else:
-        position = 1
-
-    ldata = grammar.replacer(grammar.stack.current(), initial_nonterminal, " ".join(selected_expansion), position)
-    ldata = " ".join(ldata.split())
-    grammar.stack.push(ldata)
-    sentence = grammar.create_sentential_form(grammar.stack.data, initial_nonterminal, "".join(selected_expansion), position)
-    update_label(sentential_str, sentence)
-    grammar.stack_tree.push({initial_nonterminal: selected_expansion, "position": position})
-    tree = grammar.build_tree(grammar.stack_tree, grammar.nonterminals)
-    update_label(tree_str, tree)
-    non_terminal = ''
-    val = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
-    if val:
-        if len(val) == 1:
-            non_terminal = val[0]
-        else:
-            update_label(output_str, f"\nLast expansion : {ldata} \nChoose the next non terminal for expansion or 'u' to undo or 'r' to redo : \n ")
-            update_options(execute_e1, val)
-            non_terminal = input_str.get()
-
-    execute(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, non_terminal)
-
-    # return stack.data[-1]
+    execute_btn.config(command=lambda: get_occurrence(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, initial_nonterminal, execute_btn))
