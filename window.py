@@ -97,12 +97,12 @@ def load_page2(file_variable):
     grammar = cfg.main(file_variable.get())
 
     # top_frame
-    top_frame = tk.Frame(master=page2_frame, height=500, width=1300)
-    top_frame.pack()
+    top_frame = tk.Frame(master=page2_frame, height=window.winfo_screenheight(), width=window.winfo_screenwidth())
+    top_frame.pack(fill='both', expand=1)
 
     # execute_frame
-    execute_frame = tk.LabelFrame(master=top_frame, text="Execute", height=500, width=620)
-    execute_frame.pack(side="left")
+    execute_frame = tk.LabelFrame(master=top_frame, text="Execute", width=window.winfo_screenwidth()/2)
+    execute_frame.pack(side="left", fill='y')
     execute_frame.pack_propagate(0)
 
     # button_frame
@@ -137,8 +137,8 @@ def load_page2(file_variable):
     execute_btn.pack(pady=10)
 
     # tree_frame
-    tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree", height=500, width=650)
-    tree_frame.pack(side="left")
+    tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree", width=window.winfo_screenwidth()/2)
+    tree_frame.pack(side="left", fill='y')
     tree_frame.pack_propagate(0)
 
     tree_str = tk.StringVar()
@@ -146,8 +146,9 @@ def load_page2(file_variable):
     tree_l1.pack()
 
     # sentential_frame
-    sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=150, width=900)
+    sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=50, width=900)
     sentential_frame.pack(fill="x")
+    sentential_frame.pack_propagate(0)
 
     sentential_str = tk.StringVar()
     sentential_l1 = tk.Label(master=sentential_frame, textvariable=sentential_str)
