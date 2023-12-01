@@ -114,11 +114,11 @@ def load_page2(file_variable):
 
     redo_btn = tk.Button(master=button_frame, text="-->",
                          command=lambda: functions.redo(output_str, input_str, sentential_str, tree_str, execute_e1,
-                                                        grammar, execute_btn))
+                                                        grammar, execute_btn, undo_btn, redo_btn), state="disabled")
     redo_btn.pack(side='right', padx=10)
 
     undo_btn = tk.Button(master=button_frame, text="<--",
-                         command=lambda: functions.undo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, undo_btn))
+                         command=lambda: functions.undo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, undo_btn, redo_btn), state="disabled")
     undo_btn.pack(side='right')
 
     output_str = tk.StringVar()
@@ -133,7 +133,7 @@ def load_page2(file_variable):
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, tree_str,
-                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn))
+                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn))
     execute_btn.pack(pady=10)
 
     # tree_frame
