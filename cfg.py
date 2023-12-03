@@ -201,8 +201,8 @@ class CFG:
 
                         d = self.replacer(node_st.current(), p_node, " ".join(value), 1)
                         node_st.push(d)
-        tree = root.print_tree()
-        return tree
+        root.print_tree()
+        return root
 
     def read_config(self, file):
         config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())

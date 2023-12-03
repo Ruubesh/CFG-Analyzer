@@ -113,12 +113,12 @@ def load_page2(file_variable):
     back_btn.pack(side='left', padx=10)
 
     redo_btn = tk.Button(master=button_frame, text="-->",
-                         command=lambda: functions.redo(output_str, input_str, sentential_str, tree_str, execute_e1,
+                         command=lambda: functions.redo(output_str, input_str, sentential_str, canvas, execute_e1,
                                                         grammar, execute_btn, undo_btn, redo_btn), state="disabled")
     redo_btn.pack(side='right', padx=10)
 
     undo_btn = tk.Button(master=button_frame, text="<--",
-                         command=lambda: functions.undo(output_str, input_str, sentential_str, tree_str, execute_e1, grammar, execute_btn, undo_btn, redo_btn), state="disabled")
+                         command=lambda: functions.undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn), state="disabled")
     undo_btn.pack(side='right')
 
     output_str = tk.StringVar()
@@ -132,7 +132,7 @@ def load_page2(file_variable):
     execute_e1.pack()
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
-                            command=lambda: functions.execute(output_str, input_str, sentential_str, tree_str,
+                            command=lambda: functions.execute(output_str, input_str, sentential_str, canvas,
                                                               execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn))
     execute_btn.pack(pady=10)
 
@@ -141,9 +141,15 @@ def load_page2(file_variable):
     tree_frame.pack(side="left", fill='y')
     tree_frame.pack_propagate(0)
 
-    tree_str = tk.StringVar()
-    tree_l1 = tk.Label(master=tree_frame, textvariable=tree_str, justify='left')
-    tree_l1.pack()
+    tree_sb_vertical = ttk.Scrollbar(master=tree_frame, orient="vertical")
+    tree_sb_horizontal = ttk.Scrollbar(master=tree_frame, orient="horizontal")
+    canvas = tk.Canvas(master=tree_frame, yscrollcommand=tree_sb_vertical.set, xscrollcommand=tree_sb_horizontal.set)
+    tree_sb_vertical.config(command=canvas.yview)
+    tree_sb_horizontal.config(command=canvas.xview)
+    tree_sb_vertical.pack(side="right", fill="y")
+    tree_sb_horizontal.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=1)
+    canvas.bind_all("<MouseWheel>", functions.on_canvas_scroll)
 
     # sentential_frame
     sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=50, width=900)
