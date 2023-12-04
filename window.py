@@ -5,7 +5,6 @@ import cfg
 
 
 def clear_widgets(frame):
-    # select all frame widgets and delete them
     for widget in frame.winfo_children():
         widget.destroy()
 
@@ -37,7 +36,7 @@ def load_page1():
     select_f2.pack()
 
     submit_btn = tk.Button(master=select_f2, text="Submit",
-                           command=lambda: functions.submit(file_variable.get(), grammar_str))
+                           command=lambda: functions.submit(file_variable.get(), grammar_str, init_combo, rule_combo, rules))
     submit_btn.pack(side="left", padx=5)
     # submit_btn.config(state="disabled")
 
@@ -47,15 +46,18 @@ def load_page1():
     # run_btn.config(state="disabled")
 
     # edit_frame
-    edit_frame = tk.LabelFrame(master=page1_frame, text="Edit", height=155, width=500)
+    edit_frame = tk.LabelFrame(master=page1_frame, text="Edit", height=155)
     edit_frame.pack(fill="x")
     edit_frame.pack_propagate(0)
 
+    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/2)
+    nt_frame.pack(side='left', fill='x', expand=1)
+
     entry_str = tk.StringVar()
-    entry = tk.Entry(master=edit_frame, textvariable=entry_str)
+    entry = tk.Entry(master=nt_frame, textvariable=entry_str)
     entry.pack(pady=10)
 
-    edit_f1 = tk.Frame(master=edit_frame)
+    edit_f1 = tk.Frame(master=nt_frame)
     edit_f1.pack(pady=10)
 
     choice = tk.StringVar()
@@ -64,20 +66,51 @@ def load_page1():
     nt_radio.pack(side='left', padx=10)
     t_radio = tk.Radiobutton(edit_f1, text="Terminal", variable=choice, value="terminals")
     t_radio.pack(side='left', padx=10)
-    rule_radio = tk.Radiobutton(edit_f1, text="Rule", variable=choice, value="rules")
-    rule_radio.pack(side='left', padx=10)
 
-    edit_f2 = tk.Frame(master=edit_frame)
+    edit_f2 = tk.Frame(master=nt_frame)
     edit_f2.pack(pady=10)
 
     add_btn = tk.Button(master=edit_f2, text="Add", width=7,
-                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str))
+                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str, init_combo, rule_combo, rules))
     add_btn.pack(side="left", padx=10)
 
     remove_btn = tk.Button(master=edit_f2, text="Remove",
                            command=lambda: functions.remove(file_variable.get(), choice.get(), entry_str.get(),
-                                                            grammar_str))
+                                                            grammar_str, init_combo, rule_combo, rules))
     remove_btn.pack(side="left", padx=10)
+
+    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/2)
+    rule_frame.pack(side="right", fill='x', expand=1)
+
+    rule_f1 = tk.Frame(master=rule_frame)
+    rule_f1.pack(anchor='w', pady=10, padx=121)
+
+    rule_l1 = tk.Label(master=rule_f1, text="Initial Nonterminal:")
+    rule_l1.pack(side="left")
+
+    init_val = tk.StringVar()
+    nt_options = []
+    init_combo = ttk.Combobox(master=rule_f1, textvariable=init_val, state="readonly", values=nt_options)
+    init_combo.pack(side="left")
+
+    rule_f2 = tk.Frame(master=rule_frame)
+    rule_f2.pack(pady=10)
+
+    rule_l2 = tk.Label(master=rule_f2, text="Rules:")
+    rule_l2.pack(side="left")
+
+    rule_val = tk.StringVar()
+    rule_options = []
+    rule_combo = ttk.Combobox(master=rule_f2, textvariable=rule_val, state="readonly", values=rule_options)
+    rule_combo.pack(side="left")
+    rule_combo.bind("<<ComboboxSelected>>", lambda event: functions.on_select_rule(file_variable.get(), rule_val, rules))
+
+    rules = tk.StringVar()
+    rule_entry = tk.Entry(master=rule_f2, width=30, textvariable=rules)
+    rule_entry.pack(side="left", padx=10)
+
+    save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str))
+    save_btn.pack(pady=10)
 
     # grammar_frame
     grammar_frame = tk.LabelFrame(master=page1_frame, text="Grammar", height=400)

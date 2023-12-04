@@ -209,28 +209,23 @@ class CFG:
         config.read(file)
         return config
 
-    def write_to_config(self, config):
-        with open('grammar.txt', 'w') as cf:
+    def write_to_config(self, config, file):
+        with open(file, 'w') as cf:
             config.write(cf)
 
-    def add_rule_to_config(self, config, val):
-        nt, rule = val.split("=")
-        if nt in config['rules']:
-            nt_rule = config['rules'][nt].split(',')
-            nt_rule.append(rule)
-            nt_rule = ",".join(nt_rule)
-        else:
-            nt_rule = rule
-        config.set('rules', nt, nt_rule)
-        self.write_to_config(config)
+    def check_rule(self, rule, substrings):
+        for substring in substrings:
+            if substring in rule:
+                rule = rule.replace(substring, '')
+        return not rule
 
-    def add_value(self, config, val_type, val):
+    def add_value(self, config, val_type, val, file):
         data = config['input'][val_type].split(',')
         if val not in data:
             data.append(val)
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
-            self.write_to_config(config)
+            self.write_to_config(config, file)
         else:
             print(f'{val_type} {val} already exists')
 
@@ -243,30 +238,30 @@ class CFG:
                     dlist.append("".join(rlist))
         return dlist
 
-    def remove_rule(self, config, val):
+    def remove_rule(self, config, val, file):
         if val in config['rules']:
             config.remove_option('rules', val)
-            self.write_to_config(config)
+            self.write_to_config(config, file)
         for nt in config['rules']:
             if val in config['rules'][nt].split(','):
                 data = config['rules'][nt].split(',')
                 data.remove(val)
                 new_val = ','.join(data)
                 config.set('rules', nt, new_val)
-                self.write_to_config(config)
+                self.write_to_config(config, file)
 
-    def remove_value(self, config, val_type, val):
+    def remove_value(self, config, val_type, val, file):
         data = config['input'][val_type].split(',')
         if val in data:
             dlist = self.get_dependent_rules(config, val)
             for rule in dlist:
-                self.remove_rule(config, rule)
+                self.remove_rule(config, rule, file)
 
-            self.remove_rule(config, val)
+            self.remove_rule(config, val, file)
             data.remove(val)
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
-            self.write_to_config(config)
+            self.write_to_config(config, file)
         else:
             print(f'{val_type} {val} does not exist')
 

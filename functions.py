@@ -18,30 +18,59 @@ def open_file(file_variable):
     file_variable.set(filename)
 
 
-def submit(file, grammar_str):
+def submit(file, grammar_str, init_combo, rule_combo, rules):
     with open(file, 'r') as f:
-        grammar = f.read()
-        grammar_str.set(grammar)
+        text = f.read()
+        grammar_str.set(text)
+
+    grammar = CFG().read_config(file)
+    init_combo['values'] = grammar['input']['nonterminals'].split(',')
+    init_combo.current(0)
+
+    rule_combo['values'] = grammar['input']['nonterminals'].split(',')
+    rule_combo.current(0)
+    rules.set(grammar['rules'][rule_combo['values'][0]])
 
 
-def add(file, val_type, val, grammar_str):
+def on_select_rule(file, rule_val, rules):
+    grammar = CFG().read_config(file)
+    for i in grammar['rules']:
+        if i == rule_val.get():
+            rules.set(grammar['rules'][i])
+
+
+def save_to_config(file, rule_val, rules, init_val, grammar_str):
+    grammar = CFG().read_config(file)
+    grammar.set('input', 'initial_nonterminal', init_val.get())
+
+    substrings = grammar['input']['nonterminals'].split(',') + grammar['input']['terminals'].split(',')
+    new_rules = []
+    for rule in rules.get().split(','):
+        if CFG().check_rule(rule.strip(), substrings):
+            new_rules.append(rule.strip())
+        else:
+            grammar_str.set('Invalid rules')
+            return
+
+    grammar.set('rules', rule_val.get(), ','.join(new_rules))
+    CFG().write_to_config(grammar, file)
+    with open(file, 'r') as f:
+        text = f.read()
+        grammar_str.set(text)
+
+
+def add(file, val_type, val, grammar_str, init_combo, rule_combo, rules):
     config = CFG().read_config(file)
-    if val_type == 'rules':
-        CFG().add_rule_to_config(config, val)
-    else:
-        CFG().add_value(config, val_type, val)
+    CFG().add_value(config, val_type, val, file)
 
-    submit(file, grammar_str)
+    submit(file, grammar_str, init_combo, rule_combo, rules)
 
 
-def remove(file, val_type, val, grammar_str):
+def remove(file, val_type, val, grammar_str, init_combo, rule_combo, rules):
     config = CFG().read_config(file)
-    if val_type == 'rules':
-        CFG().remove_rule(config, val)
-    else:
-        CFG().remove_value(config, val_type, val)
+    CFG().remove_value(config, val_type, val, file)
 
-    submit(file, grammar_str)
+    submit(file, grammar_str, init_combo, rule_combo, rules)
 
 
 def update_label(label, text):
@@ -81,11 +110,11 @@ def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, exe
     if ldata == grammar.stack.data[0]:
         undo_btn.config(state="disabled")
         update_label(sentential_str, grammar.stack.data[0])
-        x = 50
-        y = 50
+        x = 330
+        y = 10
         canvas.delete("all")
         canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
-        canvas.create_text(x + 60, y + 15, text=grammar.stack.data[0])
+        canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
         execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, ldata, execute_btn, undo_btn, redo_btn)
     else:
         update_label(sentential_str, sentence)
