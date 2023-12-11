@@ -130,12 +130,12 @@ def load_page2(file_variable):
     grammar = cfg.main(file_variable.get())
 
     # top_frame
-    top_frame = tk.Frame(master=page2_frame, height=window.winfo_screenheight(), width=window.winfo_screenwidth())
+    top_frame = tk.Frame(master=page2_frame)
     top_frame.pack(fill='both', expand=1)
 
     # execute_frame
-    execute_frame = tk.LabelFrame(master=top_frame, text="Execute", width=window.winfo_screenwidth()/2)
-    execute_frame.pack(side="left", fill='y')
+    execute_frame = tk.LabelFrame(master=top_frame, text="Execute")
+    execute_frame.pack(side="left", fill='both', expand=1)
     execute_frame.pack_propagate(0)
 
     # button_frame
@@ -147,11 +147,11 @@ def load_page2(file_variable):
 
     redo_btn = tk.Button(master=button_frame, text="-->",
                          command=lambda: functions.redo(output_str, input_str, sentential_str, canvas, execute_e1,
-                                                        grammar, execute_btn, undo_btn, redo_btn), state="disabled")
+                                                        grammar, execute_btn, undo_btn, redo_btn, sentential_canvas), state="disabled")
     redo_btn.pack(side='right', padx=10)
 
     undo_btn = tk.Button(master=button_frame, text="<--",
-                         command=lambda: functions.undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn), state="disabled")
+                         command=lambda: functions.undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn, sentential_canvas), state="disabled")
     undo_btn.pack(side='right')
 
     output_str = tk.StringVar()
@@ -166,12 +166,12 @@ def load_page2(file_variable):
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, canvas,
-                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn))
+                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas))
     execute_btn.pack(pady=10)
 
     # tree_frame
-    tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree", width=window.winfo_screenwidth()/2)
-    tree_frame.pack(side="left", fill='y')
+    tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree")
+    tree_frame.pack(side="left", fill='both', expand=1)
     tree_frame.pack_propagate(0)
 
     tree_sb_vertical = ttk.Scrollbar(master=tree_frame, orient="vertical")
@@ -182,22 +182,25 @@ def load_page2(file_variable):
     tree_sb_vertical.pack(side="right", fill="y")
     tree_sb_horizontal.pack(side="bottom", fill="x")
     canvas.pack(fill="both", expand=1)
-    canvas.bind_all("<MouseWheel>", functions.on_canvas_scroll)
+    canvas.bind("<MouseWheel>", functions.on_tree_scroll)
 
     # sentential_frame
-    sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=50, width=900)
+    sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=100)
     sentential_frame.pack(fill="x")
     sentential_frame.pack_propagate(0)
 
+    sentential_sb = ttk.Scrollbar(master=sentential_frame, orient="horizontal")
+    sentential_canvas = tk.Canvas(master=sentential_frame, xscrollcommand=sentential_sb.set)
+    sentential_sb.config(command=sentential_canvas.xview)
+    sentential_sb.pack(side="bottom", fill="x")
+    sentential_canvas.pack(fill="both", expand=1)
+
     sentential_str = tk.StringVar()
-    sentential_l1 = tk.Label(master=sentential_frame, textvariable=sentential_str)
-    sentential_l1.pack()
 
 
 # window
 window = tk.Tk()
 window.title("CFG")
-# window.eval("tk::PlaceWindow . center")
 window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
 
 # page1
