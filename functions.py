@@ -125,8 +125,8 @@ def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120):
     for widget in canvas.find_all():
         tags = canvas.gettags(widget)
         if "node" in tags:
-            x, y, _, _ = canvas.bbox(widget)
-            canvas.create_oval(x - 10, y - 8, x + 18, y + 20, fill="lightblue", tags='oval')
+            x, y, x1, y1 = canvas.bbox(widget)
+            canvas.create_oval(x - 10, y - 8, x1 + 10, y1 + 8, fill="lightblue", tags='oval')
             canvas.tag_raise('node')
             canvas.config(scrollregion=canvas.bbox("all"))
 
