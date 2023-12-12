@@ -109,8 +109,11 @@ def load_page1():
     rule_entry = tk.Entry(master=rule_f2, width=30, textvariable=rules)
     rule_entry.pack(side="left", padx=10)
 
-    save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str))
+    save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str, error_label))
     save_btn.pack(pady=10)
+
+    error_label = tk.Label(master=page1_frame, fg="red")
+    error_label.pack()
 
     # grammar_frame
     grammar_frame = tk.LabelFrame(master=page1_frame, text="Grammar", height=400)

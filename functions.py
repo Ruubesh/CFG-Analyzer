@@ -41,17 +41,19 @@ def on_select_rule(file, rule_val, rules):
             rules.set(grammar['rules'][i])
 
 
-def save_to_config(file, rule_val, rules, init_val, grammar_str):
+def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar = CFG().read_config(file)
     grammar.set('input', 'initial_nonterminal', init_val.get())
 
     substrings = grammar['input']['nonterminals'].split(',') + grammar['input']['terminals'].split(',') + ['epsilon']
+    substrings = sorted(substrings, key=lambda x: not x.startswith('<'))
     new_rules = []
     for rule in rules.get().split(','):
         if CFG().check_rule(rule.strip(), substrings):
             new_rules.append(rule.strip())
+            error_label.config(text="")
         else:
-            grammar_str.set('Invalid rules')
+            error_label.config(text="Invalid Rules")
             return
 
     grammar.set('rules', rule_val.get(), ','.join(new_rules))
