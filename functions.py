@@ -10,11 +10,6 @@ def update_sentential_scrollregion(sentential_canvas, sentential_str):
     sentential_canvas.config(scrollregion=sentential_canvas.bbox("all"))
 
 
-def on_tree_scroll(event):
-    canvas = event.widget
-    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-
 def open_file(file_variable):
     filename = filedialog.askopenfilename(
         initialdir="/Users/ruube/PycharmProjects/Thesis",
@@ -130,14 +125,14 @@ def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120):
         if "node" in tags:
             x, y, _, _ = canvas.bbox(widget)
             canvas.create_oval(x - 10, y - 8, x + 18, y + 20, fill="lightblue", tags='oval')
-            canvas.tag_lower('oval')
+            canvas.tag_raise('node')
             canvas.config(scrollregion=canvas.bbox("all"))
 
 
 def draw_lines_between_nodes(canvas, parent_pos, child_pos):
     parent_x, parent_y = parent_pos
     child_x, child_y = child_pos
-    canvas.create_line(parent_x, parent_y + 10, child_x, child_y - 10, arrow=tk.LAST)
+    canvas.create_line(parent_x, parent_y, child_x, child_y - 15, arrow=tk.LAST)
 
 
 def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn, sentential_canvas):

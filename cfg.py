@@ -354,12 +354,22 @@ def main(file_variable):
     for nt in grammar.nonterminals:
         nlist = []
         if nt in config['rules']:
-            for elem in (config['rules'][nt]).split(','):
-                if elem == 'epsilon':
-                    elem = ['']
+            for rule in (config['rules'][nt]).split(','):
+                rlist = []
+                temp = ''
+                if rule == 'epsilon':
+                    rlist = ['']
                 else:
-                    elem = list(elem)
-                nlist.append(elem)
+                    substrings = grammar.nonterminals + grammar.terminals
+                    for char in rule:
+                        temp += char
+                        for substring in substrings:
+                            if temp == substring:
+                                rlist.append(substring)
+                                temp = ''
+                                break
+
+                nlist.append(rlist)
             grammar.add_rule(globals()[nt]().attribute, nlist)
 
     grammar.stack.push(grammar.initial_nonterminal)

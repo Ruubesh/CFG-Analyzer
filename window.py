@@ -182,7 +182,8 @@ def load_page2(file_variable):
     tree_sb_vertical.pack(side="right", fill="y")
     tree_sb_horizontal.pack(side="bottom", fill="x")
     canvas.pack(fill="both", expand=1)
-    canvas.bind("<MouseWheel>", functions.on_tree_scroll)
+    canvas.bind("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+    canvas.bind("<Control MouseWheel>", lambda event: canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
 
     # sentential_frame
     sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=100)
@@ -194,6 +195,7 @@ def load_page2(file_variable):
     sentential_sb.config(command=sentential_canvas.xview)
     sentential_sb.pack(side="bottom", fill="x")
     sentential_canvas.pack(fill="both", expand=1)
+    sentential_canvas.bind("<MouseWheel>", lambda event: sentential_canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
 
     sentential_str = tk.StringVar()
 
