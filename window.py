@@ -9,13 +9,32 @@ def clear_widgets(frame):
         widget.destroy()
 
 
-def load_page1():
+def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error):
+    try:
+        file_error.pack_forget()
+        functions.submit(file_variable.get(), grammar_str, init_combo, rule_combo, rules)
+    except Exception as e:
+        file_error.config(text=e)
+        file_error.pack(pady=5)
+        return e
+
+
+def execute_run():
+    try:
+        load_page2()
+    except KeyError as k:
+        load_page1(f"Invalid file {k}")
+    except Exception as e:
+        load_page1(e)
+
+
+def load_page1(error_text=''):
     clear_widgets(page2_frame)
     page2_frame.pack_forget()
     page1_frame.pack(fill="both")
 
     # select_frame
-    select_frame = tk.LabelFrame(master=page1_frame, text="Select A File", height=100, width=500)
+    select_frame = tk.LabelFrame(master=page1_frame, text="Select A File", height=110, width=500)
     select_frame.pack(fill="x")
     select_frame.pack_propagate(0)
 
@@ -25,7 +44,6 @@ def load_page1():
     select_l1 = tk.Label(master=select_f1, text="File:")
     select_l1.pack(side="left")
 
-    file_variable = tk.StringVar()
     file_textbox = tk.Entry(master=select_f1, textvariable=file_variable, width=100)
     file_textbox.pack(side="left")
 
@@ -36,14 +54,15 @@ def load_page1():
     select_f2.pack()
 
     submit_btn = tk.Button(master=select_f2, text="Submit",
-                           command=lambda: functions.submit(file_variable.get(), grammar_str, init_combo, rule_combo, rules))
+                           command=lambda: execute_submit(grammar_str, init_combo, rule_combo, rules, file_error))
     submit_btn.pack(side="left", padx=5)
-    # submit_btn.config(state="disabled")
 
     run_btn = tk.Button(master=select_f2, text="Run", width=5,
-                        command=lambda: load_page2(file_variable))
+                        command=lambda: execute_run())
     run_btn.pack(side="left", padx=10)
-    # run_btn.config(state="disabled")
+
+    file_error = tk.Label(master=select_frame, text=error_text, fg="red")
+    file_error.pack(pady=5)
 
     # edit_frame
     edit_frame = tk.LabelFrame(master=page1_frame, text="Edit", height=155)
@@ -119,7 +138,7 @@ def load_page1():
     grammar_l1.pack()
 
 
-def load_page2(file_variable):
+def load_page2():
     clear_widgets(page1_frame)
     page1_frame.pack_forget()
     page2_frame.pack(fill="both", expand=1)
@@ -201,6 +220,9 @@ def load_page2(file_variable):
 window = tk.Tk()
 window.title("CFG")
 window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
+
+# global variables
+file_variable = tk.StringVar()
 
 # page1
 page1_frame = tk.Frame(master=window)
