@@ -71,12 +71,12 @@ def load_page1():
     edit_f2.pack(pady=10)
 
     add_btn = tk.Button(master=edit_f2, text="Add", width=7,
-                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str, init_combo, rule_combo, rules))
+                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str, init_combo, rule_combo, rules, error_label))
     add_btn.pack(side="left", padx=10)
 
     remove_btn = tk.Button(master=edit_f2, text="Remove",
                            command=lambda: functions.remove(file_variable.get(), choice.get(), entry_str.get(),
-                                                            grammar_str, init_combo, rule_combo, rules))
+                                                            grammar_str, init_combo, rule_combo, rules, error_label))
     remove_btn.pack(side="left", padx=10)
 
     rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/2)

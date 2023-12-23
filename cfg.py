@@ -221,13 +221,17 @@ class CFG:
 
     def add_value(self, config, val_type, val, file):
         data = config['input'][val_type].split(',')
-        if val not in data:
+        inputs = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')
+        if val not in inputs and val != '':
             data.append(val)
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
             self.write_to_config(config, file)
+            return None
+        elif val == '':
+            return None
         else:
-            print(f'{val_type} {val} already exists')
+            return f'{val} already exists'
 
     def get_dependent_rules(self, config, val):
         dlist = []
@@ -262,8 +266,11 @@ class CFG:
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
             self.write_to_config(config, file)
+            return None
+        elif val == '':
+            return None
         else:
-            print(f'{val_type} {val} does not exist')
+            return f'{val_type} {val} does not exist'
 
     def expand(self, initial_nonterminal, stack, stack_tree, nonterminals):
         if initial_nonterminal not in self.rules:

@@ -47,15 +47,16 @@ def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
 
     substrings = grammar['input']['nonterminals'].split(',') + grammar['input']['terminals'].split(',') + ['epsilon']
     substrings = sorted(substrings, key=lambda x: not x.startswith('<'))
-    new_rules = []
+    new_rule = []
     for rule in rules.get().split(','):
         if CFG().check_rule(rule.strip(), substrings):
-            new_rules.append(rule.strip())
+            new_rule.append(rule.strip())
             error_label.config(text="")
         else:
-            error_label.config(text="Invalid Rules")
+            error_label.config(text=f"{rule} is not a valid rule")
             return
 
+    new_rules = [item for item in new_rule if item != '']
     grammar.set('rules', rule_val.get(), ','.join(new_rules))
     CFG().write_to_config(grammar, file)
     with open(file, 'r') as f:
@@ -63,18 +64,26 @@ def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
         grammar_str.set(text)
 
 
-def add(file, val_type, val, grammar_str, init_combo, rule_combo, rules):
+def add(file, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
     config = CFG().read_config(file)
-    CFG().add_value(config, val_type, val, file)
+    error_text = CFG().add_value(config, val_type, val, file)
 
-    submit(file, grammar_str, init_combo, rule_combo, rules)
+    if error_text is None:
+        submit(file, grammar_str, init_combo, rule_combo, rules)
+        error_label.config(text="")
+    else:
+        error_label.config(text=error_text)
 
 
-def remove(file, val_type, val, grammar_str, init_combo, rule_combo, rules):
+def remove(file, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
     config = CFG().read_config(file)
-    CFG().remove_value(config, val_type, val, file)
+    error_text = CFG().remove_value(config, val_type, val, file)
 
-    submit(file, grammar_str, init_combo, rule_combo, rules)
+    if error_text is None:
+        submit(file, grammar_str, init_combo, rule_combo, rules)
+        error_label.config(text="")
+    else:
+        error_label.config(text=error_text)
 
 
 def update_label(label, text):
