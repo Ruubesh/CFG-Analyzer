@@ -273,9 +273,17 @@ def get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, gr
 
 
 def execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal, execute_btn,
-            undo_btn, redo_btn, sentential_canvas):
+            undo_btn, redo_btn, sentential_canvas, init_val=False):
     if initial_nonterminal not in grammar.rules:
         return initial_nonterminal
+
+    if init_val:
+        x = 400
+        y = 50
+        update_label(sentential_str, initial_nonterminal)
+        update_sentential_scrollregion(sentential_canvas, sentential_str)
+        canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
+        canvas.create_text(x + 15, y + 15, text=initial_nonterminal)
 
     update_label(output_str, f"Choose the next expansion for '{initial_nonterminal}':")
     options = []

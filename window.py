@@ -182,7 +182,7 @@ def load_page2():
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, canvas,
-                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas))
+                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas, True))
     execute_btn.pack(pady=10)
 
     # tree_frame
