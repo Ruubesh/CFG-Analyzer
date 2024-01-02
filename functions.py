@@ -101,7 +101,7 @@ def calculate_subtree_width(tree, x_space):
     return sum(calculate_subtree_width(child, x_space) for child in tree.children) + (len(tree.children) - 1) * x_space
 
 
-def calculate_positions(canvas, tree, x, y, x_space, y_space, level=0, positions=None):
+def calculate_positions(canvas, tree, x, y, x_space, y_space, level=0, positions=None, nonterminal=None):
     if positions is None:
         positions = {}
 
@@ -117,26 +117,37 @@ def calculate_positions(canvas, tree, x, y, x_space, y_space, level=0, positions
     node_y = y + y_space * level
     positions[id(tree)] = (node_x, node_y)
 
-    canvas.create_text(node_x, node_y, text=text, tags="node")
+    if nonterminal == text and tree.children == []:
+        canvas.create_text(node_x, node_y, text=text, tags="occ")
+    else:
+        canvas.create_text(node_x, node_y, text=text, tags="node")
 
     if tree.children:
         for child in tree.children:
             child_width = calculate_subtree_width(child, x_space)
             calculate_positions(canvas, child, x + x_offset + child_width / 2, y + y_space, x_space, y_space, level + 1,
-                                positions)
+                                positions, nonterminal)
             draw_lines_between_nodes(canvas, positions[id(tree)], positions[id(child)])
             x_offset += child_width + x_space
 
 
-def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120):
-    calculate_positions(canvas, tree, x, y, x_space, y_space)
+def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120, nonterminal=None):
+    calculate_positions(canvas, tree, x, y, x_space, y_space, level=0, positions=None, nonterminal=nonterminal)
 
+    occ = 0
     for widget in canvas.find_all():
         tags = canvas.gettags(widget)
         if "node" in tags:
             x, y, x1, y1 = canvas.bbox(widget)
             canvas.create_oval(x - 10, y - 8, x1 + 10, y1 + 8, fill="lightblue", tags='oval')
             canvas.tag_raise('node')
+            canvas.config(scrollregion=canvas.bbox("all"))
+        if "occ" in tags:
+            occ += 1
+            x, y, x1, y1 = canvas.bbox(widget)
+            canvas.create_oval(x - 10, y - 8, x1 + 10, y1 + 8, fill="pink", tags='oval')
+            canvas.create_text(x1 - 4, y1 + 20, text=occ, tags="occ")
+            canvas.tag_raise('occ')
             canvas.config(scrollregion=canvas.bbox("all"))
 
 
@@ -264,6 +275,8 @@ def get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, gr
         for i in range(1, grammar.stack.current().count(initial_nonterminal) + 1):
             occurrences.append(i)
         update_options(execute_e1, occurrences)
+        tree = grammar.build_tree(grammar.stack_tree, grammar.nonterminals)
+        draw_tree(canvas, tree, 400, 50, 50, 60, initial_nonterminal)
         execute_btn.config(
             command=lambda: process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar,
                                          initial_nonterminal, execute_btn, selected_expansion, undo_btn, redo_btn, sentential_canvas))
