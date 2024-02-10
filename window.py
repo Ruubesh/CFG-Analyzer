@@ -99,7 +99,7 @@ def load_page1(error_text=''):
     remove_btn.pack(side="left", padx=10)
 
     rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/2)
-    rule_frame.pack(side="right", fill='both', expand=1)
+    rule_frame.pack(side="left", fill='both', expand=1)
 
     rule_l1 = tk.Label(master=rule_frame, text="Initial Nonterminal:")
     rule_l1.grid(row=0, column=0, pady=10)
@@ -124,6 +124,9 @@ def load_page1(error_text=''):
 
     save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str, error_label))
     save_btn.grid(row=2, columnspan=3, pady=10)
+
+    reduce_btn = tk.Button(master=edit_frame, text="Reduce", command=lambda: functions.reduce(window, file_variable.get()))
+    reduce_btn.pack(side="right", padx=50)
 
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()
@@ -182,7 +185,7 @@ def load_page2():
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, canvas,
-                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas, True))
+                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas, True, True))
     execute_btn.pack(pady=10)
 
     # tree_frame

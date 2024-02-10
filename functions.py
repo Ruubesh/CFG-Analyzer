@@ -1,5 +1,5 @@
 from tkinter import filedialog
-from cfg import CFG
+from cfg import CFG, main, Stack
 import tkinter as tk
 
 
@@ -39,6 +39,67 @@ def on_select_rule(file, rule_val, rules):
     for i in grammar['rules']:
         if i == rule_val.get():
             rules.set(grammar['rules'][i])
+
+
+def on_pressing_right(reduction_str, reduction_stack, index):
+    if index.get() < len(reduction_stack.data) - 1:
+        index.set(index.get() + 1)
+        text = reduction_str.get()
+        text += f"\n{reduction_stack.data[index.get()]}"
+        update_label(reduction_str, text)
+
+
+def on_pressing_left(reduction_str, reduction_stack, index):
+    pass
+    # if index.get() > 0:
+    #     index.set(index.get() - 1)
+
+
+def reduce(window, file_variable):
+    reduction_stack = Stack()
+    grammar = main(file_variable)
+    config = CFG().read_config(file_variable)
+    set_t = set()
+    grammar.reduce_phase1(config, grammar, reduction_stack, set_t, '\u2080')
+
+    not_set_t = set(grammar.nonterminals) - set_t
+    for not_t in not_set_t:
+        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
+
+    text = '\n'
+    for nt in config['rules']:
+        for rule in config['rules'][nt].split():
+            text += f"{nt} = {rule}\n"
+
+    reduction_stack.push(text)
+    set_d = set()
+    set_d.add(grammar.initial_nonterminal)
+    reduction_stack.push(f"D\u2080 = {set_d}")
+    grammar.reduce_phase2(config, grammar, reduction_stack, set_t, set_d, '\u2081')
+
+    not_set_t = set(grammar.nonterminals) - set_d
+    for not_t in not_set_t:
+        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
+
+    text = '\n'
+    for nt in config['rules']:
+        for rule in config['rules'][nt].split():
+            text += f"{nt} = {rule}\n"
+
+    reduction_stack.push(text)
+
+    reduction_window = tk.Toplevel(window)
+    reduction_window.title("View Reduction")
+    # reduction_window.geometry("250x150")
+    reduction_window.focus()
+    reduction_str = tk.StringVar()
+    reduction_label = tk.Label(reduction_window, textvariable=reduction_str, justify="left")
+    reduction_label.pack()
+    index = tk.IntVar()
+    index.set(0)
+    update_label(reduction_str, reduction_stack.data[index.get()])
+    reduction_window.bind("<Right>", lambda event: on_pressing_right(reduction_str, reduction_stack, index))
+    reduction_window.bind("<Left>", lambda event: on_pressing_left(reduction_str, reduction_stack, index))
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):

@@ -115,6 +115,42 @@ class CFG:
         self.stack = Stack()
         self.stack_tree = Stack()
 
+    def reduce_phase1(self, config, grammar, reduction_stack, set_t, i):
+        not_set_t = set(grammar.nonterminals) - set_t
+        set_temp = set_t.copy()
+
+        for nt in not_set_t:
+            if nt in config['rules']:
+                for rule in config['rules'][nt].split(','):
+                    found = False
+                    for not_t in not_set_t:
+                        if not_t not in rule:
+                            continue
+                        else:
+                            found = True
+                    if not found:
+                        set_t.add(nt)
+
+        if set_temp != set_t:
+            reduction_stack.push(f"T{i} = {set_t}")
+            i_int = ord(i) + 1
+            i = chr(i_int)
+            self.reduce_phase1(config, grammar, reduction_stack, set_t, i)
+
+    def reduce_phase2(self, config, grammar, reduction_stack, set_t, set_d, i):
+        set_temp = set_d.copy()
+        for d in set_temp:
+            for rule in config['rules'][d].split(','):
+                for t in set_t:
+                    if t in rule:
+                        set_d.add(t)
+
+        if set_temp != set_d:
+            reduction_stack.push(f"D{i} = {set_d}")
+            i_int = ord(i) + 1
+            i = chr(i_int)
+            self.reduce_phase2(config, grammar, reduction_stack, set_t, set_d, i)
+
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
             self.rules[nonterminal] = []
