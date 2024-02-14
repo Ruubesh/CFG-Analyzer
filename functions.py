@@ -3,11 +3,13 @@ from cfg import CFG, main, Stack
 import tkinter as tk
 
 
-def update_sentential_scrollregion(sentential_canvas, sentential_str):
-    sentential_canvas.delete("all")
-    width = sentential_canvas.winfo_width() / 2
-    sentential_canvas.create_text(width, 30, text=sentential_str.get())
-    sentential_canvas.config(scrollregion=sentential_canvas.bbox("all"))
+def update_label(label, text):
+    label.set(text)
+
+
+def update_options(combobox, options):
+    combobox['values'] = options
+    combobox.current(0)
 
 
 def open_file(file_variable):
@@ -34,72 +36,65 @@ def submit(file, grammar_str, init_combo, rule_combo, rules):
     rules.set(grammar['rules'][rule_combo['values'][0]])
 
 
-def on_select_rule(file, rule_val, rules):
-    grammar = CFG().read_config(file)
-    for i in grammar['rules']:
-        if i == rule_val.get():
-            rules.set(grammar['rules'][i])
-
-
-def on_pressing_right(reduction_str, reduction_stack, index):
-    if index.get() < len(reduction_stack.data) - 1:
+def on_pressing_right(reduction_str, stack_transformation, index):
+    if index.get() < len(stack_transformation.data) - 1:
         index.set(index.get() + 1)
         text = reduction_str.get()
-        text += f"\n{reduction_stack.data[index.get()]}"
+        text += f"\n{stack_transformation.data[index.get()]}"
         update_label(reduction_str, text)
 
 
-def on_pressing_left(reduction_str, reduction_stack, index):
+def on_pressing_left(reduction_str, stack_transformation, index):
     pass
     # if index.get() > 0:
     #     index.set(index.get() - 1)
 
 
-def reduce(window, file_variable):
-    reduction_stack = Stack()
-    grammar = main(file_variable)
-    config = CFG().read_config(file_variable)
-    set_t = set()
-    grammar.reduce_phase1(config, grammar, reduction_stack, set_t, '\u2080')
-
-    not_set_t = set(grammar.nonterminals) - set_t
-    for not_t in not_set_t:
-        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
-
-    text = '\n'
-    for nt in config['rules']:
-        for rule in config['rules'][nt].split():
-            text += f"{nt} = {rule}\n"
-
-    reduction_stack.push(text)
-    set_d = set()
-    set_d.add(grammar.initial_nonterminal)
-    reduction_stack.push(f"D\u2080 = {set_d}")
-    grammar.reduce_phase2(config, grammar, reduction_stack, set_t, set_d, '\u2081')
-
-    not_set_t = set(grammar.nonterminals) - set_d
-    for not_t in not_set_t:
-        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
-
-    text = '\n'
-    for nt in config['rules']:
-        for rule in config['rules'][nt].split():
-            text += f"{nt} = {rule}\n"
-
-    reduction_stack.push(text)
-
-    reduction_window = tk.Toplevel(window)
-    reduction_window.title("View Reduction")
-    # reduction_window.geometry("250x150")
-    reduction_window.focus()
+def create_popup_window(window, stack_transformation):
+    popup_window = tk.Toplevel(window)
+    popup_window.title("View Transformation")
+    # popup_window.geometry("250x150")
+    popup_window.focus()
     reduction_str = tk.StringVar()
-    reduction_label = tk.Label(reduction_window, textvariable=reduction_str, justify="left")
+    reduction_label = tk.Label(popup_window, textvariable=reduction_str, justify="left")
     reduction_label.pack()
     index = tk.IntVar()
     index.set(0)
-    update_label(reduction_str, reduction_stack.data[index.get()])
-    reduction_window.bind("<Right>", lambda event: on_pressing_right(reduction_str, reduction_stack, index))
-    reduction_window.bind("<Left>", lambda event: on_pressing_left(reduction_str, reduction_stack, index))
+    update_label(reduction_str, stack_transformation.data[index.get()])
+    popup_window.bind("<Right>", lambda event: on_pressing_right(reduction_str, stack_transformation, index))
+    popup_window.bind("<Left>", lambda event: on_pressing_left(reduction_str, stack_transformation, index))
+
+
+def update_rules(config, grammar, file_variable, set_transformation, stack_transformation):
+    not_set_t = set(grammar.nonterminals) - set_transformation
+    for not_t in not_set_t:
+        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
+
+    text = '\n'
+    for nt in config['rules']:
+        for rule in config['rules'][nt].split():
+            text += f"{nt} = {rule}\n"
+
+    stack_transformation.push(text)
+
+
+def reduce(window, file_variable):
+    stack_transformation = Stack()
+    grammar = main(file_variable)
+    config = CFG().read_config(file_variable)
+    set_t = set()
+    grammar.reduce_phase1(config, grammar, stack_transformation, set_t, '\u2080')
+
+    update_rules(config, grammar, file_variable, set_t, stack_transformation)
+
+    set_d = set()
+    set_d.add(grammar.initial_nonterminal)
+    stack_transformation.push(f"D\u2080 = {set_d}")
+    grammar.reduce_phase2(config, grammar, stack_transformation, set_t, set_d, '\u2081')
+
+    update_rules(config, grammar, file_variable, set_d, stack_transformation)
+
+    create_popup_window(window, stack_transformation)
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
@@ -125,6 +120,13 @@ def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
         grammar_str.set(text)
 
 
+def on_select_rule(file, rule_val, rules):
+    grammar = CFG().read_config(file)
+    for i in grammar['rules']:
+        if i == rule_val.get():
+            rules.set(grammar['rules'][i])
+
+
 def add(file, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
     config = CFG().read_config(file)
     error_text = CFG().add_value(config, val_type, val, file)
@@ -147,13 +149,11 @@ def remove(file, val_type, val, grammar_str, init_combo, rule_combo, rules, erro
         error_label.config(text=error_text)
 
 
-def update_label(label, text):
-    label.set(text)
-
-
-def update_options(combobox, options):
-    combobox['values'] = options
-    combobox.current(0)
+def update_sentential_scrollregion(sentential_canvas, sentential_str):
+    sentential_canvas.delete("all")
+    width = sentential_canvas.winfo_width() / 2
+    sentential_canvas.create_text(width, 30, text=sentential_str.get())
+    sentential_canvas.config(scrollregion=sentential_canvas.bbox("all"))
 
 
 def calculate_subtree_width(tree, x_space):
