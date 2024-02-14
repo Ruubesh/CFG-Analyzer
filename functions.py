@@ -36,15 +36,15 @@ def submit(file, grammar_str, init_combo, rule_combo, rules):
     rules.set(grammar['rules'][rule_combo['values'][0]])
 
 
-def on_pressing_right(reduction_str, stack_transformation, index):
+def on_pressing_right(transform_str, stack_transformation, index):
     if index.get() < len(stack_transformation.data) - 1:
         index.set(index.get() + 1)
-        text = reduction_str.get()
+        text = transform_str.get()
         text += f"\n{stack_transformation.data[index.get()]}"
-        update_label(reduction_str, text)
+        update_label(transform_str, text)
 
 
-def on_pressing_left(reduction_str, stack_transformation, index):
+def on_pressing_left(transform_str, stack_transformation, index):
     pass
     # if index.get() > 0:
     #     index.set(index.get() - 1)
@@ -55,14 +55,32 @@ def create_popup_window(window, stack_transformation):
     popup_window.title("View Transformation")
     # popup_window.geometry("250x150")
     popup_window.focus()
-    reduction_str = tk.StringVar()
-    reduction_label = tk.Label(popup_window, textvariable=reduction_str, justify="left")
-    reduction_label.pack()
+
+    grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar")
+    grammar_frame.pack(side="left", fill="both", expand=1)
+    grammar_str = tk.StringVar()
+    grammar_label = tk.Label(master=grammar_frame, textvariable=grammar_str, justify="left")
+    grammar_label.pack()
+
+    transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps")
+    transform_frame.pack(side="left", fill="both", expand=1)
+    transform_str = tk.StringVar()
+    transform_label = tk.Label(master=transform_frame, textvariable=transform_str, justify="left")
+    transform_label.pack()
+
+    explain_frame = tk.LabelFrame(master=popup_window, text="Explanation")
+    explain_frame.pack(side="left", fill="both", expand=1)
+    explain_str = tk.StringVar()
+    explain_label = tk.Label(master=explain_frame, textvariable=explain_str, justify="left")
+    explain_label.pack()
+
     index = tk.IntVar()
     index.set(0)
-    update_label(reduction_str, stack_transformation.data[index.get()])
-    popup_window.bind("<Right>", lambda event: on_pressing_right(reduction_str, stack_transformation, index))
-    popup_window.bind("<Left>", lambda event: on_pressing_left(reduction_str, stack_transformation, index))
+
+    update_label(transform_str, stack_transformation.data[index.get()])
+
+    popup_window.bind("<Right>", lambda event: on_pressing_right(transform_str, stack_transformation, index))
+    popup_window.bind("<Left>", lambda event: on_pressing_left(transform_str, stack_transformation, index))
 
 
 def update_rules(config, grammar, file_variable, set_transformation, stack_transformation):

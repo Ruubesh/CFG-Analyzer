@@ -69,7 +69,7 @@ def load_page1(error_text=''):
     edit_frame.pack(fill="x")
     edit_frame.pack_propagate(0)
 
-    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/2)
+    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/3)
     nt_frame.pack(side='left', fill='x', expand=1, padx=100)
 
     entry_str = tk.StringVar()
@@ -98,7 +98,7 @@ def load_page1(error_text=''):
                                                             grammar_str, init_combo, rule_combo, rules, error_label))
     remove_btn.pack(side="left", padx=10)
 
-    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/2)
+    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/3)
     rule_frame.pack(side="left", fill='both', expand=1)
 
     rule_l1 = tk.Label(master=rule_frame, text="Initial Nonterminal:")
@@ -125,8 +125,20 @@ def load_page1(error_text=''):
     save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str, error_label))
     save_btn.grid(row=2, columnspan=3, pady=10)
 
-    reduce_btn = tk.Button(master=edit_frame, text="Reduce", command=lambda: functions.reduce(window, file_variable.get()))
-    reduce_btn.pack(side="right", padx=50)
+    transform_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
+    transform_frame.pack(side="left", fill='both', expand=1)
+
+    reduce_btn = tk.Button(master=transform_frame, text="Reduce", command=lambda: functions.reduce(window, file_variable.get()))
+    reduce_btn.grid(row=0, column=0)
+
+    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules")
+    epsilon_btn.grid(row=1, column=0, pady=10)
+
+    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules")
+    unit_btn.grid(row=2, column=0)
+
+    chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form")
+    chomsky_btn.grid(row=3, column=0, pady=10)
 
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()
