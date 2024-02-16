@@ -22,10 +22,15 @@ def open_file(file_variable):
     file_variable.set(filename)
 
 
-def submit(file, grammar_str, init_combo, rule_combo, rules):
+def read_file(file):
     with open(file, 'r') as f:
         text = f.read()
-        grammar_str.set(text)
+        return text
+
+
+def submit(file, grammar_str, init_combo, rule_combo, rules):
+    text = read_file(file)
+    grammar_str.set(text)
 
     grammar = CFG().read_config(file)
     init_combo['values'] = grammar['input']['nonterminals'].split(',')
@@ -133,9 +138,8 @@ def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     new_rules = [item for item in new_rule if item != '']
     grammar.set('rules', rule_val.get(), ','.join(new_rules))
     CFG().write_to_config(grammar, file)
-    with open(file, 'r') as f:
-        text = f.read()
-        grammar_str.set(text)
+    text = read_file(file)
+    grammar_str.set(text)
 
 
 def on_select_rule(file, rule_val, rules):
