@@ -115,10 +115,40 @@ class CFG:
         self.stack = Stack()
         self.stack_tree = Stack()
 
+    def generate_grammar_text(self, config, rules):
+        red = "ஆ"
+        grammar_text = ''
+
+        for section in config.sections():
+            if section == 'rules':
+                grammar_text += f"[{section}]\n"
+                for nt in config[section]:
+                    grammar_text += f"{nt} = "
+                    rule_list = config[section][nt].split(',')
+                    for index, rule in enumerate(rule_list):
+                        if index == len(rule_list) - 1:
+                            if rule in rules:
+                                grammar_text += f"{red + rule + red}\n"
+                            else:
+                                grammar_text += f"{rule}\n"
+                        else:
+                            if rule in rules:
+                                grammar_text += f"{red + rule + red},"
+                            else:
+                                grammar_text += f"{rule},"
+            else:
+                grammar_text += f"[{section}]\n"
+                for key, value in config.items(section):
+                    grammar_text += f"{key} = {value}\n"
+                grammar_text += '\n'
+
+        return grammar_text
+
     def reduce_phase1(self, config, grammar, reduction_stack, set_t, i):
         not_set_t = set(grammar.nonterminals) - set_t
         set_temp = set_t.copy()
 
+        rules = []
         for nt in not_set_t:
             if nt in config['rules']:
                 for rule in config['rules'][nt].split(','):
@@ -130,23 +160,36 @@ class CFG:
                             found = True
                     if not found:
                         set_t.add(nt)
+                        if rule not in rules:
+                            rules.append(rule)
 
         if set_temp != set_t:
-            reduction_stack.push(f"T{i} = {set_t}")
+            grammar_text = self.generate_grammar_text(config, rules)
+            reduction_text = f"T{i} = {set_t}"
+            explain_text = f"Nonterminals {set_t} can generate terminal words {rules}"
+            reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
+                                  "explain_text": explain_text})
             i_int = ord(i) + 1
             i = chr(i_int)
             self.reduce_phase1(config, grammar, reduction_stack, set_t, i)
 
     def reduce_phase2(self, config, grammar, reduction_stack, set_t, set_d, i):
         set_temp = set_d.copy()
+        rules = []
         for d in set_temp:
             for rule in config['rules'][d].split(','):
                 for t in set_t:
                     if t in rule:
                         set_d.add(t)
+                        if rule not in rules:
+                            rules.append(rule)
 
         if set_temp != set_d:
-            reduction_stack.push(f"D{i} = {set_d}")
+            grammar_text = self.generate_grammar_text(config, rules)
+            reduction_text = f"D{i} = {set_d}"
+            explain_text = f"Nonterminals {set_d} can be reached from initial nonterminal {grammar.initial_nonterminal}"
+            reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
+                                  "explain_text": explain_text})
             i_int = ord(i) + 1
             i = chr(i_int)
             self.reduce_phase2(config, grammar, reduction_stack, set_t, set_d, i)

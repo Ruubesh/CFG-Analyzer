@@ -41,18 +41,85 @@ def submit(file, grammar_str, init_combo, rule_combo, rules):
     rules.set(grammar['rules'][rule_combo['values'][0]])
 
 
-def on_pressing_right(transform_str, stack_transformation, index):
+def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index):
     if index.get() < len(stack_transformation.data) - 1:
         index.set(index.get() + 1)
-        text = transform_str.get()
-        text += f"\n{stack_transformation.data[index.get()]}"
-        update_label(transform_str, text)
+
+        grammar_text, transform_text, explain_text = get_stack_transformation_data(index, stack_transformation)
+
+        display_popup_grammar(grammar_text_widget, grammar_text)
+
+        new_transform_text = transform_str.get()
+        new_transform_text += f"\n{transform_text}"
+        update_label(transform_str, new_transform_text)
+
+        update_label(explain_str, explain_text)
 
 
-def on_pressing_left(transform_str, stack_transformation, index):
-    pass
-    # if index.get() > 0:
-    #     index.set(index.get() - 1)
+def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_transformation, index):
+    if index.get() > 0:
+        index.set(index.get() - 1)
+
+        grammar_text, transform_text, explain_text = get_stack_transformation_data(index, stack_transformation)
+
+        display_popup_grammar(grammar_text_widget, grammar_text)
+
+        if index.get() == 0:
+            transform_text = stack_transformation.data[0]["transform_text"]
+        else:
+            transform_text = stack_transformation.data[0]["transform_text"]
+            for i in range(1, index.get()+1):
+                transform_text += f'\n{stack_transformation.data[i]["transform_text"]}'
+
+        update_label(transform_str, transform_text)
+
+        update_label(explain_str, explain_text)
+
+
+def display_popup_grammar(grammar_text_widget, grammar_text):
+    grammar_text_widget.config(state=tk.NORMAL)
+    grammar_text_widget.delete("1.0", tk.END)
+    grammar_text_widget.insert("1.0", grammar_text)
+    highlight_text(grammar_text_widget)
+    grammar_text_widget.config(state=tk.DISABLED)
+
+
+def get_stack_transformation_data(index, stack_transformation):
+    grammar_text = stack_transformation.data[index.get()]["grammar_text"]
+    transform_text = stack_transformation.data[index.get()]["transform_text"]
+    explain_text = stack_transformation.data[index.get()]["explain_text"]
+    
+    return grammar_text, transform_text, explain_text
+
+
+def highlight_text(text_widget):
+    start_index = "1.0"
+    indices = []
+    while True:
+        start_index = text_widget.search("ஆ", start_index, stopindex="end", count="1")
+        if not start_index:
+            break
+        line, column = map(int, start_index.split('.'))
+        new_column = column
+        new_start_index = f"{line}.{new_column}"
+
+        end_index = text_widget.search("ஆ", f"{start_index}+1c", stopindex="end", count="1")
+        if not end_index:
+            break
+        line, column = map(int, end_index.split('.'))
+        new_column = column - 2
+        new_end_index = f"{line}.{new_column}"
+
+        start_index = f"{end_index}+1c"
+        indices.append((new_start_index, new_end_index))
+
+    text_content = text_widget.get("1.0", "end")
+    modified_text = text_content.replace("ஆ", "")
+    text_widget.delete("1.0", "end")
+    text_widget.insert("1.0", modified_text)
+
+    for index in indices:
+        text_widget.tag_add("highlight", index[0], f"{index[1]}+1c")
 
 
 def create_popup_window(window, stack_transformation):
@@ -63,9 +130,8 @@ def create_popup_window(window, stack_transformation):
 
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar")
     grammar_frame.pack(side="left", fill="both", expand=1)
-    grammar_str = tk.StringVar()
-    grammar_label = tk.Label(master=grammar_frame, textvariable=grammar_str, justify="left")
-    grammar_label.pack()
+    grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
+    grammar_text_widget.pack(fill="both", expand=1)
 
     transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps")
     transform_frame.pack(side="left", fill="both", expand=1)
@@ -82,10 +148,19 @@ def create_popup_window(window, stack_transformation):
     index = tk.IntVar()
     index.set(0)
 
-    update_label(transform_str, stack_transformation.data[index.get()])
+    grammar_text, transform_text, explain_text = get_stack_transformation_data(index, stack_transformation)
 
-    popup_window.bind("<Right>", lambda event: on_pressing_right(transform_str, stack_transformation, index))
-    popup_window.bind("<Left>", lambda event: on_pressing_left(transform_str, stack_transformation, index))
+    grammar_text_widget.insert("1.0", grammar_text)
+    grammar_text_widget.tag_configure("highlight", foreground="red")
+    highlight_text(grammar_text_widget)
+    grammar_text_widget.config(state=tk.DISABLED)
+    update_label(transform_str, transform_text)
+    update_label(explain_str, explain_text)
+
+    popup_window.bind("<Right>", lambda event: on_pressing_right(grammar_text_widget, transform_str, explain_str,
+                                                                 stack_transformation, index))
+    popup_window.bind("<Left>", lambda event: on_pressing_left(grammar_text_widget, transform_str, explain_str,
+                                                               stack_transformation, index))
 
 
 def update_rules(config, grammar, file_variable, set_transformation, stack_transformation):
@@ -98,13 +173,16 @@ def update_rules(config, grammar, file_variable, set_transformation, stack_trans
         for rule in config['rules'][nt].split():
             text += f"{nt} = {rule}\n"
 
-    stack_transformation.push(text)
+    grammar_text = read_file(file_variable)
+    explain_text = f"Remove all nonterminals that are not in {set_transformation} together with all rules where they occur"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": text, "explain_text": explain_text})
 
 
 def reduce(window, file_variable):
     stack_transformation = Stack()
     grammar = main(file_variable)
     config = CFG().read_config(file_variable)
+
     set_t = set()
     grammar.reduce_phase1(config, grammar, stack_transformation, set_t, '\u2080')
 
@@ -112,7 +190,11 @@ def reduce(window, file_variable):
 
     set_d = set()
     set_d.add(grammar.initial_nonterminal)
-    stack_transformation.push(f"D\u2080 = {set_d}")
+    grammar_text = read_file(file_variable)
+    reduction_text = f"D\u2080 = {set_d}"
+    explain_text = f"{grammar.initial_nonterminal} is the initial nonterminal"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": reduction_text,
+                               "explain_text": explain_text})
     grammar.reduce_phase2(config, grammar, stack_transformation, set_t, set_d, '\u2081')
 
     update_rules(config, grammar, file_variable, set_d, stack_transformation)
