@@ -68,7 +68,7 @@ def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_tran
             transform_text = stack_transformation.data[0]["transform_text"]
         else:
             transform_text = stack_transformation.data[0]["transform_text"]
-            for i in range(1, index.get()+1):
+            for i in range(1, index.get() + 1):
                 transform_text += f'\n{stack_transformation.data[i]["transform_text"]}'
 
         update_label(transform_str, transform_text)
@@ -88,7 +88,7 @@ def get_stack_transformation_data(index, stack_transformation):
     grammar_text = stack_transformation.data[index.get()]["grammar_text"]
     transform_text = stack_transformation.data[index.get()]["transform_text"]
     explain_text = stack_transformation.data[index.get()]["explain_text"]
-    
+
     return grammar_text, transform_text, explain_text
 
 
@@ -127,6 +127,21 @@ def create_popup_window(window, stack_transformation):
     popup_window.title("View Transformation")
     # popup_window.geometry("250x150")
     popup_window.focus()
+
+    button_frame = tk.Frame(master=popup_window)
+    button_frame.pack()
+    back_btn = tk.Button(master=button_frame, text="<--", command=lambda: on_pressing_left(grammar_text_widget,
+                                                                                           transform_str, explain_str,
+                                                                                           stack_transformation, index))
+    back_btn.pack(side=tk.LEFT, padx=20)
+    close_btn = tk.Button(master=button_frame, text="Close", command=popup_window.destroy)
+    close_btn.pack(side=tk.LEFT, padx=20, pady=15)
+    forward_btn = tk.Button(master=button_frame, text="-->", command=lambda: on_pressing_right(grammar_text_widget,
+                                                                                               transform_str,
+                                                                                               explain_str,
+                                                                                               stack_transformation,
+                                                                                               index))
+    forward_btn.pack(side=tk.LEFT, padx=20)
 
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar")
     grammar_frame.pack(side="left", fill="both", expand=1)
@@ -322,7 +337,8 @@ def draw_lines_between_nodes(canvas, parent_pos, child_pos):
     canvas.create_line(parent_x, parent_y, child_x, child_y - 15, arrow=tk.LAST)
 
 
-def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn, sentential_canvas):
+def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn,
+         sentential_canvas):
     redo_btn.config(state="normal")
     execute_btn.config(state='normal')
     execute_e1.config(state='readonly')
@@ -349,7 +365,8 @@ def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, exe
                         undo_btn, redo_btn, sentential_canvas, tree)
 
 
-def redo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn, sentential_canvas):
+def redo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn,
+         sentential_canvas):
     undo_btn.config(state="normal")
 
     sentence, ldata = grammar.stack.redo('S', grammar.nonterminals)
@@ -362,8 +379,9 @@ def redo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, exe
     draw_tree(canvas, tree, 400, 50, 50, 60)
     nt = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
     if nt:
-        get_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, ldata, undo_btn,
-                    redo_btn, sentential_canvas)
+        get_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, ldata,
+                        undo_btn,
+                        redo_btn, sentential_canvas)
     else:
         execute_btn.config(state='disabled')
         execute_e1.config(state='disabled')
@@ -451,7 +469,8 @@ def get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, gr
 
         execute_btn.config(
             command=lambda: process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar,
-                                         initial_nonterminal, execute_btn, selected_expansion, undo_btn, redo_btn, sentential_canvas))
+                                         initial_nonterminal, execute_btn, selected_expansion, undo_btn, redo_btn,
+                                         sentential_canvas))
     else:
         process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal,
                      execute_btn, selected_expansion, undo_btn, redo_btn, sentential_canvas)
@@ -482,4 +501,5 @@ def execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, 
 
     execute_btn.config(
         command=lambda: get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, grammar,
-                                       initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas, undo_tree))
+                                       initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas,
+                                       undo_tree))
