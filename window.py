@@ -131,7 +131,7 @@ def load_page1(error_text=''):
     reduce_btn = tk.Button(master=transform_frame, text="Reduce", command=lambda: functions.reduce(window, file_variable.get()))
     reduce_btn.grid(row=0, column=0)
 
-    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules")
+    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
     epsilon_btn.grid(row=1, column=0, pady=10)
 
     unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules")

@@ -88,16 +88,16 @@ class TreeNode:
         return level
 
     def print_tree(self, tree='', indent=""):
-        prefix = indent[:-3] + "|_ "*bool(indent)
+        prefix = indent[:-3] + "|_ " * bool(indent)
         if self.data == "":
             print(f'{prefix}\u03B5')
             tree += f'{prefix}\u03B5\n'
         else:
             print(prefix + self.data)
             tree += prefix + self.data + "\n"
-        for more, child in enumerate(self.children, 1-len(self.children)):
+        for more, child in enumerate(self.children, 1 - len(self.children)):
             childIndent = " |  " if more else "    "
-            tree = child.print_tree(tree, indent+childIndent)
+            tree = child.print_tree(tree, indent + childIndent)
 
         return tree
 
@@ -193,6 +193,38 @@ class CFG:
             i_int = ord(i) + 1
             i = chr(i_int)
             self.reduce_phase2(config, grammar, reduction_stack, set_t, set_d, i)
+
+    def remove_epsilon_rules(self, config, stack_transformation, set_e, i):
+        not_set_e = set(config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')) - set_e
+        set_temp = set_e.copy()
+        rules = []
+        for nt in config['rules']:
+            for rule in config['rules'][nt].split(','):
+                if 'epsilon' == rule:
+                    set_e.add(nt)
+                    if rule not in rules:
+                        rules.append(rule)
+                else:
+                    found = False
+                    for not_e in not_set_e:
+                        if not_e not in rule:
+                            continue
+                        else:
+                            found = True
+                    if not found:
+                        set_e.add(nt)
+                        if rule not in rules:
+                            rules.append(rule)
+
+        if set_temp != set_e:
+            grammar_text = self.generate_grammar_text(config, rules)
+            transformation_text = f"'\u2107'{i} = {set_e}"
+            explain_text = f"Nonterminals {set_e} can generate epsilon"
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                       "explain_text": explain_text})
+            i_int = ord(i) + 1
+            i = chr(i_int)
+            self.remove_epsilon_rules(config, stack_transformation, set_e, i)
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
@@ -373,7 +405,8 @@ class CFG:
         while True:
             try:
                 if stack.current().count(initial_nonterminal) > 1:
-                    position = int(input(f"Enter the occurrence of '{initial_nonterminal}' to expand in '{stack.current()}' : \n "))
+                    position = int(input(
+                        f"Enter the occurrence of '{initial_nonterminal}' to expand in '{stack.current()}' : \n "))
                 else:
                     position = 1
 

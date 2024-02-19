@@ -1,6 +1,7 @@
 from tkinter import filedialog
 from cfg import CFG, main, Stack
 import tkinter as tk
+from itertools import combinations
 
 
 def update_label(label, text):
@@ -178,15 +179,21 @@ def create_popup_window(window, stack_transformation):
                                                                stack_transformation, index))
 
 
-def update_rules(config, grammar, file_variable, set_transformation, stack_transformation):
-    not_set_t = set(grammar.nonterminals) - set_transformation
-    for not_t in not_set_t:
-        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
-
+def generate_rules_text(config):
     text = '\n'
     for nt in config['rules']:
         for rule in config['rules'][nt].split():
             text += f"{nt} = {rule}\n"
+
+    return text
+
+
+def update_reduction_rules(config, grammar, file_variable, set_transformation, stack_transformation):
+    not_set_t = set(grammar.nonterminals) - set_transformation
+    for not_t in not_set_t:
+        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
+
+    text = generate_rules_text(config)
 
     grammar_text = read_file(file_variable)
     explain_text = f"Remove all nonterminals that are not in {set_transformation} together with all rules where they occur"
@@ -201,7 +208,7 @@ def reduce(window, file_variable):
     set_t = set()
     grammar.reduce_phase1(config, grammar, stack_transformation, set_t, '\u2080')
 
-    update_rules(config, grammar, file_variable, set_t, stack_transformation)
+    update_reduction_rules(config, grammar, file_variable, set_t, stack_transformation)
 
     set_d = set()
     set_d.add(grammar.initial_nonterminal)
@@ -212,7 +219,52 @@ def reduce(window, file_variable):
                                "explain_text": explain_text})
     grammar.reduce_phase2(config, grammar, stack_transformation, set_t, set_d, '\u2081')
 
-    update_rules(config, grammar, file_variable, set_d, stack_transformation)
+    update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
+
+    create_popup_window(window, stack_transformation)
+
+
+def remove_epsilon_rules(window, file_variable):
+    stack_transformation = Stack()
+    config = CFG().read_config(file_variable)
+    grammar = main(file_variable)
+
+    set_e = set()
+    CFG().remove_epsilon_rules(config, stack_transformation, set_e, '\u2080')
+
+    new_rules = {}
+    for nonterminal, production_rules in grammar.rules.items():
+        for rule in production_rules:
+            indices = []
+            for index, nt in enumerate(rule):
+                if nt in set_e:
+                    indices.append(index)
+            if nonterminal not in new_rules:
+                new_rules[nonterminal] = set()
+            new_rules[nonterminal].add(tuple(rule))
+            for r in range(1, len(indices) + 1):
+                combos = combinations(indices, r)
+                for combo in combos:
+                    temp_rule = rule.copy()
+                    for ind in sorted(combo, reverse=True):
+                        temp_rule.pop(ind)
+                    new_rules[nonterminal].add(tuple(temp_rule))
+        new_production_rule = []
+        for new_rule in new_rules[nonterminal]:
+            new_production_rule.append(''.join(new_rule))
+        new_production_rules = [item for item in new_production_rule if item != '']
+        config.set('rules', nonterminal, ','.join(new_production_rules))
+
+    grammar_text = read_file(file_variable)
+    transformation_text = generate_rules_text(config)
+    explain_text = f"Remove all epsilon rules and replace every other A --> \u03B1 \nwith a set of rules obtained by " \
+                   f"all possible rules of the form A --> \u03B1\u2032 \nwhere \u03B1\u2032 is obtained from \u03B1 by " \
+                   f"possible ommitting of \n(some) occurrences of nonterminals from set {set_e}"
+
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    CFG().write_to_config(config, file_variable)
 
     create_popup_window(window, stack_transformation)
 
