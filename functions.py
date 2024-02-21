@@ -231,7 +231,7 @@ def remove_epsilon_rules(window, file_variable):
 
     set_e = set()
     CFG().remove_epsilon_rules(config, stack_transformation, set_e, '\u2080')
-
+    set_e.add(grammar.initial_nonterminal)
     new_rules = {}
     for nonterminal, production_rules in grammar.rules.items():
         for rule in production_rules:
@@ -254,6 +254,13 @@ def remove_epsilon_rules(window, file_variable):
             new_production_rule.append(''.join(new_rule))
         new_production_rules = [item for item in new_production_rule if item != '']
         config.set('rules', nonterminal, ','.join(new_production_rules))
+
+    if grammar.initial_nonterminal in set_e:
+        new_init_nt = f"{grammar.initial_nonterminal}_prime"
+        CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
+        config.set('input', 'initial_nonterminal', new_init_nt)
+        new_init_rule = [grammar.initial_nonterminal, 'epsilon']
+        config.set('rules', new_init_nt, ','.join(new_init_rule))
 
     grammar_text = read_file(file_variable)
     transformation_text = generate_rules_text(config)
