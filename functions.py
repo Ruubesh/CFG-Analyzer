@@ -231,7 +231,7 @@ def remove_epsilon_rules(window, file_variable):
 
     set_e = set()
     CFG().remove_epsilon_rules(config, stack_transformation, set_e, '\u2080')
-    set_e.add(grammar.initial_nonterminal)
+
     new_rules = {}
     for nonterminal, production_rules in grammar.rules.items():
         for rule in production_rules:
