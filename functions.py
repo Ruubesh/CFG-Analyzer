@@ -42,9 +42,10 @@ def submit(file, grammar_str, init_combo, rule_combo, rules):
     rules.set(grammar['rules'][rule_combo['values'][0]])
 
 
-def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index):
+def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn, forward_btn):
     if index.get() < len(stack_transformation.data) - 1:
         index.set(index.get() + 1)
+        back_btn.config(state=tk.NORMAL)
 
         grammar_text, transform_text, explain_text = get_stack_transformation_data(index, stack_transformation)
 
@@ -56,16 +57,21 @@ def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_tra
 
         update_label(explain_str, explain_text)
 
+        if index.get() == len(stack_transformation.data) - 1:
+            forward_btn.config(state=tk.DISABLED)
 
-def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_transformation, index):
+
+def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn, forward_btn):
     if index.get() > 0:
         index.set(index.get() - 1)
+        forward_btn.config(state=tk.NORMAL)
 
         grammar_text, transform_text, explain_text = get_stack_transformation_data(index, stack_transformation)
 
         display_popup_grammar(grammar_text_widget, grammar_text)
 
         if index.get() == 0:
+            back_btn.config(state=tk.DISABLED)
             transform_text = stack_transformation.data[0]["transform_text"]
         else:
             transform_text = stack_transformation.data[0]["transform_text"]
@@ -133,7 +139,9 @@ def create_popup_window(window, stack_transformation):
     button_frame.pack()
     back_btn = tk.Button(master=button_frame, text="<--", command=lambda: on_pressing_left(grammar_text_widget,
                                                                                            transform_str, explain_str,
-                                                                                           stack_transformation, index))
+                                                                                           stack_transformation, index,
+                                                                                           back_btn, forward_btn),
+                         state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
     close_btn = tk.Button(master=button_frame, text="Close", command=popup_window.destroy)
     close_btn.pack(side=tk.LEFT, padx=20, pady=15)
@@ -141,7 +149,7 @@ def create_popup_window(window, stack_transformation):
                                                                                                transform_str,
                                                                                                explain_str,
                                                                                                stack_transformation,
-                                                                                               index))
+                                                                                               index, back_btn, forward_btn))
     forward_btn.pack(side=tk.LEFT, padx=20)
 
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=popup_window.winfo_width() / 3)
@@ -177,9 +185,9 @@ def create_popup_window(window, stack_transformation):
     update_label(explain_str, explain_text)
 
     popup_window.bind("<Right>", lambda event: on_pressing_right(grammar_text_widget, transform_str, explain_str,
-                                                                 stack_transformation, index))
+                                                                 stack_transformation, index, back_btn, forward_btn))
     popup_window.bind("<Left>", lambda event: on_pressing_left(grammar_text_widget, transform_str, explain_str,
-                                                               stack_transformation, index))
+                                                               stack_transformation, index, back_btn, forward_btn))
 
 
 def generate_rules_text(config):
