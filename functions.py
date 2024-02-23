@@ -126,7 +126,7 @@ def highlight_text(text_widget):
 def create_popup_window(window, stack_transformation):
     popup_window = tk.Toplevel(window)
     popup_window.title("View Transformation")
-    # popup_window.geometry("250x150")
+    popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
     popup_window.focus()
 
     button_frame = tk.Frame(master=popup_window)
@@ -144,19 +144,22 @@ def create_popup_window(window, stack_transformation):
                                                                                                index))
     forward_btn.pack(side=tk.LEFT, padx=20)
 
-    grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar")
+    grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=popup_window.winfo_width() / 3)
     grammar_frame.pack(side="left", fill="both", expand=1)
+    grammar_frame.pack_propagate(0)
     grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
 
-    transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps")
+    transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps", width=popup_window.winfo_width() / 3)
     transform_frame.pack(side="left", fill="both", expand=1)
+    transform_frame.pack_propagate(0)
     transform_str = tk.StringVar()
     transform_label = tk.Label(master=transform_frame, textvariable=transform_str, justify="left")
     transform_label.pack()
 
-    explain_frame = tk.LabelFrame(master=popup_window, text="Explanation")
+    explain_frame = tk.LabelFrame(master=popup_window, text="Explanation", width=popup_window.winfo_width() / 3)
     explain_frame.pack(side="left", fill="both", expand=1)
+    explain_frame.pack_propagate(0)
     explain_str = tk.StringVar()
     explain_label = tk.Label(master=explain_frame, textvariable=explain_str, justify="left")
     explain_label.pack()
