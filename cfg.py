@@ -1,5 +1,6 @@
 import re
 import configparser
+import os
 
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
@@ -324,20 +325,31 @@ class CFG:
         with open(file, 'w') as cf:
             config.write(cf)
 
+    def write_to_config_copy(self, config, file):
+        directory, filename = os.path.split(file)
+        new_filename = f"{os.path.splitext(filename)[0]}_copy.txt"
+        new_file = os.path.join(directory, new_filename)
+
+        with open(new_file, 'w') as cf:
+            config.write(cf)
+
     def check_rule(self, rule, substrings):
         for substring in substrings:
             if substring in rule:
                 rule = rule.replace(substring, '')
         return not rule
 
-    def add_value(self, config, val_type, val, file):
+    def add_value(self, config, val_type, val, file, overwrite=True):
         data = config['input'][val_type].split(',')
         inputs = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')
         if val not in inputs and val != '':
             data.append(val)
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
-            self.write_to_config(config, file)
+            if overwrite:
+                self.write_to_config(config, file)
+            else:
+                self.write_to_config_copy(config, file)
             return None
         elif val == '':
             return None
@@ -353,30 +365,43 @@ class CFG:
                     dlist.append("".join(rlist))
         return dlist
 
-    def remove_rule(self, config, val, file):
+    def remove_rule(self, config, val, file, overwrite=True):
         if val in config['rules']:
             config.remove_option('rules', val)
-            self.write_to_config(config, file)
+            if overwrite:
+                self.write_to_config(config, file)
+            else:
+                self.write_to_config_copy(config, file)
         for nt in config['rules']:
             if val in config['rules'][nt].split(','):
                 data = config['rules'][nt].split(',')
                 data.remove(val)
                 new_val = ','.join(data)
                 config.set('rules', nt, new_val)
-                self.write_to_config(config, file)
+                if overwrite:
+                    self.write_to_config(config, file)
+                else:
+                    self.write_to_config_copy(config, file)
 
-    def remove_value(self, config, val_type, val, file):
+    def remove_value(self, config, val_type, val, file, overwrite=True):
         data = config['input'][val_type].split(',')
         if val in data:
             dlist = self.get_dependent_rules(config, val)
-            for rule in dlist:
-                self.remove_rule(config, rule, file)
-
-            self.remove_rule(config, val, file)
+            if overwrite:
+                for rule in dlist:
+                    self.remove_rule(config, rule, file)
+                self.remove_rule(config, val, file)
+            else:
+                for rule in dlist:
+                    self.remove_rule(config, rule, file, overwrite)
+                self.remove_rule(config, val, file, overwrite)
             data.remove(val)
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
-            self.write_to_config(config, file)
+            if overwrite:
+                self.write_to_config(config, file)
+            else:
+                self.write_to_config_copy(config, file)
             return None
         elif val == '':
             return None

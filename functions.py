@@ -202,7 +202,7 @@ def generate_rules_text(config):
 def update_reduction_rules(config, grammar, file_variable, set_transformation, stack_transformation):
     not_set_t = set(grammar.nonterminals) - set_transformation
     for not_t in not_set_t:
-        CFG().remove_value(config, 'nonterminals', not_t, file_variable)
+        CFG().remove_value(config, 'nonterminals', not_t, file_variable, overwrite=False)
 
     text = generate_rules_text(config)
 
@@ -268,7 +268,7 @@ def remove_epsilon_rules(window, file_variable):
 
     if grammar.initial_nonterminal in set_e:
         new_init_nt = f"{grammar.initial_nonterminal}_prime"
-        CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
+        CFG().add_value(config, 'nonterminals', new_init_nt, file_variable, overwrite=False)
         config.set('input', 'initial_nonterminal', new_init_nt)
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
         config.set('rules', new_init_nt, ','.join(new_init_rule))
@@ -282,7 +282,7 @@ def remove_epsilon_rules(window, file_variable):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    CFG().write_to_config(config, file_variable)
+    CFG().write_to_config_copy(config, file_variable)
 
     create_popup_window(window, stack_transformation)
 
