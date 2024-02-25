@@ -367,6 +367,8 @@ def remove_unit_rules(window, file):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
+    CFG().write_to_config_copy(config, file)
+
     create_popup_window(window, stack_transformation)
 
 
