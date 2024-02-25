@@ -125,6 +125,7 @@ def load_page1(error_text=''):
     save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str, error_label))
     save_btn.grid(row=2, columnspan=3, pady=10)
 
+    # transform frame
     transform_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
     transform_frame.pack(side="left", fill='both', expand=1)
 
@@ -134,10 +135,10 @@ def load_page1(error_text=''):
     epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
     epsilon_btn.grid(row=1, column=0, pady=10)
 
-    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules")
+    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", command=lambda: functions.remove_unit_rules(window, file_variable.get()))
     unit_btn.grid(row=2, column=0)
 
-    chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form")
+    chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
     chomsky_btn.grid(row=3, column=0, pady=10)
 
     error_label = tk.Label(master=page1_frame, fg="red")

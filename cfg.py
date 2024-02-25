@@ -240,6 +240,36 @@ class CFG:
             i = chr(i_int)
             self.remove_epsilon_rules(file, config, stack_transformation, set_e, set_list, i)
 
+    def remove_unit_rules(self, file, config, stack_transformation, set_nt, set_list, i):
+        set_temp = set_nt.copy()
+
+        explain_text = f"Rules of the form A\u2192B where A,B\u2208\u03A0"
+        rules = []
+        for nonterminal in set_temp:
+            for rule in config['rules'][nonterminal].split(','):
+                if rule in list(config['rules']):
+                    set_nt.add(rule)
+                    if rule not in rules and rule not in set_temp:
+                        rules.append(rule)
+                        explain_text += f"\n{nonterminal} = {rule}"
+
+        if set_temp != set_nt:
+            grammar_text = self.generate_grammar_text(file, rules)
+            self.set_to_list(set_nt, set_list)
+            transformation_text = f"{set_list[0]}{i} = {set_list}"
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                       "explain_text": explain_text})
+            i_int = ord(i) + 1
+            i = chr(i_int)
+            self.remove_unit_rules(file, config, stack_transformation, set_nt, set_list, i)
+        else:
+            transformation_text = stack_transformation.data[-1]['transform_text']
+            transformation_text += '\n'
+            stack_transformation.data[-1]['transform_text'] = transformation_text
+
+    def chomsky_normal_form(self, file, config, stack_transformation, set_nt, set_list, i):
+        pass
+
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
             self.rules[nonterminal] = []

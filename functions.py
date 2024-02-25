@@ -324,6 +324,56 @@ def remove_epsilon_rules(window, file_variable):
     create_popup_window(window, stack_transformation)
 
 
+def remove_unit_rules(window, file):
+    stack_transformation = Stack()
+    config = CFG().read_config(file)
+
+    grammar_text = read_file(file)
+
+    transform_sets = {}
+    for nonterminal in config['rules']:
+        set_nt = set()
+        set_list = []
+
+        set_nt.add(nonterminal)
+        set_list.append(nonterminal)
+        transformation_text = f"{nonterminal}\u2080 = {set_list}"
+        stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                   "explain_text": ''})
+        CFG().remove_unit_rules(file, config, stack_transformation, set_nt, set_list, '\u2081')
+
+        transform_sets[nonterminal] = set_list
+
+    transformation_text = ''
+    for key, value in transform_sets.items():
+        transformation_text += f"{key} = {value}\n"
+
+        new_rules = []
+        for val in value:
+            for rule in config['rules'][val].split(','):
+                if rule not in list(config['rules']) and rule not in new_rules:
+                    new_rules.append(rule)
+        config.set('rules', key, ','.join(new_rules))
+
+    explain_text = "For each A\u2208\u03A0 compute the set of all nonterminals\n" \
+                   "that can be obtained from A by using only unit rules, i.e.,\nA = {B\u2208\u03A0 | A =>\u002A B}"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    transformation_text = generate_rules_text(config)
+    explain_text = "Construct CFG G\u2032 = (Π, Σ, S, P′) where P′ consist of rules of the form\n" \
+                   "A → β where A ∈ Π, β is not a single nonterminal,\n" \
+                   "and (B → β) ∈ P for some B ∈ set A"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    create_popup_window(window, stack_transformation)
+
+
+def chomsky_normal_form(window, file):
+    pass
+
+
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar = CFG().read_config(file)
     grammar.set('input', 'initial_nonterminal', init_val.get())
