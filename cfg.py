@@ -116,7 +116,13 @@ class CFG:
         self.stack = Stack()
         self.stack_tree = Stack()
 
-    def generate_grammar_text(self, config, rules):
+    def set_to_list(self, set_temp, set_list):
+        for temp in set_temp:
+            if temp not in set_list:
+                set_list.append(temp)
+
+    def generate_grammar_text(self, file, rules):
+        config = self.read_config(file)
         red = "ஆ"
         grammar_text = ''
 
@@ -145,10 +151,11 @@ class CFG:
 
         return grammar_text
 
-    def reduce_phase1(self, config, grammar, reduction_stack, set_t, i):
+    def reduce_phase1(self, file, config, grammar, reduction_stack, set_t, set_list, i):
         not_set_t = set(grammar.nonterminals) - set_t
         set_temp = set_t.copy()
 
+        explain_text = f"Nonterminals generating terminal words"
         rules = []
         for nt in not_set_t:
             if nt in config['rules']:
@@ -163,48 +170,53 @@ class CFG:
                         set_t.add(nt)
                         if rule not in rules:
                             rules.append(rule)
+                        explain_text += f"\n{nt} = {rule}"
 
         if set_temp != set_t:
-            grammar_text = self.generate_grammar_text(config, rules)
-            reduction_text = f"T{i} = {set_t}"
-            explain_text = f"Nonterminals {set_t} can generate terminal words {rules}"
+            grammar_text = self.generate_grammar_text(file, rules)
+            self.set_to_list(set_t, set_list)
+            reduction_text = f"T{i} = {set_list}"
             reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                   "explain_text": explain_text})
             i_int = ord(i) + 1
             i = chr(i_int)
-            self.reduce_phase1(config, grammar, reduction_stack, set_t, i)
+            self.reduce_phase1(file, config, grammar, reduction_stack, set_t, set_list, i)
 
-    def reduce_phase2(self, config, grammar, reduction_stack, set_t, set_d, i):
+    def reduce_phase2(self, file, config, grammar, reduction_stack, set_t, set_d, set_list, i):
         set_temp = set_d.copy()
         rules = []
-        for d in set_temp:
-            for rule in config['rules'][d].split(','):
+        for nt in set_temp:
+            for rule in config['rules'][nt].split(','):
                 for t in set_t:
-                    if t in rule:
+                    if t in rule and t not in set_d:
                         set_d.add(t)
                         if rule not in rules:
                             rules.append(rule)
 
         if set_temp != set_d:
-            grammar_text = self.generate_grammar_text(config, rules)
-            reduction_text = f"D{i} = {set_d}"
-            explain_text = f"Nonterminals {set_d} can be reached from initial nonterminal {grammar.initial_nonterminal}"
+            grammar_text = self.generate_grammar_text(file, rules)
+            self.set_to_list(set_d, set_list)
+            reduction_text = f"D{i} = {set_list}"
+            explain_text = f"Nonterminals that can be reached from {grammar.initial_nonterminal}\n{set_d - set_temp}"
             reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                   "explain_text": explain_text})
             i_int = ord(i) + 1
             i = chr(i_int)
-            self.reduce_phase2(config, grammar, reduction_stack, set_t, set_d, i)
+            self.reduce_phase2(file, config, grammar, reduction_stack, set_t, set_d, set_list, i)
 
-    def remove_epsilon_rules(self, config, stack_transformation, set_e, i):
+    def remove_epsilon_rules(self, file, config, stack_transformation, set_e, set_list, i):
         not_set_e = set(config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')) - set_e
         set_temp = set_e.copy()
+
+        explain_text = f"Nonterminals that can generate epsilon"
         rules = []
         for nt in config['rules']:
             for rule in config['rules'][nt].split(','):
                 if 'epsilon' == rule:
                     set_e.add(nt)
-                    if rule not in rules:
+                    if rule not in rules and nt not in set_temp:
                         rules.append(rule)
+                        explain_text += f"\n{nt} = {rule}"
                 else:
                     found = False
                     for not_e in not_set_e:
@@ -214,18 +226,19 @@ class CFG:
                             found = True
                     if not found:
                         set_e.add(nt)
-                        if rule not in rules:
+                        if rule not in rules and nt not in set_temp:
                             rules.append(rule)
+                            explain_text += f"\n{nt} = {rule}"
 
         if set_temp != set_e:
-            grammar_text = self.generate_grammar_text(config, rules)
-            transformation_text = f"'\u2107'{i} = {set_e}"
-            explain_text = f"Nonterminals {set_e} can generate epsilon"
+            grammar_text = self.generate_grammar_text(file, rules)
+            self.set_to_list(set_e, set_list)
+            transformation_text = f"\u2107{i} = {set_list}"
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
             i_int = ord(i) + 1
             i = chr(i_int)
-            self.remove_epsilon_rules(config, stack_transformation, set_e, i)
+            self.remove_epsilon_rules(file, config, stack_transformation, set_e, set_list, i)
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:

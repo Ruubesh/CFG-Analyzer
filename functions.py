@@ -42,7 +42,8 @@ def submit(file, grammar_str, init_combo, rule_combo, rules):
     rules.set(grammar['rules'][rule_combo['values'][0]])
 
 
-def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn, forward_btn):
+def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn,
+                      forward_btn):
     if index.get() < len(stack_transformation.data) - 1:
         index.set(index.get() + 1)
         back_btn.config(state=tk.NORMAL)
@@ -61,7 +62,8 @@ def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_tra
             forward_btn.config(state=tk.DISABLED)
 
 
-def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn, forward_btn):
+def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn,
+                     forward_btn):
     if index.get() > 0:
         index.set(index.get() - 1)
         forward_btn.config(state=tk.NORMAL)
@@ -101,20 +103,33 @@ def get_stack_transformation_data(index, stack_transformation):
 
 def highlight_text(text_widget):
     start_index = "1.0"
+    start_occurrence = 0
+    end_occurrence = 1
+    line_set = set()
     indices = []
     while True:
         start_index = text_widget.search("ஆ", start_index, stopindex="end", count="1")
         if not start_index:
             break
         line, column = map(int, start_index.split('.'))
-        new_column = column
+
+        if line in line_set:
+            start_occurrence += 1
+            end_occurrence += 1
+        else:
+            line_set.add(line)
+            start_occurrence = 0
+            end_occurrence = 1
+
+        new_column = column - 2 * start_occurrence
         new_start_index = f"{line}.{new_column}"
 
         end_index = text_widget.search("ஆ", f"{start_index}+1c", stopindex="end", count="1")
         if not end_index:
             break
         line, column = map(int, end_index.split('.'))
-        new_column = column - 2
+
+        new_column = column - 2 * end_occurrence
         new_end_index = f"{line}.{new_column}"
 
         start_index = f"{end_index}+1c"
@@ -149,7 +164,8 @@ def create_popup_window(window, stack_transformation):
                                                                                                transform_str,
                                                                                                explain_str,
                                                                                                stack_transformation,
-                                                                                               index, back_btn, forward_btn))
+                                                                                               index, back_btn,
+                                                                                               forward_btn))
     forward_btn.pack(side=tk.LEFT, padx=20)
 
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=popup_window.winfo_width() / 3)
@@ -158,7 +174,8 @@ def create_popup_window(window, stack_transformation):
     grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
 
-    transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps", width=popup_window.winfo_width() / 3)
+    transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps",
+                                    width=popup_window.winfo_width() / 3)
     transform_frame.pack(side="left", fill="both", expand=1)
     transform_frame.pack_propagate(0)
     transform_str = tk.StringVar()
@@ -207,7 +224,10 @@ def update_reduction_rules(config, grammar, file_variable, set_transformation, s
     text = generate_rules_text(config)
 
     grammar_text = read_file(file_variable)
-    explain_text = f"Remove all nonterminals that are not in {set_transformation} together with all rules where they occur"
+    explain_text = f"Remove all nonterminals that are not in\n" \
+                   f"{set_transformation}\n" \
+                   f"together with all rules where they occur\n" \
+                   f"Removed Nonterminals: {not_set_t}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": text, "explain_text": explain_text})
 
 
@@ -217,18 +237,28 @@ def reduce(window, file_variable):
     config = CFG().read_config(file_variable)
 
     set_t = set()
-    grammar.reduce_phase1(config, grammar, stack_transformation, set_t, '\u2080')
+    set_list = []
+    grammar.reduce_phase1(file_variable, config, grammar, stack_transformation, set_t, set_list, '\u2080')
+
+    grammar_text = read_file(file_variable)
+    transform_text = f"\nT = {set_list}"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": ''})
 
     update_reduction_rules(config, grammar, file_variable, set_t, stack_transformation)
 
+    set_list.clear()
+    set_list.append(grammar.initial_nonterminal)
     set_d = set()
     set_d.add(grammar.initial_nonterminal)
     grammar_text = read_file(file_variable)
-    reduction_text = f"D\u2080 = {set_d}"
+    reduction_text = f"D\u2080 = {set_list}"
     explain_text = f"{grammar.initial_nonterminal} is the initial nonterminal"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                "explain_text": explain_text})
-    grammar.reduce_phase2(config, grammar, stack_transformation, set_t, set_d, '\u2081')
+    grammar.reduce_phase2(file_variable, config, grammar, stack_transformation, set_t, set_d, set_list, '\u2081')
+
+    transform_text = f"\nD = {set_list}"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": ''})
 
     update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
 
@@ -241,7 +271,13 @@ def remove_epsilon_rules(window, file_variable):
     grammar = main(file_variable)
 
     set_e = set()
-    CFG().remove_epsilon_rules(config, stack_transformation, set_e, '\u2080')
+    set_list = []
+    CFG().remove_epsilon_rules(file_variable, config, stack_transformation, set_e, set_list, '\u2080')
+
+    grammar_text = read_file(file_variable)
+    transform_text = f"\n\u2107 = {set_list}"
+    explain_text = f"Nonterminals {set_list} can generate epsilon"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": explain_text})
 
     new_rules = {}
     for nonterminal, production_rules in grammar.rules.items():
@@ -277,7 +313,8 @@ def remove_epsilon_rules(window, file_variable):
     transformation_text = generate_rules_text(config)
     explain_text = f"Remove all epsilon rules and replace every other A --> \u03B1 \nwith a set of rules obtained by " \
                    f"all possible rules of the form A --> \u03B1\u2032 \nwhere \u03B1\u2032 is obtained from \u03B1 by " \
-                   f"possible ommitting of \n(some) occurrences of nonterminals from set {set_e}"
+                   f"possible ommitting of \n(some) occurrences of nonterminals from set\n" \
+                   f"{set_e}"
 
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
