@@ -1,0 +1,9 @@
+[input]
+nonterminals = S,A,B
+terminals = a,b
+initial_nonterminal = S
+
+[rules]
+S = ASA,aB
+A = B,S
+B = b,epsilon
