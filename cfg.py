@@ -267,8 +267,60 @@ class CFG:
             transformation_text += '\n'
             stack_transformation.data[-1]['transform_text'] = transformation_text
 
-    def chomsky_normal_form(self, file, config, stack_transformation, set_nt, set_list, i):
-        pass
+    def decompose_rules(self, config, grammar):
+        new_rules = {}
+        new_nt_count = 1
+        for nonterminal, rules in grammar.rules.items():
+            for rule in rules:
+                if len(rule) > 2:
+                    first = 0
+                    for i, item in enumerate(rule):
+                        if i < len(rule) - 2:
+                            new_nt = f'nt{new_nt_count}'
+                            sub_rule = [item, new_nt]
+                            if nonterminal not in new_rules:
+                                new_rules[nonterminal] = []
+                                new_rules[nonterminal].append(sub_rule)
+                            elif first == 0:
+                                new_rules[nonterminal].append(sub_rule)
+                                first = 1
+                            else:
+                                new_nt = f'nt{new_nt_count - 1}'
+                                if new_nt not in new_rules:
+                                    new_rules[new_nt] = []
+                                new_rules[new_nt].append(sub_rule)
+                        elif i == len(rule) - 2:
+                            new_nt_count -= 1
+                            new_nt = f'nt{new_nt_count}'
+                            sub_rule = [item, rule[i + 1]]
+                            if new_nt not in new_rules:
+                                new_rules[new_nt] = []
+                            new_rules[new_nt].append(sub_rule)
+                        else:
+                            new_nt_count -= 1
+                        new_nt_count += 1
+                else:
+                    if nonterminal not in new_rules:
+                        new_rules[nonterminal] = []
+                    new_rules[nonterminal].append(rule)
+
+        self.rule_dict_to_config(config, new_rules)
+
+    def rule_dict_to_config(self, config, new_rules):
+        for nonterminal, rules in new_rules.items():
+            nonterminals = config['input']['nonterminals'].split(',')
+            if nonterminal not in nonterminals:
+                nonterminals.append(nonterminal)
+                config.set('input', 'nonterminals', ','.join(nonterminals))
+
+            rule_list = []
+            for rule in rules:
+                if rule == ['']:
+                    rule_list.append('epsilon')
+                else:
+                    rule_list.append(''.join(rule))
+
+            config.set('rules', nonterminal, ','.join(rule_list))
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
@@ -365,7 +417,7 @@ class CFG:
         return config
 
     def write_to_config(self, config, file):
-        with open(file, 'w') as cf:
+        with open(file, 'w', encoding="utf-8") as cf:
             config.write(cf)
 
     def write_to_config_copy(self, config, file):
@@ -373,8 +425,10 @@ class CFG:
         new_filename = f"{os.path.splitext(filename)[0]}_copy.txt"
         new_file = os.path.join(directory, new_filename)
 
-        with open(new_file, 'w') as cf:
+        with open(new_file, 'w', encoding="utf-8") as cf:
             config.write(cf)
+
+        return new_file
 
     def check_rule(self, rule, substrings):
         for substring in substrings:

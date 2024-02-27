@@ -138,8 +138,8 @@ def load_page1(error_text=''):
     unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", command=lambda: functions.remove_unit_rules(window, file_variable.get()))
     unit_btn.grid(row=2, column=0)
 
-    chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
-    chomsky_btn.grid(row=3, column=0, pady=10)
+    chomsky_btn = tk.Button(master=transform_frame, text="CNF", command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
+    chomsky_btn.grid(row=0, column=1, padx=10)
 
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()

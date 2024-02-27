@@ -265,8 +265,17 @@ def reduce(window, file_variable):
     create_popup_window(window, stack_transformation)
 
 
-def remove_epsilon_rules(window, file_variable):
-    stack_transformation = Stack()
+def remove_epsilon_rules(window, file_variable, chomsky_stack=None, chomsky=False):
+    grammar_text = read_file(file_variable)
+    if chomsky:
+        stack_transformation = chomsky_stack
+        transform_text = 'Step 2:\n'
+        explain_text = "Remove epsilon rules"
+        stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
+                                   "explain_text": explain_text})
+    else:
+        stack_transformation = Stack()
+
     config = CFG().read_config(file_variable)
     grammar = main(file_variable)
 
@@ -274,7 +283,6 @@ def remove_epsilon_rules(window, file_variable):
     set_list = []
     CFG().remove_epsilon_rules(file_variable, config, stack_transformation, set_e, set_list, '\u2080')
 
-    grammar_text = read_file(file_variable)
     transform_text = f"\n\u2107 = {set_list}"
     explain_text = f"Nonterminals {set_list} can generate epsilon"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": explain_text})
@@ -305,9 +313,19 @@ def remove_epsilon_rules(window, file_variable):
     if grammar.initial_nonterminal in set_e:
         new_init_nt = f"{grammar.initial_nonterminal}_prime"
         CFG().add_value(config, 'nonterminals', new_init_nt, file_variable, overwrite=False)
-        config.set('input', 'initial_nonterminal', new_init_nt)
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
+        config.set('input', 'initial_nonterminal', new_init_nt)
         config.set('rules', new_init_nt, ','.join(new_init_rule))
+    elif chomsky:
+        for nonterminal, production_rules in grammar.rules.items():
+            for rule in production_rules:
+                if grammar.initial_nonterminal in rule:
+                    new_init_nt = f"{grammar.initial_nonterminal}_prime"
+                    CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
+                    new_init_rule = [grammar.initial_nonterminal]
+                    config.set('input', 'initial_nonterminal', new_init_nt)
+                    config.set('rules', new_init_nt, ','.join(new_init_rule))
+                    break
 
     grammar_text = read_file(file_variable)
     transformation_text = generate_rules_text(config)
@@ -315,20 +333,28 @@ def remove_epsilon_rules(window, file_variable):
                    f"all possible rules of the form A --> \u03B1\u2032 \nwhere \u03B1\u2032 is obtained from \u03B1 by " \
                    f"possible ommitting of \n(some) occurrences of nonterminals from set\n" \
                    f"{set_e}"
-
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    CFG().write_to_config_copy(config, file_variable)
+    if chomsky:
+        CFG().write_to_config(config, file_variable)
+    else:
+        CFG().write_to_config_copy(config, file_variable)
 
-    create_popup_window(window, stack_transformation)
+        create_popup_window(window, stack_transformation)
 
 
-def remove_unit_rules(window, file):
-    stack_transformation = Stack()
-    config = CFG().read_config(file)
-
+def remove_unit_rules(window, file, chomsky_stack, chomsky=False):
     grammar_text = read_file(file)
+    if chomsky:
+        stack_transformation = chomsky_stack
+        transform_text = 'Step 3:\n'
+        explain_text = "Remove unit rules"
+        stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
+                                   "explain_text": explain_text})
+    else:
+        stack_transformation = Stack()
+    config = CFG().read_config(file)
 
     transform_sets = {}
     for nonterminal in config['rules']:
@@ -367,13 +393,86 @@ def remove_unit_rules(window, file):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    CFG().write_to_config_copy(config, file)
+    if chomsky:
+        CFG().write_to_config(config, file)
+    else:
+        CFG().write_to_config_copy(config, file)
 
-    create_popup_window(window, stack_transformation)
+        create_popup_window(window, stack_transformation)
 
 
 def chomsky_normal_form(window, file):
-    pass
+    stack_transformation = Stack()
+    config = CFG().read_config(file)
+    grammar = main(file)
+
+    # Step 1
+    CFG().decompose_rules(config, grammar)
+
+    grammar_text = read_file(file)
+    transformation_text = 'Step 1:'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": ''})
+
+    transformation_text = generate_rules_text(config)
+    explain_text = "Decompose each rule A → α where |α| ≥ 3 into a sequence of rules\n" \
+                   "where each right-hand size has length 2"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    copy_file = CFG().write_to_config_copy(config, file)
+
+    # Step 2
+    remove_epsilon_rules(window, copy_file, stack_transformation, chomsky=True)
+
+    # Step 3
+    remove_unit_rules(window, copy_file, stack_transformation, chomsky=True)
+
+    # Step 4
+    config = CFG().read_config(copy_file)
+    grammar = main(copy_file)
+
+    new_rules = {}
+    new_nt_count = 1
+    replaced = set()
+    for nonterminal, rules in grammar.rules.items():
+        for rule in rules:
+            if len(rule) == 2:
+                terminals = config['input']['terminals'].split(',')
+                for terminal in terminals:
+                    for index in range(len(rule)):
+                        if rule[index] == terminal:
+                            new_nt = f'<nt{new_nt_count}>'
+                            for key, value in new_rules.items():
+                                if terminal in value:
+                                    rule[index] = key
+                            if terminal not in replaced:
+                                rule[index] = new_nt
+                                new_rules[new_nt] = [terminal]
+                                replaced.add(terminal)
+                                new_nt_count += 1
+
+    for nonterminal, rule in new_rules.items():
+        grammar.add_rule(nonterminal, [rule])
+
+    CFG().rule_dict_to_config(config, grammar.rules)
+
+    grammar_text = read_file(copy_file)
+    transformation_text = 'Step 4:'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": ''})
+
+    transformation_text = generate_rules_text(config)
+    explain_text = "For each terminal 'a' occurring on the right-hand size\n" \
+                   "of some rule A → α where |α| = 2 introduce a new nonterminal N\u2090,\n" \
+                   "replace occurrences of 'a' on such right-hand sides\n" \
+                   "with N\u2090, and add N\u2090 → a as a new rule"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    CFG().write_to_config(config, copy_file)
+
+    create_popup_window(window, stack_transformation)
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
