@@ -1,4 +1,4 @@
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 from cfg import CFG, main, Stack
 import tkinter as tk
 from itertools import combinations
@@ -43,7 +43,7 @@ def submit(file, grammar_str, init_combo, rule_combo, rules):
 
 
 def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn,
-                      forward_btn):
+                      forward_btn, transform_canvas):
     if index.get() < len(stack_transformation.data) - 1:
         index.set(index.get() + 1)
         back_btn.config(state=tk.NORMAL)
@@ -55,6 +55,7 @@ def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_tra
         new_transform_text = transform_str.get()
         new_transform_text += f"\n{transform_text}"
         update_label(transform_str, new_transform_text)
+        update_vertical_scrollregion(transform_canvas, transform_str)
 
         update_label(explain_str, explain_text)
 
@@ -63,7 +64,7 @@ def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_tra
 
 
 def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn,
-                     forward_btn):
+                     forward_btn, transform_canvas):
     if index.get() > 0:
         index.set(index.get() - 1)
         forward_btn.config(state=tk.NORMAL)
@@ -81,6 +82,7 @@ def on_pressing_left(grammar_text_widget, transform_str, explain_str, stack_tran
                 transform_text += f'\n{stack_transformation.data[i]["transform_text"]}'
 
         update_label(transform_str, transform_text)
+        update_vertical_scrollregion(transform_canvas, transform_str)
 
         update_label(explain_str, explain_text)
 
@@ -152,20 +154,18 @@ def create_popup_window(window, stack_transformation):
 
     button_frame = tk.Frame(master=popup_window)
     button_frame.pack()
-    back_btn = tk.Button(master=button_frame, text="<--", command=lambda: on_pressing_left(grammar_text_widget,
-                                                                                           transform_str, explain_str,
-                                                                                           stack_transformation, index,
-                                                                                           back_btn, forward_btn),
+    back_btn = tk.Button(master=button_frame, text="<--",
+                         command=lambda: on_pressing_left(grammar_text_widget, transform_str, explain_str,
+                                                          stack_transformation, index, back_btn, forward_btn,
+                                                          transform_canvas),
                          state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
     close_btn = tk.Button(master=button_frame, text="Close", command=popup_window.destroy)
     close_btn.pack(side=tk.LEFT, padx=20, pady=15)
-    forward_btn = tk.Button(master=button_frame, text="-->", command=lambda: on_pressing_right(grammar_text_widget,
-                                                                                               transform_str,
-                                                                                               explain_str,
-                                                                                               stack_transformation,
-                                                                                               index, back_btn,
-                                                                                               forward_btn))
+    forward_btn = tk.Button(master=button_frame, text="-->",
+                            command=lambda: on_pressing_right(grammar_text_widget, transform_str, explain_str,
+                                                              stack_transformation, index, back_btn, forward_btn,
+                                                              transform_canvas))
     forward_btn.pack(side=tk.LEFT, padx=20)
 
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=popup_window.winfo_width() / 3)
@@ -179,8 +179,13 @@ def create_popup_window(window, stack_transformation):
     transform_frame.pack(side="left", fill="both", expand=1)
     transform_frame.pack_propagate(0)
     transform_str = tk.StringVar()
-    transform_label = tk.Label(master=transform_frame, textvariable=transform_str, justify="left")
-    transform_label.pack()
+    transform_vsb = ttk.Scrollbar(master=transform_frame)
+    transform_canvas = tk.Canvas(master=transform_frame, yscrollcommand=transform_vsb.set)
+    transform_vsb.config(command=transform_canvas.yview)
+    transform_vsb.pack(side="right", fill="y")
+    transform_canvas.pack(fill="both", expand=1)
+    transform_canvas.bind("<MouseWheel>",
+                           lambda event: transform_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
     explain_frame = tk.LabelFrame(master=popup_window, text="Explanation", width=popup_window.winfo_width() / 3)
     explain_frame.pack(side="left", fill="both", expand=1)
@@ -199,12 +204,15 @@ def create_popup_window(window, stack_transformation):
     highlight_text(grammar_text_widget)
     grammar_text_widget.config(state=tk.DISABLED)
     update_label(transform_str, transform_text)
+    update_vertical_scrollregion(transform_canvas, transform_str)
     update_label(explain_str, explain_text)
 
     popup_window.bind("<Right>", lambda event: on_pressing_right(grammar_text_widget, transform_str, explain_str,
-                                                                 stack_transformation, index, back_btn, forward_btn))
+                                                                 stack_transformation, index, back_btn, forward_btn,
+                                                                 transform_canvas))
     popup_window.bind("<Left>", lambda event: on_pressing_left(grammar_text_widget, transform_str, explain_str,
-                                                               stack_transformation, index, back_btn, forward_btn))
+                                                               stack_transformation, index, back_btn, forward_btn,
+                                                               transform_canvas))
 
 
 def generate_rules_text(config):
@@ -531,6 +539,13 @@ def update_sentential_scrollregion(sentential_canvas, sentential_str):
     width = sentential_canvas.winfo_width() / 2
     sentential_canvas.create_text(width, 30, text=sentential_str.get())
     sentential_canvas.config(scrollregion=sentential_canvas.bbox("all"))
+
+
+def update_vertical_scrollregion(canvas, str_var):
+    canvas.delete("all")
+    width = canvas.winfo_width() / 2
+    canvas.create_text(width, 10, text=str_var.get())
+    canvas.config(scrollregion=canvas.bbox("all"))
 
 
 def calculate_subtree_width(tree, x_space):
