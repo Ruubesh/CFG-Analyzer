@@ -273,10 +273,10 @@ def reduce(window, file_variable):
     create_popup_window(window, stack_transformation)
 
 
-def remove_epsilon_rules(window, file_variable, chomsky_stack=None, chomsky=False):
+def remove_epsilon_rules(window, file_variable, other_stack=None, other_transform=False):
     grammar_text = read_file(file_variable)
-    if chomsky:
-        stack_transformation = chomsky_stack
+    if other_transform:
+        stack_transformation = other_stack
         transform_text = 'Step 2:\n'
         explain_text = "Remove epsilon rules"
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
@@ -324,7 +324,7 @@ def remove_epsilon_rules(window, file_variable, chomsky_stack=None, chomsky=Fals
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
         config.set('input', 'initial_nonterminal', new_init_nt)
         config.set('rules', new_init_nt, ','.join(new_init_rule))
-    elif chomsky:
+    elif other_transform:
         for nonterminal, production_rules in grammar.rules.items():
             for rule in production_rules:
                 if grammar.initial_nonterminal in rule:
@@ -344,7 +344,7 @@ def remove_epsilon_rules(window, file_variable, chomsky_stack=None, chomsky=Fals
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    if chomsky:
+    if other_transform:
         CFG().write_to_config(config, file_variable)
     else:
         CFG().write_to_config_copy(config, file_variable)
@@ -352,10 +352,10 @@ def remove_epsilon_rules(window, file_variable, chomsky_stack=None, chomsky=Fals
         create_popup_window(window, stack_transformation)
 
 
-def remove_unit_rules(window, file, chomsky_stack, chomsky=False):
+def remove_unit_rules(window, file, other_stack=None, other_transform=False):
     grammar_text = read_file(file)
-    if chomsky:
-        stack_transformation = chomsky_stack
+    if other_transform:
+        stack_transformation = other_stack
         transform_text = 'Step 3:\n'
         explain_text = "Remove unit rules"
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
@@ -401,7 +401,7 @@ def remove_unit_rules(window, file, chomsky_stack, chomsky=False):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    if chomsky:
+    if other_transform:
         CFG().write_to_config(config, file)
     else:
         CFG().write_to_config_copy(config, file)
@@ -431,10 +431,10 @@ def chomsky_normal_form(window, file):
     copy_file = CFG().write_to_config_copy(config, file)
 
     # Step 2
-    remove_epsilon_rules(window, copy_file, stack_transformation, chomsky=True)
+    remove_epsilon_rules(window, copy_file, stack_transformation, other_transform=True)
 
     # Step 3
-    remove_unit_rules(window, copy_file, stack_transformation, chomsky=True)
+    remove_unit_rules(window, copy_file, stack_transformation, other_transform=True)
 
     # Step 4
     config = CFG().read_config(copy_file)
