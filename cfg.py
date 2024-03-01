@@ -134,12 +134,12 @@ class CFG:
                     rule_list = config[section][nt].split(',')
                     for index, rule in enumerate(rule_list):
                         if index == len(rule_list) - 1:
-                            if rule in rules:
+                            if nt in rules.keys() and rule in rules[nt]:
                                 grammar_text += f"{red + rule + red}\n"
                             else:
                                 grammar_text += f"{rule}\n"
                         else:
-                            if rule in rules:
+                            if nt in rules.keys() and rule in rules[nt]:
                                 grammar_text += f"{red + rule + red},"
                             else:
                                 grammar_text += f"{rule},"
@@ -156,7 +156,7 @@ class CFG:
         set_temp = set_t.copy()
 
         explain_text = f"Nonterminals generating terminal words"
-        rules = []
+        rules = {}
         for nt in not_set_t:
             if nt in config['rules']:
                 for rule in config['rules'][nt].split(','):
@@ -168,8 +168,9 @@ class CFG:
                             found = True
                     if not found:
                         set_t.add(nt)
-                        if rule not in rules:
-                            rules.append(rule)
+                        if nt not in rules:
+                            rules[nt] = set()
+                        rules[nt].add(rule)
                         explain_text += f"\n{nt} = {rule}"
 
         if set_temp != set_t:
@@ -184,14 +185,15 @@ class CFG:
 
     def reduce_phase2(self, file, config, grammar, reduction_stack, set_t, set_d, set_list, i):
         set_temp = set_d.copy()
-        rules = []
+        rules = {}
         for nt in set_temp:
             for rule in config['rules'][nt].split(','):
                 for t in set_t:
                     if t in rule and t not in set_d:
                         set_d.add(t)
-                        if rule not in rules:
-                            rules.append(rule)
+                        if nt not in rules:
+                            rules[nt] = set()
+                        rules[nt].add(rule)
 
         if set_temp != set_d:
             grammar_text = self.generate_grammar_text(file, rules)
@@ -209,13 +211,15 @@ class CFG:
         set_temp = set_e.copy()
 
         explain_text = f"Nonterminals that can generate epsilon"
-        rules = []
+        rules = {}
         for nt in config['rules']:
             for rule in config['rules'][nt].split(','):
                 if 'epsilon' == rule:
                     set_e.add(nt)
-                    if rule not in rules and nt not in set_temp:
-                        rules.append(rule)
+                    if nt not in set_temp:
+                        if nt not in rules:
+                            rules[nt] = set()
+                        rules[nt].add(rule)
                         explain_text += f"\n{nt} = {rule}"
                 else:
                     found = False
@@ -226,8 +230,10 @@ class CFG:
                             found = True
                     if not found:
                         set_e.add(nt)
-                        if rule not in rules and nt not in set_temp:
-                            rules.append(rule)
+                        if nt not in set_temp:
+                            if nt not in rules:
+                                rules[nt] = set()
+                            rules[nt].add(rule)
                             explain_text += f"\n{nt} = {rule}"
 
         if set_temp != set_e:
@@ -244,13 +250,15 @@ class CFG:
         set_temp = set_nt.copy()
 
         explain_text = f"Rules of the form A\u2192B where A,B\u2208\u03A0"
-        rules = []
+        rules = {}
         for nonterminal in set_temp:
             for rule in config['rules'][nonterminal].split(','):
                 if rule in list(config['rules']):
                     set_nt.add(rule)
-                    if rule not in rules and rule not in set_temp:
-                        rules.append(rule)
+                    if rule not in set_temp:
+                        if nonterminal not in rules:
+                            rules[nonterminal] = set()
+                        rules[nonterminal].add(rule)
                         explain_text += f"\n{nonterminal} = {rule}"
 
         if set_temp != set_nt:
