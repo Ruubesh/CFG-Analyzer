@@ -452,6 +452,9 @@ def chomsky_normal_form(window, file):
                     for index in range(len(rule)):
                         if rule[index] == terminal:
                             new_nt = f'<et{new_nt_count}>'
+                            while new_nt in grammar.nonterminals:
+                                new_nt_count += 1
+                                new_nt = f'<et{new_nt_count}>'
                             for key, value in new_rules.items():
                                 if terminal in value:
                                     rule[index] = key
