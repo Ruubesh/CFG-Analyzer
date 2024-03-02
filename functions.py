@@ -303,15 +303,17 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
                 if nt in set_e:
                     indices.append(index)
             if nonterminal not in new_rules:
-                new_rules[nonterminal] = set()
-            new_rules[nonterminal].add(tuple(rule))
+                new_rules[nonterminal] = []
+            if tuple(rule) not in new_rules[nonterminal]:
+                new_rules[nonterminal].append(tuple(rule))
             for r in range(1, len(indices) + 1):
                 combos = combinations(indices, r)
                 for combo in combos:
                     temp_rule = rule.copy()
                     for ind in sorted(combo, reverse=True):
                         temp_rule.pop(ind)
-                    new_rules[nonterminal].add(tuple(temp_rule))
+                    if tuple(temp_rule) not in new_rules[nonterminal]:
+                        new_rules[nonterminal].append(tuple(temp_rule))
         new_production_rule = []
         for new_rule in new_rules[nonterminal]:
             new_production_rule.append(''.join(new_rule))
@@ -335,7 +337,6 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
                     config.set('rules', new_init_nt, ','.join(new_init_rule))
                     break
 
-    grammar_text = read_file(file_variable)
     transformation_text = generate_rules_text(config)
     explain_text = f"Remove all epsilon rules and replace every other A --> \u03B1 \nwith a set of rules obtained by " \
                    f"all possible rules of the form A --> \u03B1\u2032 \nwhere \u03B1\u2032 is obtained from \u03B1 by " \
