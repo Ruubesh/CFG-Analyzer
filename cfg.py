@@ -284,28 +284,31 @@ class CFG:
                     first = 0
                     for i, item in enumerate(rule):
                         if i < len(rule) - 2:
-                            new_nt = f'nt{new_nt_count}'
+                            new_nt = f'<nt{new_nt_count}>'
                             sub_rule = [item, new_nt]
                             if nonterminal not in new_rules:
                                 new_rules[nonterminal] = []
                                 new_rules[nonterminal].append(sub_rule)
+                                first = 1
                             elif first == 0:
                                 new_rules[nonterminal].append(sub_rule)
                                 first = 1
                             else:
-                                new_nt = f'nt{new_nt_count - 1}'
+                                new_nt = f'<nt{new_nt_count - 1}>'
                                 if new_nt not in new_rules:
                                     new_rules[new_nt] = []
                                 new_rules[new_nt].append(sub_rule)
                         elif i == len(rule) - 2:
                             new_nt_count -= 1
-                            new_nt = f'nt{new_nt_count}'
+                            new_nt = f'<nt{new_nt_count}>'
                             sub_rule = [item, rule[i + 1]]
                             if new_nt not in new_rules:
                                 new_rules[new_nt] = []
                             new_rules[new_nt].append(sub_rule)
                         else:
                             new_nt_count -= 1
+
+                        # prev_nt = new_nt
                         new_nt_count += 1
                 else:
                     if nonterminal not in new_rules:

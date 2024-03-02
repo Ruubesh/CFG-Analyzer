@@ -421,7 +421,7 @@ def chomsky_normal_form(window, file):
     grammar_text = read_file(file)
     transformation_text = 'Step 1:'
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
-                               "explain_text": ''})
+                               "explain_text": 'Decompose rules'})
 
     transformation_text = generate_rules_text(config)
     explain_text = "Decompose each rule A → α where |α| ≥ 3 into a sequence of rules\n" \
@@ -451,7 +451,7 @@ def chomsky_normal_form(window, file):
                 for terminal in terminals:
                     for index in range(len(rule)):
                         if rule[index] == terminal:
-                            new_nt = f'<nt{new_nt_count}>'
+                            new_nt = f'<et{new_nt_count}>'
                             for key, value in new_rules.items():
                                 if terminal in value:
                                     rule[index] = key
