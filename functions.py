@@ -2,6 +2,7 @@ from tkinter import filedialog, ttk
 from cfg import CFG, main, Stack
 import tkinter as tk
 from itertools import combinations
+import os
 
 
 def update_label(label, text):
@@ -146,23 +147,46 @@ def highlight_text(text_widget):
         text_widget.tag_add("highlight", index[0], f"{index[1]}+1c")
 
 
-def create_popup_window(window, stack_transformation):
+def save_as_transformed_grammar(config):
+    file = filedialog.asksaveasfilename(defaultextension=".*",
+                                        initialdir="/Users/ruube/PycharmProjects/Thesis",
+                                        title="Save File",
+                                        filetypes=(("Text files", "*.txt"), ("All files", "*.*"))
+                                        )
+    CFG().write_to_config(config, file)
+
+
+def on_popup_window_close(window, config, file):
+    temp_file = CFG().write_to_config_copy(config, file)
+    os.remove(temp_file)
+    window.destroy()
+
+
+def create_popup_window(window, stack_transformation, config, file):
     popup_window = tk.Toplevel(window)
     popup_window.title("View Transformation")
+    popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
     popup_window.focus()
 
     button_frame = tk.Frame(master=popup_window)
-    button_frame.pack()
-    back_btn = tk.Button(master=button_frame, text="<--",
+    button_frame.pack(fill=tk.X)
+    left_button_frame = tk.Frame(master=button_frame)
+    left_button_frame.place(x=40, y=15)
+    close_btn = tk.Button(master=left_button_frame, text="Close",
+                          command=lambda: on_popup_window_close(popup_window, config, file))
+    close_btn.pack()
+    center_button_frame = tk.Frame(master=button_frame)
+    center_button_frame.pack()
+    back_btn = tk.Button(master=center_button_frame, text="<--",
                          command=lambda: on_pressing_left(grammar_text_widget, transform_str, explain_str,
                                                           stack_transformation, index, back_btn, forward_btn,
                                                           transform_canvas),
                          state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
-    close_btn = tk.Button(master=button_frame, text="Close", command=popup_window.destroy)
-    close_btn.pack(side=tk.LEFT, padx=20, pady=15)
-    forward_btn = tk.Button(master=button_frame, text="-->",
+    save_btn = tk.Button(master=center_button_frame, text="Save", command=lambda: save_as_transformed_grammar(config))
+    save_btn.pack(side=tk.LEFT, padx=20, pady=15)
+    forward_btn = tk.Button(master=center_button_frame, text="-->",
                             command=lambda: on_pressing_right(grammar_text_widget, transform_str, explain_str,
                                                               stack_transformation, index, back_btn, forward_btn,
                                                               transform_canvas))
@@ -270,7 +294,7 @@ def reduce(window, file_variable):
 
     update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
 
-    create_popup_window(window, stack_transformation)
+    create_popup_window(window, stack_transformation, config, file_variable)
 
 
 def remove_epsilon_rules(window, file_variable, other_stack=None, other_transform=False):
@@ -350,7 +374,7 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
     else:
         CFG().write_to_config_copy(config, file_variable)
 
-        create_popup_window(window, stack_transformation)
+        create_popup_window(window, stack_transformation, config, file_variable)
 
 
 def remove_unit_rules(window, file, other_stack=None, other_transform=False):
@@ -407,7 +431,7 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
     else:
         CFG().write_to_config_copy(config, file)
 
-        create_popup_window(window, stack_transformation)
+        create_popup_window(window, stack_transformation, config, file)
 
 
 def chomsky_normal_form(window, file):
@@ -484,7 +508,7 @@ def chomsky_normal_form(window, file):
 
     CFG().write_to_config(config, copy_file)
 
-    create_popup_window(window, stack_transformation)
+    create_popup_window(window, stack_transformation, config, file)
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
