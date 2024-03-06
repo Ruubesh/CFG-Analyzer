@@ -334,6 +334,9 @@ class CFG:
 
             config.set('rules', nonterminal, ','.join(rule_list))
 
+    def gnf_phase1(self, config, grammar):
+        pass
+
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
             self.rules[nonterminal] = []

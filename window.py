@@ -69,7 +69,7 @@ def load_page1(error_text=''):
     edit_frame.pack(fill="x")
     edit_frame.pack_propagate(0)
 
-    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/3)
+    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
     nt_frame.pack(side='left', fill='x', expand=1, padx=100)
 
     entry_str = tk.StringVar()
@@ -90,7 +90,8 @@ def load_page1(error_text=''):
     edit_f2.pack(pady=10)
 
     add_btn = tk.Button(master=edit_f2, text="Add", width=7,
-                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str, init_combo, rule_combo, rules, error_label))
+                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str,
+                                                      init_combo, rule_combo, rules, error_label))
     add_btn.pack(side="left", padx=10)
 
     remove_btn = tk.Button(master=edit_f2, text="Remove",
@@ -98,7 +99,7 @@ def load_page1(error_text=''):
                                                             grammar_str, init_combo, rule_combo, rules, error_label))
     remove_btn.pack(side="left", padx=10)
 
-    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width()/3)
+    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
     rule_frame.pack(side="left", fill='both', expand=1)
 
     rule_l1 = tk.Label(master=rule_frame, text="Initial Nonterminal:")
@@ -116,30 +117,41 @@ def load_page1(error_text=''):
     rule_options = []
     rule_combo = ttk.Combobox(master=rule_frame, textvariable=rule_val, state="readonly", values=rule_options)
     rule_combo.grid(row=1, column=1)
-    rule_combo.bind("<<ComboboxSelected>>", lambda event: functions.on_select_rule(file_variable.get(), rule_val, rules))
+    rule_combo.bind("<<ComboboxSelected>>",
+                    lambda event: functions.on_select_rule(file_variable.get(), rule_val, rules))
 
     rules = tk.StringVar()
     rule_entry = tk.Entry(master=rule_frame, width=30, textvariable=rules)
     rule_entry.grid(row=1, column=2, padx=10)
 
-    save_btn = tk.Button(master=rule_frame, text="Save", command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val, grammar_str, error_label))
+    save_btn = tk.Button(master=rule_frame, text="Save",
+                         command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val,
+                                                                  grammar_str, error_label))
     save_btn.grid(row=2, columnspan=3, pady=10)
 
     # transform frame
     transform_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
     transform_frame.pack(side="left", fill='both', expand=1)
 
-    reduce_btn = tk.Button(master=transform_frame, text="Reduce", command=lambda: functions.reduce(window, file_variable.get()))
+    reduce_btn = tk.Button(master=transform_frame, text="Reduce",
+                           command=lambda: functions.reduce(window, file_variable.get()))
     reduce_btn.grid(row=0, column=0)
 
-    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
+    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules",
+                            command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
     epsilon_btn.grid(row=1, column=0, pady=10)
 
-    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", command=lambda: functions.remove_unit_rules(window, file_variable.get()))
+    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules",
+                         command=lambda: functions.remove_unit_rules(window, file_variable.get()))
     unit_btn.grid(row=2, column=0)
 
-    chomsky_btn = tk.Button(master=transform_frame, text="CNF", command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
+    chomsky_btn = tk.Button(master=transform_frame, text="CNF",
+                            command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
     chomsky_btn.grid(row=0, column=1, padx=10)
+
+    greibach_btn = tk.Button(master=transform_frame, text="GNF",
+                             command=lambda: functions.greibach_normal_form(window, file_variable.get()))
+    greibach_btn.grid(row=1, column=1, padx=10)
 
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()
@@ -179,11 +191,14 @@ def load_page2():
 
     redo_btn = tk.Button(master=button_frame, text="-->",
                          command=lambda: functions.redo(output_str, input_str, sentential_str, canvas, execute_e1,
-                                                        grammar, execute_btn, undo_btn, redo_btn, sentential_canvas), state="disabled")
+                                                        grammar, execute_btn, undo_btn, redo_btn, sentential_canvas),
+                         state="disabled")
     redo_btn.pack(side='right', padx=10)
 
     undo_btn = tk.Button(master=button_frame, text="<--",
-                         command=lambda: functions.undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn, sentential_canvas), state="disabled")
+                         command=lambda: functions.undo(output_str, input_str, sentential_str, canvas, execute_e1,
+                                                        grammar, execute_btn, undo_btn, redo_btn, sentential_canvas),
+                         state="disabled")
     undo_btn.pack(side='right')
 
     output_str = tk.StringVar()
@@ -198,7 +213,9 @@ def load_page2():
 
     execute_btn = tk.Button(master=execute_frame, text="Execute",
                             command=lambda: functions.execute(output_str, input_str, sentential_str, canvas,
-                                                              execute_e1, grammar, grammar.initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas, True, True))
+                                                              execute_e1, grammar, grammar.initial_nonterminal,
+                                                              execute_btn, undo_btn, redo_btn, sentential_canvas, True,
+                                                              True))
     execute_btn.pack(pady=10)
 
     # tree_frame
@@ -227,7 +244,8 @@ def load_page2():
     sentential_sb.config(command=sentential_canvas.xview)
     sentential_sb.pack(side="bottom", fill="x")
     sentential_canvas.pack(fill="both", expand=1)
-    sentential_canvas.bind("<MouseWheel>", lambda event: sentential_canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
+    sentential_canvas.bind("<MouseWheel>",
+                           lambda event: sentential_canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
 
     sentential_str = tk.StringVar()
 

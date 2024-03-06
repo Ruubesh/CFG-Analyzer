@@ -511,6 +511,12 @@ def chomsky_normal_form(window, file):
     create_popup_window(window, stack_transformation, config, file)
 
 
+def greibach_normal_form(window, file):
+    stack_transformation = Stack()
+    config = CFG().read_config(file)
+    grammar = main(file)
+
+
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar = CFG().read_config(file)
     grammar.set('input', 'initial_nonterminal', init_val.get())
