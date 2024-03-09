@@ -147,8 +147,9 @@ def highlight_text(text_widget):
         text_widget.tag_add("highlight", index[0], f"{index[1]}+1c")
 
 
-def save_as_transformed_grammar(config):
-    file = filedialog.asksaveasfilename(defaultextension=".*",
+def save_as_transformed_grammar(config, popup_window):
+    file = filedialog.asksaveasfilename(parent=popup_window,
+                                        defaultextension=".*",
                                         initialdir="/Users/ruube/PycharmProjects/Thesis",
                                         title="Save File",
                                         filetypes=(("Text files", "*.txt"), ("All files", "*.*"))
@@ -168,7 +169,6 @@ def create_popup_window(window, stack_transformation, config, file):
     popup_window = tk.Toplevel(window)
     popup_window.title("View Transformation")
     popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
-    popup_window.transient(window)
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
     popup_window.focus()
 
@@ -188,7 +188,7 @@ def create_popup_window(window, stack_transformation, config, file):
                          state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
     save_btn = tk.Button(master=center_button_frame, text="Save",
-                         command=lambda: save_as_transformed_grammar(config))
+                         command=lambda: save_as_transformed_grammar(config, popup_window))
     save_btn.pack(side=tk.LEFT, padx=20, pady=15)
     forward_btn = tk.Button(master=center_button_frame, text="-->",
                             command=lambda: on_pressing_right(grammar_text_widget, transform_str, explain_str,
@@ -246,8 +246,9 @@ def create_popup_window(window, stack_transformation, config, file):
 def generate_rules_text(config):
     text = '\n'
     for nt in config['rules']:
-        for rule in config['rules'][nt].split():
-            text += f"{nt} = {rule}\n"
+        rules = config['rules'][nt].split(',')
+        formatted_rules = ' | '.join(rules)
+        text += f"{nt} → {formatted_rules}\n"
 
     return text
 
