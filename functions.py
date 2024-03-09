@@ -153,7 +153,9 @@ def save_as_transformed_grammar(config):
                                         title="Save File",
                                         filetypes=(("Text files", "*.txt"), ("All files", "*.*"))
                                         )
-    CFG().write_to_config(config, file)
+
+    if file:
+        CFG().write_to_config(config, file)
 
 
 def on_popup_window_close(window, config, file):
@@ -166,6 +168,7 @@ def create_popup_window(window, stack_transformation, config, file):
     popup_window = tk.Toplevel(window)
     popup_window.title("View Transformation")
     popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
+    popup_window.transient(window)
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
     popup_window.focus()
 
@@ -184,7 +187,8 @@ def create_popup_window(window, stack_transformation, config, file):
                                                           transform_canvas),
                          state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
-    save_btn = tk.Button(master=center_button_frame, text="Save", command=lambda: save_as_transformed_grammar(config))
+    save_btn = tk.Button(master=center_button_frame, text="Save",
+                         command=lambda: save_as_transformed_grammar(config))
     save_btn.pack(side=tk.LEFT, padx=20, pady=15)
     forward_btn = tk.Button(master=center_button_frame, text="-->",
                             command=lambda: on_pressing_right(grammar_text_widget, transform_str, explain_str,
@@ -387,7 +391,20 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
                                    "explain_text": explain_text})
     else:
         stack_transformation = Stack()
-    config = CFG().read_config(file)
+        config = CFG().read_config(file)
+        epsilon = False
+        for nonterminal in config['rules']:
+            for rule in config['rules'][nonterminal].split(','):
+                if rule == 'epsilon':
+                    file = CFG().write_to_config_copy(config, file)
+                    remove_epsilon_rules(window, file, Stack(), other_transform=True)
+                    epsilon = True
+
+        config = CFG().read_config(file)
+        transform_text = generate_rules_text(config)
+        explain_text = "Grammar after removing epsilon rules"
+        stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
+                                   "explain_text": explain_text})
 
     transform_sets = {}
     for nonterminal in config['rules']:
@@ -428,6 +445,9 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
 
     if other_transform:
         CFG().write_to_config(config, file)
+    elif epsilon:
+        os.remove(file)
+        create_popup_window(window, stack_transformation, config, file)
     else:
         CFG().write_to_config_copy(config, file)
 
