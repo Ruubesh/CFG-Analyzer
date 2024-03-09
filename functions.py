@@ -512,9 +512,76 @@ def chomsky_normal_form(window, file):
 
 
 def greibach_normal_form(window, file):
-    stack_transformation = Stack()
     config = CFG().read_config(file)
-    grammar = main(file)
+    copy_file = CFG().write_to_config_copy(config, file)
+    stack_transformation = Stack()
+
+    # Remove Epsilon Rules
+    remove_epsilon_rules(window, copy_file, Stack(), other_transform=True)
+
+    # Remove Unit Rules
+    remove_unit_rules(window, copy_file, Stack(), other_transform=True)
+
+    # Step 1
+    config = CFG().read_config(copy_file)
+
+    grammar_text = read_file(file)
+    transformation_text = generate_rules_text(config)
+    explain_text = "Grammar after removing unit rules and epsilon rules"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    # Greibach Normal Form
+    grammar = main(copy_file)
+
+    nt_dict = {}
+    i = 1
+    for nonterminal, production_rules in grammar.rules.items():
+        if nonterminal not in nt_dict:
+            nt_dict[nonterminal] = i
+            i += 1
+        for production_rule in production_rules:
+            for item in production_rule:
+                if item in grammar.nonterminals and item not in nt_dict:
+                    nt_dict[item] = i
+                    i += 1
+
+    for nonterminal in nt_dict.keys():
+        CFG().gnf_phase1(grammar, nonterminal, nt_dict)
+
+    CFG().rule_dict_to_config(config, grammar.rules)
+
+    grammar_text = read_file(copy_file)
+    transformation_text = generate_rules_text(config)
+    explain_text = "Check for every production rule if RHS has first symbol\n" \
+                   "as non terminal say Aj for the production of Ai,\n" \
+                   "it is mandatory that i should be less than j.\n" \
+                   "Not great and not even equal.\n\n" \
+                   "If i>j then replace the production rule of Aj at its place in Ai.\n\n" \
+                   "If i=j, it is the left recursion. Create a new state Z\n" \
+                   "which has the symbols of the left recursive production,\n" \
+                   "once followed by Z and once without Z,\n" \
+                   "and change that production rule by removing that particular production\n" \
+                   "and adding all other production once followed by Z."
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    for nonterminal in grammar.rules.keys():
+        CFG().gnf_phase2(grammar, nonterminal)
+
+    CFG().rule_dict_to_config(config, grammar.rules)
+
+    transformation_text = generate_rules_text(config)
+    explain_text = "Replace the production to the form of either\n" \
+                   "Ai → x (any single terminal symbol)\n" \
+                   "OR\n" \
+                   "Ai → xX (any single non terminal followed by any number of non terminals)"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    CFG().write_to_config_copy(config, file)
+
+    create_popup_window(window, stack_transformation, config, file)
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):

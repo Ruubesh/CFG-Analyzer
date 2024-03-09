@@ -334,8 +334,77 @@ class CFG:
 
             config.set('rules', nonterminal, ','.join(rule_list))
 
-    def gnf_phase1(self, config, grammar):
-        pass
+    def gnf_phase1(self, grammar, nonterminal, nt_dict):
+        rules = grammar.rules[nonterminal]
+        new_nt_count = 1
+        for rule_index, rule in enumerate(rules):
+            first_item = rule[0]
+            if first_item in grammar.nonterminals and nt_dict[first_item] < nt_dict[nonterminal]:
+                if len(grammar.rules[first_item]) == 1:
+                    rule[0] = grammar.rules[first_item][0][0]
+                else:
+                    rule_list = []
+                    for item_rules in grammar.rules[first_item]:
+                        temp_rule = rule.copy()
+                        temp_rule[0:1] = item_rules
+                        rule_list.append(temp_rule)
+
+                    new_rule_list = rules[:rule_index] + rule_list + rules[rule_index:]
+                    new_rule_list.remove(rule)
+                    grammar.rules[nonterminal] = new_rule_list
+                    break
+            elif first_item in grammar.nonterminals and nt_dict[first_item] == nt_dict[nonterminal]:
+                new_nt = f'<gt{new_nt_count}>'
+                while new_nt in grammar.nonterminals:
+                    new_nt_count += 1
+                    new_nt = f'<gt{new_nt_count}>'
+
+                temp_rule = rule.copy()
+                temp_rule.pop(0)
+                temp_rule1 = temp_rule.copy()
+                temp_rule1.append(new_nt)
+                new_nt_rules = [temp_rule, temp_rule1]
+
+                grammar.nonterminals.append(new_nt)
+                grammar.add_rule(new_nt, new_nt_rules)
+
+                rules.pop(rule_index)
+                rule_list = []
+                for rul in rules:
+                    rule_list.append(rul)
+
+                for rul in rules:
+                    temp_rul = rul.copy()
+                    temp_rul.append(new_nt)
+                    rule_list.append(temp_rul)
+
+                grammar.rules[nonterminal] = rule_list
+                break
+
+        if rules != grammar.rules[nonterminal]:
+            self.gnf_phase1(grammar, nonterminal, nt_dict)
+
+    def gnf_phase2(self, grammar, nonterminal):
+        rules = grammar.rules[nonterminal]
+        for rule_index, rule in enumerate(rules):
+            first_item = rule[0]
+            if first_item in grammar.nonterminals:
+                if len(grammar.rules[first_item]) == 1:
+                    rule[0] = grammar.rules[first_item][0][0]
+                else:
+                    rule_list = []
+                    for item_rules in grammar.rules[first_item]:
+                        temp_rule = rule.copy()
+                        temp_rule[0:1] = item_rules
+                        rule_list.append(temp_rule)
+
+                    new_rule_list = rules[:rule_index] + rule_list + rules[rule_index:]
+                    new_rule_list.remove(rule)
+                    grammar.rules[nonterminal] = new_rule_list
+                    break
+
+        if rules != grammar.rules[nonterminal]:
+            self.gnf_phase2(grammar, nonterminal)
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
