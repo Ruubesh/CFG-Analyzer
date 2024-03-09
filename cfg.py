@@ -264,7 +264,7 @@ class CFG:
         if set_temp != set_nt:
             grammar_text = self.generate_grammar_text(file, rules)
             self.set_to_list(set_nt, set_list)
-            transformation_text = f"{set_list[0]}{i} = {set_list}"
+            transformation_text = f"N({set_list[0]}){i} = {set_list}"
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
             i_int = ord(i) + 1

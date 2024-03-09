@@ -413,7 +413,7 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
 
         set_nt.add(nonterminal)
         set_list.append(nonterminal)
-        transformation_text = f"{nonterminal}\u2080 = {set_list}"
+        transformation_text = f"N({nonterminal})\u2080 = {set_list}"
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                    "explain_text": ''})
         CFG().remove_unit_rules(file, config, stack_transformation, set_nt, set_list, '\u2081')
@@ -422,7 +422,7 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
 
     transformation_text = ''
     for key, value in transform_sets.items():
-        transformation_text += f"{key} = {value}\n"
+        transformation_text += f"N({key}) = {value}\n"
 
         new_rules = []
         for val in value:
