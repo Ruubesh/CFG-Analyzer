@@ -208,12 +208,18 @@ def create_popup_window(window, stack_transformation, config, file):
     transform_frame.pack_propagate(0)
     transform_str = tk.StringVar()
     transform_vsb = ttk.Scrollbar(master=transform_frame)
-    transform_canvas = tk.Canvas(master=transform_frame, yscrollcommand=transform_vsb.set)
+    transform_hsb = ttk.Scrollbar(master=transform_frame, orient="horizontal")
+    transform_canvas = tk.Canvas(master=transform_frame, yscrollcommand=transform_vsb.set,
+                                 xscrollcommand=transform_hsb.set)
     transform_vsb.config(command=transform_canvas.yview)
+    transform_hsb.config(command=transform_canvas.xview)
     transform_vsb.pack(side="right", fill="y")
+    transform_hsb.pack(side="bottom", fill="x")
     transform_canvas.pack(fill="both", expand=1)
     transform_canvas.bind("<MouseWheel>",
-                           lambda event: transform_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+                          lambda event: transform_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+    transform_canvas.bind("<Control MouseWheel>",
+                          lambda event: transform_canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
 
     explain_frame = tk.LabelFrame(master=popup_window, text="Explanation", width=popup_window.winfo_width() / 3)
     explain_frame.pack(side="left", fill="both", expand=1)
@@ -322,7 +328,8 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
 
     transform_text = f"\n\u2107 = {set_list}"
     explain_text = f"Nonterminals {set_list} can generate epsilon"
-    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": explain_text})
+    stack_transformation.push(
+        {"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": explain_text})
 
     new_rules = {}
     for nonterminal, production_rules in grammar.rules.items():
@@ -384,6 +391,8 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
 
 def remove_unit_rules(window, file, other_stack=None, other_transform=False):
     grammar_text = read_file(file)
+    config = CFG().read_config(file)
+    epsilon = False
     if other_transform:
         stack_transformation = other_stack
         transform_text = 'Step 3:\n'
@@ -392,8 +401,6 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
                                    "explain_text": explain_text})
     else:
         stack_transformation = Stack()
-        config = CFG().read_config(file)
-        epsilon = False
         for nonterminal in config['rules']:
             for rule in config['rules'][nonterminal].split(','):
                 if rule == 'epsilon':

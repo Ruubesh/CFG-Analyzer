@@ -28,6 +28,10 @@ def execute_run():
         load_page1(e)
 
 
+def initial_page():
+    pass
+
+
 def load_page1(error_text=''):
     clear_widgets(page2_frame)
     page2_frame.pack_forget()
@@ -260,7 +264,6 @@ file_variable = tk.StringVar()
 
 # page1
 page1_frame = tk.Frame(master=window)
-page1_frame.pack(fill="both")
 
 # page2
 page2_frame = tk.Frame(master=window)
