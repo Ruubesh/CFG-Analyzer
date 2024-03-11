@@ -5,6 +5,21 @@ from itertools import combinations
 import os
 
 
+def create_scrollbars(frame):
+    vertical_scrollbar = ttk.Scrollbar(master=frame, orient="vertical")
+    horizontal_scrollbar = ttk.Scrollbar(master=frame, orient="horizontal")
+    canvas = tk.Canvas(master=frame, yscrollcommand=vertical_scrollbar.set, xscrollcommand=horizontal_scrollbar.set)
+    vertical_scrollbar.config(command=canvas.yview)
+    horizontal_scrollbar.config(command=canvas.xview)
+    vertical_scrollbar.pack(side="right", fill="y")
+    horizontal_scrollbar.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=1)
+    canvas.bind("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+    canvas.bind("<Control MouseWheel>", lambda event: canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
+
+    return canvas
+
+
 def update_label(label, text):
     label.set(text)
 
@@ -14,14 +29,25 @@ def update_options(combobox, options):
     combobox.current(0)
 
 
-def open_file(file_variable):
-    filename = filedialog.askopenfilename(
+def open_files(listbox, listbox_items):
+    filenames = filedialog.askopenfilenames(
         initialdir="/Users/ruube/PycharmProjects/Thesis",
         title="Select A File",
         filetypes=(("Text files", "*.txt"), ("All files", "*.*"))
     )
 
-    file_variable.set(filename)
+    for filename in filenames:
+        if filename not in listbox.get(0, tk.END):
+            listbox.insert(tk.END, filename)
+            listbox_items.append(filename)
+
+
+def remove_file(listbox, listbox_items):
+    selected_index = listbox.curselection()
+    if selected_index:
+        listbox.delete(selected_index)
+        for index in selected_index:
+            del listbox_items[index]
 
 
 def read_file(file):
@@ -30,9 +56,15 @@ def read_file(file):
         return text
 
 
-def submit(file, grammar_str, init_combo, rule_combo, rules):
+def display_grammar(file, grammar_str, file_variable):
+    file_variable.set(file)
     text = read_file(file)
     grammar_str.set(text)
+
+
+def submit(file_variable, grammar_str, init_combo, rule_combo, rules):
+    file = file_variable.get()
+    display_grammar(file, grammar_str, file_variable)
 
     grammar = CFG().read_config(file)
     init_combo['values'] = grammar['input']['nonterminals'].split(',')
@@ -207,19 +239,8 @@ def create_popup_window(window, stack_transformation, config, file):
     transform_frame.pack(side="left", fill="both", expand=1)
     transform_frame.pack_propagate(0)
     transform_str = tk.StringVar()
-    transform_vsb = ttk.Scrollbar(master=transform_frame)
-    transform_hsb = ttk.Scrollbar(master=transform_frame, orient="horizontal")
-    transform_canvas = tk.Canvas(master=transform_frame, yscrollcommand=transform_vsb.set,
-                                 xscrollcommand=transform_hsb.set)
-    transform_vsb.config(command=transform_canvas.yview)
-    transform_hsb.config(command=transform_canvas.xview)
-    transform_vsb.pack(side="right", fill="y")
-    transform_hsb.pack(side="bottom", fill="x")
-    transform_canvas.pack(fill="both", expand=1)
-    transform_canvas.bind("<MouseWheel>",
-                          lambda event: transform_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
-    transform_canvas.bind("<Control MouseWheel>",
-                          lambda event: transform_canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
+
+    transform_canvas = create_scrollbars(transform_frame)
 
     explain_frame = tk.LabelFrame(master=popup_window, text="Explanation", width=popup_window.winfo_width() / 3)
     explain_frame.pack(side="left", fill="both", expand=1)

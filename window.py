@@ -12,69 +12,93 @@ def clear_widgets(frame):
 def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error):
     try:
         file_error.pack_forget()
-        functions.submit(file_variable.get(), grammar_str, init_combo, rule_combo, rules)
+        functions.submit(file_variable, grammar_str, init_combo, rule_combo, rules)
     except Exception as e:
-        file_error.config(text=e)
-        file_error.pack(pady=5)
-        return e
+        load_initial_page(e)
 
 
 def execute_run():
     try:
         load_page2()
     except KeyError as k:
-        load_page1(f"Invalid file {k}")
+        load_initial_page(f"Invalid file {k}")
     except Exception as e:
-        load_page1(e)
+        load_initial_page(e)
 
 
-def initial_page():
-    pass
-
-
-def load_page1(error_text=''):
+def load_initial_page(error_text=''):
+    clear_widgets(page1_frame)
     clear_widgets(page2_frame)
+    page1_frame.pack_forget()
+    page2_frame.pack_forget()
+    initial_page_frame.pack(fill=tk.BOTH, expand=1)
+
+    # top_frame
+    top_frame = tk.Frame(master=initial_page_frame)
+    top_frame.pack(fill='both', expand=1)
+
+    # list_frame
+    list_frame = tk.Frame(master=top_frame)
+    list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+
+    listbox = tk.Listbox(master=list_frame, height=25, width=80)
+    listbox.pack(padx=80, pady=10, anchor=tk.E)
+    listbox.bind("<<ListboxSelect>>",
+                 lambda event: functions.display_grammar(listbox.get(tk.ANCHOR), grammar_str, file_variable))
+
+    for item in listbox_items:
+        listbox.insert(tk.END, item)
+
+    # btn_frame
+    btn_frame = tk.Frame(master=top_frame)
+    btn_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1, pady=110)
+
+    add_btn = tk.Button(master=btn_frame, text="Add", width=10,
+                        command=lambda: functions.open_files(listbox, listbox_items))
+    add_btn.pack(pady=20, anchor=tk.W)
+
+    remove_btn = tk.Button(master=btn_frame, text="Remove", width=10,
+                           command=lambda: functions.remove_file(listbox, listbox_items))
+    remove_btn.pack(anchor=tk.W)
+
+    edit_btn = tk.Button(master=btn_frame, text="Edit", width=10,
+                         command=lambda: load_page1(file_error))
+    edit_btn.pack(pady=20, anchor=tk.W)
+
+    run_btn = tk.Button(master=btn_frame, text="Run", width=10,
+                        command=lambda: execute_run())
+    run_btn.pack(anchor=tk.W)
+
+    file_error = tk.Label(master=list_frame, text=error_text, fg="red")
+    file_error.pack()
+
+    # grammar_frame
+    grammar_frame = tk.LabelFrame(master=initial_page_frame, text="Grammar", height=400)
+    grammar_frame.pack(fill=tk.X, side=tk.BOTTOM)
+    grammar_frame.pack_propagate(0)
+
+    grammar_str = tk.StringVar()
+    grammar_l1 = tk.Label(master=grammar_frame, textvariable=grammar_str, justify='left')
+    grammar_l1.pack()
+
+
+def load_page1(file_error):
+    clear_widgets(initial_page_frame)
+    clear_widgets(page2_frame)
+    initial_page_frame.pack_forget()
     page2_frame.pack_forget()
     page1_frame.pack(fill="both")
-
-    # select_frame
-    select_frame = tk.LabelFrame(master=page1_frame, text="Select A File", height=110, width=500)
-    select_frame.pack(fill="x")
-    select_frame.pack_propagate(0)
-
-    select_f1 = tk.Frame(master=select_frame)
-    select_f1.pack(pady=5)
-
-    select_l1 = tk.Label(master=select_f1, text="File:")
-    select_l1.pack(side="left")
-
-    file_textbox = tk.Entry(master=select_f1, textvariable=file_variable, width=100)
-    file_textbox.pack(side="left")
-
-    browse_btn = tk.Button(master=select_f1, text="Browse", command=lambda: functions.open_file(file_variable))
-    browse_btn.pack(side="left", padx=5)
-
-    select_f2 = tk.Frame(master=select_frame)
-    select_f2.pack()
-
-    submit_btn = tk.Button(master=select_f2, text="Submit",
-                           command=lambda: execute_submit(grammar_str, init_combo, rule_combo, rules, file_error))
-    submit_btn.pack(side="left", padx=5)
-
-    run_btn = tk.Button(master=select_f2, text="Run", width=5,
-                        command=lambda: execute_run())
-    run_btn.pack(side="left", padx=10)
-
-    file_error = tk.Label(master=select_frame, text=error_text, fg="red")
-    file_error.pack(pady=5)
 
     # edit_frame
     edit_frame = tk.LabelFrame(master=page1_frame, text="Edit", height=155)
     edit_frame.pack(fill="x")
     edit_frame.pack_propagate(0)
 
-    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
+    nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 2)
     nt_frame.pack(side='left', fill='x', expand=1, padx=100)
+
+    back_btn = tk.Button(master=nt_frame, text='Back', width=7, command=lambda: load_initial_page())
+    back_btn.pack(side=tk.LEFT)
 
     entry_str = tk.StringVar()
     entry = tk.Entry(master=nt_frame, textvariable=entry_str)
@@ -98,12 +122,12 @@ def load_page1(error_text=''):
                                                       init_combo, rule_combo, rules, error_label))
     add_btn.pack(side="left", padx=10)
 
-    remove_btn = tk.Button(master=edit_f2, text="Remove",
+    remove_btn = tk.Button(master=edit_f2, text="Remove", width=7,
                            command=lambda: functions.remove(file_variable.get(), choice.get(), entry_str.get(),
                                                             grammar_str, init_combo, rule_combo, rules, error_label))
     remove_btn.pack(side="left", padx=10)
 
-    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
+    rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 2)
     rule_frame.pack(side="left", fill='both', expand=1)
 
     rule_l1 = tk.Label(master=rule_frame, text="Initial Nonterminal:")
@@ -128,32 +152,32 @@ def load_page1(error_text=''):
     rule_entry = tk.Entry(master=rule_frame, width=30, textvariable=rules)
     rule_entry.grid(row=1, column=2, padx=10)
 
-    save_btn = tk.Button(master=rule_frame, text="Save",
+    save_btn = tk.Button(master=rule_frame, text="Modify", width=7,
                          command=lambda: functions.save_to_config(file_variable.get(), rule_val, rules, init_val,
                                                                   grammar_str, error_label))
     save_btn.grid(row=2, columnspan=3, pady=10)
 
     # transform frame
-    transform_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 3)
-    transform_frame.pack(side="left", fill='both', expand=1)
+    transform_frame = tk.LabelFrame(master=page1_frame, text='Transform', height=155)
+    transform_frame.pack(fill='x', expand=1)
 
-    reduce_btn = tk.Button(master=transform_frame, text="Reduce",
+    reduce_btn = tk.Button(master=transform_frame, text="Reduce", width=20,
                            command=lambda: functions.reduce(window, file_variable.get()))
     reduce_btn.grid(row=0, column=0)
 
-    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules",
+    epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", width=20,
                             command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
     epsilon_btn.grid(row=1, column=0, pady=10)
 
-    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules",
+    unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", width=20,
                          command=lambda: functions.remove_unit_rules(window, file_variable.get()))
-    unit_btn.grid(row=2, column=0)
+    unit_btn.grid(row=0, column=2)
 
-    chomsky_btn = tk.Button(master=transform_frame, text="CNF",
+    chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", width=20,
                             command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
     chomsky_btn.grid(row=0, column=1, padx=10)
 
-    greibach_btn = tk.Button(master=transform_frame, text="GNF",
+    greibach_btn = tk.Button(master=transform_frame, text="Greibach Normal Form", width=20,
                              command=lambda: functions.greibach_normal_form(window, file_variable.get()))
     greibach_btn.grid(row=1, column=1, padx=10)
 
@@ -169,9 +193,13 @@ def load_page1(error_text=''):
     grammar_l1 = tk.Label(master=grammar_frame, textvariable=grammar_str, justify='left')
     grammar_l1.pack()
 
+    execute_submit(grammar_str, init_combo, rule_combo, rules, file_error)
+
 
 def load_page2():
+    clear_widgets(initial_page_frame)
     clear_widgets(page1_frame)
+    initial_page_frame.pack_forget()
     page1_frame.pack_forget()
     page2_frame.pack(fill="both", expand=1)
 
@@ -190,7 +218,7 @@ def load_page2():
     button_frame = tk.Frame(master=execute_frame)
     button_frame.pack(fill='x')
 
-    back_btn = tk.Button(master=button_frame, text="Back", command=lambda: load_page1())
+    back_btn = tk.Button(master=button_frame, text="Back", command=lambda: load_initial_page())
     back_btn.pack(side='left', padx=10)
 
     redo_btn = tk.Button(master=button_frame, text="-->",
@@ -227,16 +255,7 @@ def load_page2():
     tree_frame.pack(side="left", fill='both', expand=1)
     tree_frame.pack_propagate(0)
 
-    tree_sb_vertical = ttk.Scrollbar(master=tree_frame, orient="vertical")
-    tree_sb_horizontal = ttk.Scrollbar(master=tree_frame, orient="horizontal")
-    canvas = tk.Canvas(master=tree_frame, yscrollcommand=tree_sb_vertical.set, xscrollcommand=tree_sb_horizontal.set)
-    tree_sb_vertical.config(command=canvas.yview)
-    tree_sb_horizontal.config(command=canvas.xview)
-    tree_sb_vertical.pack(side="right", fill="y")
-    tree_sb_horizontal.pack(side="bottom", fill="x")
-    canvas.pack(fill="both", expand=1)
-    canvas.bind("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
-    canvas.bind("<Control MouseWheel>", lambda event: canvas.xview_scroll(int(-1 * (event.delta / 120)), "units"))
+    canvas = functions.create_scrollbars(tree_frame)
 
     # sentential_frame
     sentential_frame = tk.LabelFrame(master=page2_frame, text="Sentential Form", height=100)
@@ -261,6 +280,10 @@ window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight()
 
 # global variables
 file_variable = tk.StringVar()
+listbox_items = []
+
+# initial_page
+initial_page_frame = tk.Frame(master=window)
 
 # page1
 page1_frame = tk.Frame(master=window)
@@ -268,8 +291,8 @@ page1_frame = tk.Frame(master=window)
 # page2
 page2_frame = tk.Frame(master=window)
 
-# load page1
-load_page1()
+# load initial_page
+load_initial_page()
 
 # run
 window.mainloop()
