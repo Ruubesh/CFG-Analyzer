@@ -90,7 +90,7 @@ def load_page1(file_error):
     page1_frame.pack(fill="both")
 
     # edit_frame
-    edit_frame = tk.LabelFrame(master=page1_frame, text="Edit", height=155)
+    edit_frame = tk.LabelFrame(master=page1_frame, text="Edit", height=165)
     edit_frame.pack(fill="x")
     edit_frame.pack_propagate(0)
 
@@ -102,7 +102,7 @@ def load_page1(file_error):
 
     entry_str = tk.StringVar()
     entry = tk.Entry(master=nt_frame, textvariable=entry_str)
-    entry.pack(pady=10)
+    entry.pack(pady=5)
 
     edit_f1 = tk.Frame(master=nt_frame)
     edit_f1.pack(pady=10)
@@ -163,7 +163,7 @@ def load_page1(file_error):
 
     reduce_btn = tk.Button(master=transform_frame, text="Reduce", width=20,
                            command=lambda: functions.reduce(window, file_variable.get()))
-    reduce_btn.grid(row=0, column=0)
+    reduce_btn.grid(row=0, column=0, padx=10)
 
     epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", width=20,
                             command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
@@ -171,15 +171,15 @@ def load_page1(file_error):
 
     unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", width=20,
                          command=lambda: functions.remove_unit_rules(window, file_variable.get()))
-    unit_btn.grid(row=0, column=2)
+    unit_btn.grid(row=0, column=1)
 
     chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", width=20,
                             command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
-    chomsky_btn.grid(row=0, column=1, padx=10)
+    chomsky_btn.grid(row=0, column=2, padx=20)
 
     greibach_btn = tk.Button(master=transform_frame, text="Greibach Normal Form", width=20,
                              command=lambda: functions.greibach_normal_form(window, file_variable.get()))
-    greibach_btn.grid(row=1, column=1, padx=10)
+    greibach_btn.grid(row=1, column=2)
 
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()

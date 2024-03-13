@@ -123,7 +123,7 @@ class CFG:
             if temp not in set_list:
                 set_list.append(temp)
 
-    def generate_grammar_text(self, file, rules):
+    def generate_grammar_text(self, file, rules, label=False):
         config = self.read_config(file)
         red = "ஆ"
         grammar_text = ''
@@ -132,7 +132,7 @@ class CFG:
             if section == 'rules':
                 grammar_text += f"[{section}]\n"
                 for nt in config[section]:
-                    grammar_text += f"{nt} = "
+                    grammar_text += f"{nt} → "
                     rule_list = config[section][nt].split(',')
                     for index, rule in enumerate(rule_list):
                         if index == len(rule_list) - 1:
@@ -140,11 +140,16 @@ class CFG:
                                 grammar_text += f"{red + rule + red}\n"
                             else:
                                 grammar_text += f"{rule}\n"
+                        elif label:
+                            if nt in rules.keys() and rule in rules[nt]:
+                                grammar_text += f"{red + rule + red} | "
+                            else:
+                                grammar_text += f"{rule} | "
                         else:
                             if nt in rules.keys() and rule in rules[nt]:
-                                grammar_text += f"{red + rule + red},"
+                                grammar_text += f"{red + rule + red}|"
                             else:
-                                grammar_text += f"{rule},"
+                                grammar_text += f"{rule}|"
             else:
                 grammar_text += f"[{section}]\n"
                 for key, value in config.items(section):

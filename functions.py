@@ -58,7 +58,7 @@ def read_file(file):
 
 def display_grammar(file, grammar_str, file_variable):
     file_variable.set(file)
-    text = read_file(file)
+    text = CFG().generate_grammar_text(file, {}, label=True)
     grammar_str.set(text)
 
 
@@ -287,7 +287,7 @@ def update_reduction_rules(config, grammar, file_variable, set_transformation, s
 
     text = generate_rules_text(config)
 
-    grammar_text = read_file(file_variable)
+    grammar_text = CFG().generate_grammar_text(file_variable, {})
     explain_text = f"Remove all nonterminals that are not in\n" \
                    f"{set_transformation}\n" \
                    f"together with all rules where they occur\n" \
@@ -304,7 +304,7 @@ def reduce(window, file_variable):
     set_list = []
     grammar.reduce_phase1(file_variable, config, grammar, stack_transformation, set_t, set_list, '\u2080')
 
-    grammar_text = read_file(file_variable)
+    grammar_text = CFG().generate_grammar_text(file_variable, {})
     transform_text = f"\nT = {set_list}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": ''})
 
@@ -314,7 +314,7 @@ def reduce(window, file_variable):
     set_list.append(grammar.initial_nonterminal)
     set_d = set()
     set_d.add(grammar.initial_nonterminal)
-    grammar_text = read_file(file_variable)
+    grammar_text = CFG().generate_grammar_text(file_variable, {})
     reduction_text = f"D\u2080 = {set_list}"
     explain_text = f"{grammar.initial_nonterminal} is the initial nonterminal"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": reduction_text,
@@ -330,7 +330,7 @@ def reduce(window, file_variable):
 
 
 def remove_epsilon_rules(window, file_variable, other_stack=None, other_transform=False):
-    grammar_text = read_file(file_variable)
+    grammar_text = CFG().generate_grammar_text(file_variable, {})
     if other_transform:
         stack_transformation = other_stack
         transform_text = 'Step 2:\n'
@@ -411,7 +411,7 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
 
 
 def remove_unit_rules(window, file, other_stack=None, other_transform=False):
-    grammar_text = read_file(file)
+    grammar_text = CFG().generate_grammar_text(file, {})
     config = CFG().read_config(file)
     epsilon = False
     if other_transform:
@@ -491,7 +491,7 @@ def chomsky_normal_form(window, file):
     # Step 1
     CFG().decompose_rules(config, grammar)
 
-    grammar_text = read_file(file)
+    grammar_text = CFG().generate_grammar_text(file, {})
     transformation_text = 'Step 1:'
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": 'Decompose rules'})
@@ -542,7 +542,7 @@ def chomsky_normal_form(window, file):
 
     CFG().rule_dict_to_config(config, grammar.rules)
 
-    grammar_text = read_file(copy_file)
+    grammar_text = CFG().generate_grammar_text(copy_file, {})
     transformation_text = 'Step 4:'
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": ''})
@@ -574,7 +574,7 @@ def greibach_normal_form(window, file):
     # Step 1
     config = CFG().read_config(copy_file)
 
-    grammar_text = read_file(file)
+    grammar_text = CFG().generate_grammar_text(file, {})
     transformation_text = 'Step 1:'
     explain_text = "Remove unit rules and epsilon rules"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
@@ -588,7 +588,7 @@ def greibach_normal_form(window, file):
     # Step 2
     grammar = main(copy_file)
 
-    grammar_text = read_file(copy_file)
+    grammar_text = CFG().generate_grammar_text(copy_file, {})
     transformation_text = 'Step 2:'
     explain_text = "Assign integer values to nonterminal symbols from 1...N in same sequence\n" \
                    "and reorder the rules in ascending order"
@@ -625,7 +625,7 @@ def greibach_normal_form(window, file):
 
     # Step 3
     CFG().write_to_config(config, copy_file)
-    grammar_text = read_file(copy_file)
+    grammar_text = CFG().generate_grammar_text(copy_file, {})
     transformation_text = 'Step 3:'
     explain_text = "Check for every production rule if RHS has first symbol\n" \
                    "as non terminal say Aj for the production of Ai,\n" \
@@ -679,7 +679,7 @@ def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     new_rules = [item for item in new_rule if item != '']
     grammar.set('rules', rule_val.get(), ','.join(new_rules))
     CFG().write_to_config(grammar, file)
-    text = read_file(file)
+    text = CFG().generate_grammar_text(file, {}, label=True)
     grammar_str.set(text)
 
 
