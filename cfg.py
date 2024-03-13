@@ -1,6 +1,8 @@
 import re
 import configparser
 import os
+import functions
+from copy import deepcopy
 
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
@@ -334,14 +336,24 @@ class CFG:
 
             config.set('rules', nonterminal, ','.join(rule_list))
 
-    def gnf_phase1(self, grammar, nonterminal, nt_dict):
+    def gnf_phase1(self, grammar, nonterminal, nt_dict, config, stack_transformation, file):
         rules = grammar.rules[nonterminal]
+        temp_rules = deepcopy(rules)
         new_nt_count = 1
+        rule_highlight = {}
+        explain_text = ''
         for rule_index, rule in enumerate(rules):
             first_item = rule[0]
             if first_item in grammar.nonterminals and nt_dict[first_item] < nt_dict[nonterminal]:
+                if nonterminal not in rule_highlight:
+                    rule_highlight[nonterminal] = set()
+                rule_highlight[nonterminal].add(''.join(rule))
+                explain_text = f"{first_item} < {nonterminal}\nReplace the production rule of '{first_item}' at its " \
+                               f"place in '{nonterminal}'"
+
                 if len(grammar.rules[first_item]) == 1:
                     rule[0] = grammar.rules[first_item][0][0]
+                    break
                 else:
                     rule_list = []
                     for item_rules in grammar.rules[first_item]:
@@ -358,6 +370,16 @@ class CFG:
                 while new_nt in grammar.nonterminals:
                     new_nt_count += 1
                     new_nt = f'<gt{new_nt_count}>'
+
+                if nonterminal not in rule_highlight:
+                    rule_highlight[nonterminal] = set()
+                rule_highlight[nonterminal].add(''.join(rule))
+                explain_text = f"{first_item} = {nonterminal}, it is the left recursion.\n" \
+                               f"Create a new state '{new_nt}' which has the symbols\n" \
+                               f"of the left recursive production, once followed by {new_nt}\n" \
+                               f"and once without {new_nt},and change that production rule by\n" \
+                               f"removing that particular production and adding all other\n" \
+                               f"production once followed by {new_nt}.\n"
 
                 temp_rule = rule.copy()
                 temp_rule.pop(0)
@@ -381,30 +403,53 @@ class CFG:
                 grammar.rules[nonterminal] = rule_list
                 break
 
-        if rules != grammar.rules[nonterminal]:
-            self.gnf_phase1(grammar, nonterminal, nt_dict)
+        if temp_rules != grammar.rules[nonterminal]:
+            grammar_text = self.generate_grammar_text(file, rule_highlight)
+            self.rule_dict_to_config(config, grammar.rules)
+            self.write_to_config(config, file)
+            transformation_text = functions.generate_rules_text(config)
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                       "explain_text": explain_text})
+            self.gnf_phase1(grammar, nonterminal, nt_dict, config, stack_transformation, file)
 
-    def gnf_phase2(self, grammar, nonterminal):
+    def gnf_phase2(self, grammar, nonterminal, config, stack_transformation, file):
         rules = grammar.rules[nonterminal]
+        temp_rules = deepcopy(rules)
+        rule_highlight = {}
+        explain_text = ''
         for rule_index, rule in enumerate(rules):
             first_item = rule[0]
             if first_item in grammar.nonterminals:
+                if nonterminal not in rule_highlight:
+                    rule_highlight[nonterminal] = set()
+                rule_highlight[nonterminal].add(''.join(rule))
+
                 if len(grammar.rules[first_item]) == 1:
+                    explain_text = f"{first_item} → {grammar.rules[first_item][0][0]}"
                     rule[0] = grammar.rules[first_item][0][0]
+                    break
                 else:
+                    explain_text = f"Replace {''.join(rule)} with the following rules:"
                     rule_list = []
                     for item_rules in grammar.rules[first_item]:
                         temp_rule = rule.copy()
                         temp_rule[0:1] = item_rules
                         rule_list.append(temp_rule)
+                        explain_text += f"\n{''.join(temp_rule)}"
 
                     new_rule_list = rules[:rule_index] + rule_list + rules[rule_index:]
                     new_rule_list.remove(rule)
                     grammar.rules[nonterminal] = new_rule_list
                     break
 
-        if rules != grammar.rules[nonterminal]:
-            self.gnf_phase2(grammar, nonterminal)
+        if temp_rules != grammar.rules[nonterminal]:
+            grammar_text = self.generate_grammar_text(file, rule_highlight)
+            self.rule_dict_to_config(config, grammar.rules)
+            self.write_to_config(config, file)
+            transformation_text = functions.generate_rules_text(config)
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                       "explain_text": explain_text})
+            self.gnf_phase2(grammar, nonterminal, config, stack_transformation, file)
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:

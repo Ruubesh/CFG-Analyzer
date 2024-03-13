@@ -575,33 +575,58 @@ def greibach_normal_form(window, file):
     config = CFG().read_config(copy_file)
 
     grammar_text = read_file(file)
+    transformation_text = 'Step 1:'
+    explain_text = "Remove unit rules and epsilon rules"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
     transformation_text = generate_rules_text(config)
     explain_text = "Grammar after removing unit rules and epsilon rules"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    # Greibach Normal Form
+    # Step 2
     grammar = main(copy_file)
 
+    grammar_text = read_file(copy_file)
+    transformation_text = 'Step 2:'
+    explain_text = "Assign integer values to nonterminal symbols from 1...N in same sequence\n" \
+                   "and reorder the rules in ascending order"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    new_config = CFG().read_config(copy_file)
     nt_dict = {}
     i = 1
     for nonterminal, production_rules in grammar.rules.items():
         if nonterminal not in nt_dict:
+            if nonterminal in new_config['rules']:
+                new_config.remove_option('rules', nonterminal)
+
+            new_config.set('rules', nonterminal, config['rules'][nonterminal])
             nt_dict[nonterminal] = i
+            explain_text += f"\n{nonterminal} = {i}"
             i += 1
         for production_rule in production_rules:
             for item in production_rule:
                 if item in grammar.nonterminals and item not in nt_dict:
+                    if item in new_config['rules']:
+                        new_config.remove_option('rules', item)
+
+                    new_config.set('rules', item, config['rules'][item])
                     nt_dict[item] = i
+                    explain_text += f"\n{item} = {i}"
                     i += 1
 
-    for nonterminal in nt_dict.keys():
-        CFG().gnf_phase1(grammar, nonterminal, nt_dict)
-
-    CFG().rule_dict_to_config(config, grammar.rules)
-
-    grammar_text = read_file(copy_file)
+    config = new_config
     transformation_text = generate_rules_text(config)
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    # Step 3
+    CFG().write_to_config(config, copy_file)
+    grammar_text = read_file(copy_file)
+    transformation_text = 'Step 3:'
     explain_text = "Check for every production rule if RHS has first symbol\n" \
                    "as non terminal say Aj for the production of Ai,\n" \
                    "it is mandatory that i should be less than j.\n" \
@@ -615,18 +640,21 @@ def greibach_normal_form(window, file):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    for nonterminal in grammar.rules.keys():
-        CFG().gnf_phase2(grammar, nonterminal)
+    for nonterminal in nt_dict.keys():
+        CFG().gnf_phase1(grammar, nonterminal, nt_dict, config, stack_transformation, copy_file)
 
-    CFG().rule_dict_to_config(config, grammar.rules)
-
-    transformation_text = generate_rules_text(config)
+    # Step 4
+    grammar_text = CFG().generate_grammar_text(copy_file, {})
+    transformation_text = 'Step 4:'
     explain_text = "Replace the production to the form of either\n" \
                    "Ai → x (any single terminal symbol)\n" \
                    "OR\n" \
-                   "Ai → xX (any single non terminal followed by any number of non terminals)"
+                   "Ai → xX (any single terminal followed by any number of non terminals)"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
+
+    for nonterminal in grammar.rules.keys():
+        CFG().gnf_phase2(grammar, nonterminal, config, stack_transformation, copy_file)
 
     CFG().write_to_config_copy(config, file)
 
