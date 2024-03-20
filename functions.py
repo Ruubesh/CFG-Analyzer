@@ -661,6 +661,24 @@ def greibach_normal_form(window, file):
     create_popup_window(window, stack_transformation, config, file)
 
 
+def compute_first(window, file):
+    stack_transformation = Stack()
+    config = CFG().read_config(file)
+    grammar = main(file)
+
+    first_dict = CFG().compute_first(grammar)
+    transformation_text = ''
+    for nonterminal, first_set in first_dict.items():
+        transformation_text += f"FIRST({nonterminal}) = {first_set}\n"
+
+    grammar_text = CFG().generate_grammar_text(file, {})
+    explain_text = ''
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    create_popup_window(window, stack_transformation, config, file)
+
+
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar = CFG().read_config(file)
     grammar.set('input', 'initial_nonterminal', init_val.get())

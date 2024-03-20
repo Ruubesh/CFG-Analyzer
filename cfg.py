@@ -456,6 +456,55 @@ class CFG:
                                        "explain_text": explain_text})
             self.gnf_phase2(grammar, nonterminal, config, stack_transformation, file)
 
+    def compute_first(self, grammar):
+        first_dict = {}
+
+        for nonterminal in grammar.nonterminals:
+            first_dict[nonterminal] = set()
+
+        while True:
+            updated = False
+
+            for nonterminal, rules in grammar.rules.items():
+                for rule in rules:
+                    first_item = rule[0]
+
+                    if first_item in grammar.terminals:
+                        if first_item not in first_dict[nonterminal]:
+                            first_dict[nonterminal].add(first_item)
+                            updated = True
+                    elif first_item in grammar.nonterminals:
+                        for item in first_dict[first_item]:
+                            if item != 'epsilon' and item not in first_dict[nonterminal]:
+                                first_dict[nonterminal].add(item)
+                                updated = True
+                        if 'epsilon' in first_dict[first_item]:
+                            for item in rule[1:]:
+                                if item in grammar.terminals:
+                                    if item not in first_dict[nonterminal]:
+                                        first_dict[nonterminal].add(item)
+                                        updated = True
+                                    break
+                                elif item in grammar.nonterminals:
+                                    for i in first_dict[item]:
+                                        if i != 'epsilon' and i not in first_dict[nonterminal]:
+                                            first_dict[nonterminal].add(i)
+                                            updated = True
+                                    if 'epsilon' not in first_dict[item]:
+                                        break
+                                    elif item == rule[-1] and 'epsilon' not in first_dict[nonterminal]:
+                                        first_dict[nonterminal].add('epsilon')
+                                        updated = True
+                    else:
+                        if 'epsilon' not in first_dict[nonterminal]:
+                            first_dict[nonterminal].add('epsilon')
+                            updated = True
+
+            if not updated:
+                break
+
+        return first_dict
+
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
             self.rules[nonterminal] = []

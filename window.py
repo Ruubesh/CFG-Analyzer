@@ -181,6 +181,10 @@ def load_page1(file_error):
                              command=lambda: functions.greibach_normal_form(window, file_variable.get()))
     greibach_btn.grid(row=1, column=2)
 
+    first_btn = tk.Button(master=transform_frame, text="First", width=20,
+                          command=lambda: functions.compute_first(window, file_variable.get()))
+    first_btn.grid(row=0, column=3, padx=20)
+
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()
 
