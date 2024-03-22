@@ -695,7 +695,16 @@ def compute_first_and_follow(window, file):
                                "explain_text": explain_text})
 
     # compute_follow
+    follow_dict = CFG().compute_follow(grammar, first_dict)
 
+    # FOLLOW
+    transformation_text = '\n'
+    for nonterminal, follow_set in follow_dict.items():
+        transformation_text += f"FOLLOW({nonterminal}) = {follow_set}\n"
+
+    explain_text = 'FOLLOWs of the nonterminals in the grammar'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
 
     create_popup_window(window, stack_transformation, config, file)
 

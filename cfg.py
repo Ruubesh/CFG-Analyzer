@@ -512,8 +512,71 @@ class CFG:
 
         return first_dict, node_dict
 
-    def compute_follow(self):
-        pass
+    def compute_follow(self, grammar, first_dict):
+        follow_dict = {}
+
+        for nonterminal in grammar.nonterminals:
+            follow_dict[nonterminal] = set()
+
+        follow_dict[grammar.initial_nonterminal].add('⊣')
+
+        while True:
+            updated = False
+
+            for nt in grammar.nonterminals:
+                for nonterminal, rules in grammar.rules.items():
+                    for rule in rules:
+                        for index, item in enumerate(rule):
+                            if nt == item:
+                                if rule[index] == rule[-1]:
+                                    for item in follow_dict[nonterminal]:
+                                        if item not in follow_dict[nt]:
+                                            follow_dict[nt].add(item)
+                                            updated = True
+                                            # break
+                                else:
+                                    follow_item = rule[index + 1]
+
+                                    if follow_item in grammar.terminals:
+                                        if follow_item not in follow_dict[nt]:
+                                            follow_dict[nt].add(follow_item)
+                                            updated = True
+                                    elif follow_item in grammar.nonterminals:
+                                        for item in first_dict[follow_item]:
+                                            if item != 'epsilon' and item not in follow_dict[nt]:
+                                                follow_dict[nt].add(item)
+                                                updated = True
+                                        if 'epsilon' in first_dict[follow_item]:
+                                            if rule[index + 1] == rule[-1]:
+                                                for item in follow_dict[nonterminal]:
+                                                    if item not in follow_dict[nt]:
+                                                        follow_dict[nt].add(item)
+                                                        updated = True
+                                                        # break
+                                            else:
+                                                for ind, item in enumerate(rule[index + 2:]):
+                                                    if item in grammar.terminals:
+                                                        if item not in follow_dict[nt]:
+                                                            follow_dict[nt].add(item)
+                                                            updated = True
+                                                        break
+                                                    elif item in grammar.nonterminals:
+                                                        for i in first_dict[item]:
+                                                            if i != 'epsilon' and i not in follow_dict[nt]:
+                                                                follow_dict[nt].add(i)
+                                                                updated = True
+                                                        if 'epsilon' not in first_dict[item]:
+                                                            break
+                                                        elif rule[index + 2 + ind] == rule[-1]:
+                                                            for i in follow_dict[nonterminal]:
+                                                                if i not in follow_dict[nt]:
+                                                                    follow_dict[nt].add(i)
+                                                                    updated = True
+
+            if not updated:
+                break
+
+        return follow_dict
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
