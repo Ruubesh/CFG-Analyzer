@@ -661,20 +661,37 @@ def greibach_normal_form(window, file):
     create_popup_window(window, stack_transformation, config, file)
 
 
-def compute_first(window, file):
+def compute_first_and_follow(window, file):
     stack_transformation = Stack()
     config = CFG().read_config(file)
     grammar = main(file)
 
-    first_dict = CFG().compute_first(grammar)
+    # compute_first
+    first_dict, node_dict = CFG().compute_first(grammar)
+
+    # nodes and edges
     transformation_text = ''
+    for node, edges in node_dict.items():
+        transformation_text += f"Node({node}):\n"
+        for edge in edges:
+            transformation_text += f"\t-->{edge}\n"
+
+    grammar_text = CFG().generate_grammar_text(file, {})
+    explain_text = "Nodes and their respective edges to other nodes"
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    # FIRST
+    transformation_text = '\n'
     for nonterminal, first_set in first_dict.items():
         transformation_text += f"FIRST({nonterminal}) = {first_set}\n"
 
-    grammar_text = CFG().generate_grammar_text(file, {})
-    explain_text = ''
+    explain_text = 'FIRSTs of the nonterminals in the grammar'
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
+
+    # compute_follow
+
 
     create_popup_window(window, stack_transformation, config, file)
 

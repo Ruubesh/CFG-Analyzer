@@ -458,9 +458,11 @@ class CFG:
 
     def compute_first(self, grammar):
         first_dict = {}
+        node_dict = {}
 
         for nonterminal in grammar.nonterminals:
             first_dict[nonterminal] = set()
+            node_dict[nonterminal] = set()
 
         while True:
             updated = False
@@ -468,6 +470,8 @@ class CFG:
             for nonterminal, rules in grammar.rules.items():
                 for rule in rules:
                     first_item = rule[0]
+                    if first_item != '':
+                        node_dict[nonterminal].add(first_item)
 
                     if first_item in grammar.terminals:
                         if first_item not in first_dict[nonterminal]:
@@ -480,6 +484,9 @@ class CFG:
                                 updated = True
                         if 'epsilon' in first_dict[first_item]:
                             for item in rule[1:]:
+                                if item != '':
+                                    node_dict[nonterminal].add(item)
+
                                 if item in grammar.terminals:
                                     if item not in first_dict[nonterminal]:
                                         first_dict[nonterminal].add(item)
@@ -503,7 +510,10 @@ class CFG:
             if not updated:
                 break
 
-        return first_dict
+        return first_dict, node_dict
+
+    def compute_follow(self):
+        pass
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
