@@ -656,6 +656,10 @@ def greibach_normal_form(window, file):
     for nonterminal in grammar.rules.keys():
         CFG().gnf_phase2(grammar, nonterminal, config, stack_transformation, copy_file)
 
+    explain_text = stack_transformation.data[-1]["explain_text"]
+    explain_text += "\n\nThe grammar is now in Greibach Normal Form"
+    stack_transformation.data[-1]["explain_text"] = explain_text
+
     CFG().write_to_config_copy(config, file)
 
     create_popup_window(window, stack_transformation, config, file)
@@ -759,6 +763,7 @@ def update_vertical_scrollregion(canvas, str_var):
     width = canvas.winfo_width() / 2
     canvas.create_text(width, 10, text=str_var.get())
     canvas.config(scrollregion=canvas.bbox("all"))
+    canvas.yview_moveto(1.0)
 
 
 def calculate_subtree_width(tree, x_space):
