@@ -483,7 +483,7 @@ class CFG:
                                 first_dict[nonterminal].add(item)
                                 updated = True
                         if 'epsilon' in first_dict[first_item]:
-                            for item in rule[1:]:
+                            for ind, item in enumerate(rule[1:]):
                                 if item != '':
                                     node_dict[nonterminal].add(item)
 
@@ -499,7 +499,7 @@ class CFG:
                                             updated = True
                                     if 'epsilon' not in first_dict[item]:
                                         break
-                                    elif item == rule[-1] and 'epsilon' not in first_dict[nonterminal]:
+                                    elif ind + 1 == len(rule) - 1 and 'epsilon' not in first_dict[nonterminal]:
                                         first_dict[nonterminal].add('epsilon')
                                         updated = True
                     else:
@@ -528,7 +528,7 @@ class CFG:
                     for rule in rules:
                         for index, item in enumerate(rule):
                             if nt == item:
-                                if rule[index] == rule[-1]:
+                                if index == len(rule) - 1:
                                     for item in follow_dict[nonterminal]:
                                         if item not in follow_dict[nt]:
                                             follow_dict[nt].add(item)
@@ -547,7 +547,7 @@ class CFG:
                                                 follow_dict[nt].add(item)
                                                 updated = True
                                         if 'epsilon' in first_dict[follow_item]:
-                                            if rule[index + 1] == rule[-1]:
+                                            if index + 1 == len(rule) - 1:
                                                 for item in follow_dict[nonterminal]:
                                                     if item not in follow_dict[nt]:
                                                         follow_dict[nt].add(item)
@@ -567,7 +567,7 @@ class CFG:
                                                                 updated = True
                                                         if 'epsilon' not in first_dict[item]:
                                                             break
-                                                        elif rule[index + 2 + ind] == rule[-1]:
+                                                        elif index + 2 + ind == len(rule) - 1:
                                                             for i in follow_dict[nonterminal]:
                                                                 if i not in follow_dict[nt]:
                                                                     follow_dict[nt].add(i)
