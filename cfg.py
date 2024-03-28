@@ -582,6 +582,7 @@ class CFG:
     def compute_first_rules(self, grammar, instance, first_dict):
         nonterminal = instance.name
         first_rules = instance.first_rules
+
         for rule in grammar.rules[nonterminal]:
             if rule == ['']:
                 key = 'epsilon'
@@ -606,6 +607,62 @@ class CFG:
                         break
                 else:
                     first_rules[key].add('epsilon')
+
+    def is_mutually_disjoint(self, instance, stack_transformation, grammar_text):
+        nonterminal = instance.name
+        first_rules = instance.first_rules
+
+        transformation_text = f"Node({nonterminal}):\n"
+
+        overlapping_pairs = []
+        rules = list(first_rules.keys())
+        for i in range(len(rules)):
+            key = rules[i]
+            transformation_text += f"\t{first_rules[key]} → {key}\n"
+            for j in range(i + 1, len(rules)):
+                rule1, rule2 = rules[i], rules[j]
+                set1, set2 = set(first_rules[rule1]), set(first_rules[rule2])
+                if set1.intersection(set2):
+                    overlapping_pairs.append((rule1, rule2))
+
+        explain_text = ''
+        if overlapping_pairs:
+            for rule1, rule2 in overlapping_pairs:
+                explain_text += f"Rules '{rule1}' and '{rule2}' in {nonterminal} contain common elements:\n" \
+                                f"{first_rules[rule1].intersection(first_rules[rule2])}\n\n"
+
+            explain_text += "This is not a LL(1) grammar"
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                       "explain_text": explain_text})
+            return True
+        else:
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                                       "explain_text": explain_text})
+            return False
+
+    def ll1_c3(self, instance, stack_transformation, grammar_text, first_dict, follow_dict):
+        nonterminal = instance.name
+        first_rules = instance.first_rules
+
+        if 'epsilon' in first_dict[nonterminal]:
+            temp_dict = {}
+            for rule, firsts in first_rules.items():
+                if 'epsilon' in firsts:
+                    continue
+                else:
+                    temp_dict[rule] = firsts
+
+            set1 = set(follow_dict[nonterminal])
+            for rule, firsts in temp_dict.items():
+                set2 = set(firsts)
+                if set1.intersection(set2):
+                    explain_text = f"FIRST({rule}) has common elements with FOLLOW({nonterminal})\n" \
+                                   f"{set1.intersection(set2)}\n\nThis is not a LL(1) grammar"
+                    stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
+                                               "explain_text": explain_text})
+                    return True
+                else:
+                    return False
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:

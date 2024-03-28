@@ -709,6 +709,43 @@ def compute_first_and_follow(window, file):
     create_popup_window(window, stack_transformation, config, file)
 
 
+def is_ll1(window, file):
+    grammar = main(file)
+    stack_transformation = Stack()
+    config = CFG().read_config(file)
+
+    first_dict, _ = CFG().compute_first(grammar)
+    follow_dict = CFG().compute_follow(grammar, first_dict)
+
+    grammar_text = CFG().generate_grammar_text(file, {})
+
+    instance_dict = {}
+    for name, cls in grammar.classes.items():
+        if name in grammar.nonterminals:
+            instance = cls()
+            instance.first_rules = {}
+            instance_dict[name] = instance
+
+            CFG().compute_first_rules(grammar, instance, first_dict)
+
+            conflict = CFG().is_mutually_disjoint(instance, stack_transformation, grammar_text)
+
+            if conflict:
+                break
+
+            conflict = CFG().ll1_c3(instance, stack_transformation, grammar_text, first_dict, follow_dict)
+
+            if conflict:
+                break
+
+    if not conflict:
+        explain_text = "This is a LL(1) grammar"
+        stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
+                                   "explain_text": explain_text})
+
+    create_popup_window(window, stack_transformation, config, file)
+
+
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar = CFG().read_config(file)
     grammar.set('input', 'initial_nonterminal', init_val.get())
