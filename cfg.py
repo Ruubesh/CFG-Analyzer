@@ -111,6 +111,7 @@ class TreeNode:
 
 class CFG:
     def __init__(self):
+        self.classes = {}
         self.rules = {}
         self.nonterminals = []
         self.terminals = []
@@ -578,6 +579,34 @@ class CFG:
 
         return follow_dict
 
+    def compute_first_rules(self, grammar, instance, first_dict):
+        nonterminal = instance.name
+        first_rules = instance.first_rules
+        for rule in grammar.rules[nonterminal]:
+            if rule == ['']:
+                key = 'epsilon'
+            else:
+                key = ''.join(rule)
+            if key not in first_rules:
+                first_rules[key] = set()
+            for index, item in enumerate(rule):
+                if item in grammar.terminals:
+                    first_rules[key].add(item)
+                    break
+                elif item in grammar.nonterminals:
+                    if index == len(rule) - 1 and 'epsilon' in first_dict[item]:
+                        first_rules[key].add('epsilon')
+                    if 'epsilon' in first_dict[item]:
+                        for i in first_dict[item]:
+                            if i != 'epsilon':
+                                first_rules[key].add(i)
+                    else:
+                        for i in first_dict[item]:
+                            first_rules[key].add(i)
+                        break
+                else:
+                    first_rules[key].add('epsilon')
+
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
             self.rules[nonterminal] = []
@@ -593,7 +622,7 @@ class CFG:
 
     def create_class(self, class_names):
         for class_name in class_names:
-            globals()[class_name] = type(class_name, (), {'attribute': class_name})
+            self.classes[class_name] = type(class_name, (), {'name': class_name})
 
     def create_sentential_form(self, st, nt, exp, pos):
         new_st = Stack()
@@ -867,7 +896,7 @@ def main(file_variable):
                                 break
 
                 nlist.append(rlist)
-            grammar.add_rule(globals()[nt]().attribute, nlist)
+            grammar.add_rule(nt, nlist)
 
     grammar.stack.push(grammar.initial_nonterminal)
     return grammar
