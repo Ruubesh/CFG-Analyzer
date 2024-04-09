@@ -197,9 +197,9 @@ def on_popup_window_close(window, config, file):
     window.destroy()
 
 
-def create_popup_window(window, stack_transformation, config, file):
+def create_popup_window(window, stack_transformation, config, file, win_title):
     popup_window = tk.Toplevel(window)
-    popup_window.title("View Transformation")
+    popup_window.title(win_title)
     popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
     popup_window.focus()
@@ -326,7 +326,7 @@ def reduce(window, file_variable):
 
     update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
 
-    create_popup_window(window, stack_transformation, config, file_variable)
+    create_popup_window(window, stack_transformation, config, file_variable, 'Reduction')
 
 
 def remove_epsilon_rules(window, file_variable, other_stack=None, other_transform=False):
@@ -407,7 +407,7 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
     else:
         CFG().write_to_config_copy(config, file_variable)
 
-        create_popup_window(window, stack_transformation, config, file_variable)
+        create_popup_window(window, stack_transformation, config, file_variable, 'Remove Epsilon Rules')
 
 
 def remove_unit_rules(window, file, other_stack=None, other_transform=False):
@@ -476,11 +476,11 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
         CFG().write_to_config(config, file)
     elif epsilon:
         os.remove(file)
-        create_popup_window(window, stack_transformation, config, file)
+        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules')
     else:
         CFG().write_to_config_copy(config, file)
 
-        create_popup_window(window, stack_transformation, config, file)
+        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules')
 
 
 def chomsky_normal_form(window, file):
@@ -557,7 +557,7 @@ def chomsky_normal_form(window, file):
 
     CFG().write_to_config(config, copy_file)
 
-    create_popup_window(window, stack_transformation, config, file)
+    create_popup_window(window, stack_transformation, config, file, 'Chomsky Normal Form')
 
 
 def greibach_normal_form(window, file):
@@ -662,7 +662,7 @@ def greibach_normal_form(window, file):
 
     CFG().write_to_config_copy(config, file)
 
-    create_popup_window(window, stack_transformation, config, file)
+    create_popup_window(window, stack_transformation, config, file, 'Greibach Normal Form')
 
 
 def compute_first_and_follow(window, file):
@@ -688,7 +688,11 @@ def compute_first_and_follow(window, file):
     # FIRST
     transformation_text = '\n'
     for nonterminal, first_set in first_dict.items():
-        transformation_text += f"FIRST({nonterminal}) = {first_set}\n"
+        f_set = first_set.copy()
+        if 'epsilon' in f_set:
+            f_set.remove('epsilon')
+            f_set.add('ε')
+        transformation_text += f"FIRST({nonterminal}) = {f_set}\n"
 
     explain_text = 'FIRSTs of the nonterminals in the grammar'
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
@@ -706,7 +710,7 @@ def compute_first_and_follow(window, file):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    create_popup_window(window, stack_transformation, config, file)
+    create_popup_window(window, stack_transformation, config, file, 'First and Follow')
 
 
 def is_ll1(window, file):
@@ -719,6 +723,27 @@ def is_ll1(window, file):
 
     grammar_text = CFG().generate_grammar_text(file, {})
 
+    # display first and follow
+    transformation_text = '\n'
+    for nonterminal, first_set in first_dict.items():
+        f_set = first_set.copy()
+        if 'epsilon' in f_set:
+            f_set.remove('epsilon')
+            f_set.add('ε')
+        transformation_text += f"FIRST({nonterminal}) = {f_set}\n"
+
+    explain_text = 'FIRSTs of the nonterminals in the grammar'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    transformation_text = '\n'
+    for nonterminal, follow_set in follow_dict.items():
+        transformation_text += f"FOLLOW({nonterminal}) = {follow_set}\n"
+
+    explain_text = 'FOLLOWs of the nonterminals in the grammar'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
     instance_dict = {}
     for name, cls in grammar.classes.items():
         if name in grammar.nonterminals:
@@ -726,7 +751,7 @@ def is_ll1(window, file):
             instance.first_rules = {}
             instance_dict[name] = instance
 
-            CFG().compute_first_rules(grammar, instance, first_dict)
+            CFG().compute_first_rules(grammar, instance, first_dict, follow_dict)
 
             conflict = CFG().is_mutually_disjoint(instance, stack_transformation, grammar_text)
 
@@ -743,7 +768,7 @@ def is_ll1(window, file):
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
                                    "explain_text": explain_text})
 
-    create_popup_window(window, stack_transformation, config, file)
+    create_popup_window(window, stack_transformation, config, file, 'LL(1)')
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):

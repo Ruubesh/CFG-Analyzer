@@ -138,18 +138,30 @@ class CFG:
                     for index, rule in enumerate(rule_list):
                         if index == len(rule_list) - 1:
                             if nt in rules.keys() and rule in rules[nt]:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
                                 grammar_text += f"{red + rule + red}\n"
                             else:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
                                 grammar_text += f"{rule}\n"
                         elif label:
                             if nt in rules.keys() and rule in rules[nt]:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
                                 grammar_text += f"{red + rule + red} | "
                             else:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
                                 grammar_text += f"{rule} | "
                         else:
                             if nt in rules.keys() and rule in rules[nt]:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
                                 grammar_text += f"{red + rule + red}|"
                             else:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
                                 grammar_text += f"{rule}|"
             else:
                 grammar_text += f"[{section}]\n"
@@ -579,7 +591,7 @@ class CFG:
 
         return follow_dict
 
-    def compute_first_rules(self, grammar, instance, first_dict):
+    def compute_first_rules(self, grammar, instance, first_dict, follow_dict):
         nonterminal = instance.name
         first_rules = instance.first_rules
 
@@ -606,19 +618,27 @@ class CFG:
                             first_rules[key].add(i)
                         break
                 else:
-                    first_rules[key].add('epsilon')
+                    for t in follow_dict[nonterminal]:
+                        first_rules[key].add(t)
 
     def is_mutually_disjoint(self, instance, stack_transformation, grammar_text):
         nonterminal = instance.name
         first_rules = instance.first_rules
 
-        transformation_text = f"Node({nonterminal}):\n"
+        transformation_text = f"Nonterminal({nonterminal}):\n"
 
         overlapping_pairs = []
         rules = list(first_rules.keys())
         for i in range(len(rules)):
             key = rules[i]
-            transformation_text += f"\t{first_rules[key]} → {key}\n"
+            keyt = key
+            if keyt == 'epsilon':
+                keyt = 'ε'
+            first_rules_set = first_rules[key]
+            if 'epsilon' in first_rules_set:
+                first_rules_set.remove('epsilon')
+                first_rules_set.add('ε')
+            transformation_text += f"\t{first_rules_set}\t{nonterminal} → {keyt}\n"
             for j in range(i + 1, len(rules)):
                 rule1, rule2 = rules[i], rules[j]
                 set1, set2 = set(first_rules[rule1]), set(first_rules[rule2])
