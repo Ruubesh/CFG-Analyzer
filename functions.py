@@ -771,6 +771,49 @@ def is_ll1(window, file):
     create_popup_window(window, stack_transformation, config, file, 'LL(1)')
 
 
+def lr0(window, file):
+    config = CFG().read_config(file)
+
+    # augmented grammar
+    init_nt = config['input']['initial_nonterminal']
+    new_nt = f'{init_nt}_prime'
+    config.set('rules', new_nt, init_nt)
+    temp_file = CFG().write_to_config_copy(config, file)
+    config['input']['initial_nonterminal'] = new_nt
+    CFG().write_to_config(config, temp_file)
+    CFG().add_value(config, 'nonterminals', new_nt, temp_file)
+
+    grammar = main(temp_file)
+
+    # instances
+    instance_dict = {}
+    for name, cls in grammar.classes.items():
+        instance = cls()
+        instance.states = {}
+        instance_dict[name] = instance
+
+    init_rule = grammar.rules[grammar.initial_nonterminal][0].copy()
+    init_rule.insert(0, '.')
+    starting_item = [init_rule]
+    states = {0: starting_item}
+    parsing_table = {}
+
+    CFG().compute_closure(grammar, starting_item)
+
+    rules_dict = {}
+    count = 1
+    for nonterminal, rules in grammar.rules.items():
+        for rule in rules:
+            if nonterminal != new_nt:
+                rules_dict[count] = (nonterminal, rule)
+                count += 1
+
+    CFG().compute_goto(grammar, states, parsing_table, rules_dict)
+
+    print(states.items())
+    print(parsing_table.items())
+
+
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar = CFG().read_config(file)
     grammar.set('input', 'initial_nonterminal', init_val.get())

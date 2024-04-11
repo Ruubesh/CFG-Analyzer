@@ -1,7 +1,7 @@
 import re
 import configparser
 import os
-import functions
+# import functions
 from copy import deepcopy
 
 
@@ -683,6 +683,123 @@ class CFG:
                     return True
                 else:
                     return False
+
+    def compute_closure(self, grammar, starting_item):
+        for item in starting_item:
+            for index, symbol in enumerate(item):
+                if symbol == '.':
+                    symbol_after_dot = item[index + 1]
+                    if symbol_after_dot in grammar.nonterminals:
+                        for rule in grammar.rules[symbol_after_dot]:
+                            temp_rule = rule.copy()
+                            temp_rule.insert(0, '.')
+                            starting_item.append(temp_rule)
+
+        return starting_item
+
+    def compute_goto(self, grammar, states, parsing_table, rules_dict):
+        new_state = 1
+        while True:
+            updated = False
+            for state, items in list(states.items()):
+                for item in items:
+                    for index, symbol in enumerate(item):
+                        if symbol == '.':
+                            if index == len(item) - 2:
+                                starting_item = item.copy()
+                                dot = starting_item.pop(index)
+                                starting_item.insert(index + 1, dot)
+                                # starting_item = [starting_item]
+                                present = False
+                                for key, value in states.items():
+                                    if starting_item == value:
+                                        symbol_after_dot = item[index + 1]
+                                        if (state, symbol_after_dot) not in parsing_table:
+                                            parsing_table[(state, symbol_after_dot)] = set()
+                                        if symbol_after_dot in grammar.nonterminals:
+                                            parsing_table[(state, symbol_after_dot)].add(f'G{key}')
+                                        else:
+                                            parsing_table[(state, symbol_after_dot)].add(f'S{key}')
+                                        present = True
+                                        break
+                                if not present:
+                                    symbol_after_dot = item[index + 1]
+                                    if (state, symbol_after_dot) not in parsing_table:
+                                        parsing_table[(state, symbol_after_dot)] = set()
+                                    if symbol_after_dot in grammar.nonterminals:
+                                        parsing_table[(state, symbol_after_dot)].add(f'G{new_state}')
+                                    else:
+                                        parsing_table[(state, symbol_after_dot)].add(f'S{new_state}')
+                                    states[new_state] = starting_item
+                                    new_state += 1
+                                    updated = True
+                            elif index == len(item) - 1:
+                                rule = items.copy()
+                                rule.remove('.')
+                                for st, rules in rules_dict.items():
+                                    if rule == rules[1]:
+                                        for terminal in grammar.terminals:
+                                            if (state, terminal) not in parsing_table:
+                                                parsing_table[(state, terminal)] = set()
+                                            parsing_table[(state, terminal)].add(f'R{st}')
+                            else:
+                                starting_item = item.copy()
+                                dot = starting_item.pop(index)
+                                starting_item.insert(index + 1, dot)
+
+                                next_symbol = starting_item[index + 2]
+                                if next_symbol in grammar.nonterminals:
+                                    starting_item = self.compute_closure(grammar, [starting_item])
+                                    present = False
+                                    for key, value in states.items():
+                                        if starting_item == value:
+                                            symbol_after_dot = item[index + 1]
+                                            if (state, symbol_after_dot) not in parsing_table:
+                                                parsing_table[(state, symbol_after_dot)] = set()
+                                            if symbol_after_dot in grammar.nonterminals:
+                                                parsing_table[(state, symbol_after_dot)].add(f'G{key}')
+                                            else:
+                                                parsing_table[(state, symbol_after_dot)].add(f'S{key}')
+                                            present = True
+                                            break
+                                    if not present:
+                                        symbol_after_dot = item[index + 1]
+                                        if (state, symbol_after_dot) not in parsing_table:
+                                            parsing_table[(state, symbol_after_dot)] = set()
+                                        if symbol_after_dot in grammar.nonterminals:
+                                            parsing_table[(state, symbol_after_dot)].add(f'G{new_state}')
+                                        else:
+                                            parsing_table[(state, symbol_after_dot)].add(f'S{new_state}')
+                                        states[new_state] = starting_item
+                                        new_state += 1
+                                        updated = True
+                                else:
+                                    present = False
+                                    for key, value in states.items():
+                                        if starting_item == value:
+                                            symbol_after_dot = item[index + 1]
+                                            if (state, symbol_after_dot) not in parsing_table:
+                                                parsing_table[(state, symbol_after_dot)] = set()
+                                            if symbol_after_dot in grammar.nonterminals:
+                                                parsing_table[(state, symbol_after_dot)].add(f'G{key}')
+                                            else:
+                                                parsing_table[(state, symbol_after_dot)].add(f'S{key}')
+                                            present = True
+                                            break
+                                    if not present:
+                                        symbol_after_dot = item[index + 1]
+                                        if (state, symbol_after_dot) not in parsing_table:
+                                            parsing_table[(state, symbol_after_dot)] = set()
+                                        if symbol_after_dot in grammar.nonterminals:
+                                            parsing_table[(state, symbol_after_dot)].add(f'G{new_state}')
+                                        else:
+                                            parsing_table[(state, symbol_after_dot)].add(f'S{new_state}')
+                                        states[new_state] = starting_item
+                                        new_state += 1
+                                        updated = True
+
+            if not updated:
+                break
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
