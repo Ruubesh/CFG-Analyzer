@@ -771,7 +771,7 @@ def is_ll1(window, file):
     create_popup_window(window, stack_transformation, config, file, 'LL(1)')
 
 
-def lr0(window, file):
+def is_lr0(window, file):
     config = CFG().read_config(file)
 
     # augmented grammar
@@ -802,7 +802,7 @@ def lr0(window, file):
     CFG().compute_closure(grammar, starting_item)
 
     rules_dict = {}
-    count = 1
+    count = 0
     for nonterminal, rules in grammar.rules.items():
         for rule in rules:
             if nonterminal != new_nt:
@@ -811,28 +811,31 @@ def lr0(window, file):
 
     CFG().compute_goto(grammar, states, parsing_table, rules_dict)
 
-    stack_transformation = Stack()
-    grammar_text = CFG().generate_grammar_text(file, {})
-    transformation_text = ''
-    for state, items in states.items():
-        transformation_text += f'State({state})\n'
-        if isinstance(items, list) and any(isinstance(item, list) for item in items):
-            for it in items:
-                transformation_text += f'\t{it}\n'
-        else:
-            transformation_text += f'\t{items}\n'
-    explain_text = 'LR(0) items'
-    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
-                               "explain_text": explain_text})
+    print(states.items())
+    print(parsing_table)
 
-    transformation_text = ''
-    for key, value in parsing_table.items():
-        transformation_text += f'{key}: {value}\n'
-    explain_text = 'Parsing table'
-    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
-                               "explain_text": explain_text})
-
-    create_popup_window(window, stack_transformation, config, file, 'LR(0)')
+    # stack_transformation = Stack()
+    # grammar_text = CFG().generate_grammar_text(file, {})
+    # transformation_text = ''
+    # for state, items in states.items():
+    #     transformation_text += f'State({state})\n'
+    #     if isinstance(items, list) and any(isinstance(item, list) for item in items):
+    #         for it in items:
+    #             transformation_text += f'\t{it}\n'
+    #     else:
+    #         transformation_text += f'\t{items}\n'
+    # explain_text = 'LR(0) items'
+    # stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+    #                            "explain_text": explain_text})
+    #
+    # transformation_text = ''
+    # for key, value in parsing_table.items():
+    #     transformation_text += f'{key}: {value}\n'
+    # explain_text = 'Parsing table'
+    # stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+    #                            "explain_text": explain_text})
+    #
+    # create_popup_window(window, stack_transformation, config, file, 'LR(0)')
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
