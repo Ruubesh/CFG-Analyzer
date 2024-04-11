@@ -784,13 +784,14 @@ def lr0(window, file):
     CFG().add_value(config, 'nonterminals', new_nt, temp_file)
 
     grammar = main(temp_file)
+    os.remove(temp_file)
 
     # instances
-    instance_dict = {}
-    for name, cls in grammar.classes.items():
-        instance = cls()
-        instance.states = {}
-        instance_dict[name] = instance
+    # instance_dict = {}
+    # for name, cls in grammar.classes.items():
+    #     instance = cls()
+    #     instance.states = {}
+    #     instance_dict[name] = instance
 
     init_rule = grammar.rules[grammar.initial_nonterminal][0].copy()
     init_rule.insert(0, '.')
@@ -810,8 +811,28 @@ def lr0(window, file):
 
     CFG().compute_goto(grammar, states, parsing_table, rules_dict)
 
-    print(states.items())
-    print(parsing_table.items())
+    stack_transformation = Stack()
+    grammar_text = CFG().generate_grammar_text(file, {})
+    transformation_text = ''
+    for state, items in states.items():
+        transformation_text += f'State({state})\n'
+        if isinstance(items, list) and any(isinstance(item, list) for item in items):
+            for it in items:
+                transformation_text += f'\t{it}\n'
+        else:
+            transformation_text += f'\t{items}\n'
+    explain_text = 'LR(0) items'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    transformation_text = ''
+    for key, value in parsing_table.items():
+        transformation_text += f'{key}: {value}\n'
+    explain_text = 'Parsing table'
+    stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
+                               "explain_text": explain_text})
+
+    create_popup_window(window, stack_transformation, config, file, 'LR(0)')
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
