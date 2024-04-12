@@ -814,9 +814,11 @@ def is_lr0(window, file):
 
     CFG().compute_lr0_items(grammar, states_dict, parsing_table, rules_num_dict)
 
-    print(parsing_table)
+
+
+    # print(parsing_table)
     for key, value in states_dict.items():
-        for lhs, rhs in value.items.items():
+        for lhs, rhs in value.transitions.items():
             print(key, lhs, rhs)
 
     # stack_transformation = Stack()

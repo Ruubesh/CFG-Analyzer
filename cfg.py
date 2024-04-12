@@ -713,6 +713,10 @@ class CFG:
                 for lhs, value in instance.items.items():
                     if starting_item[1] == value:
                         symbol_after_dot = item[index + 1]
+
+                        inst = states_dict[state]
+                        inst.transitions[symbol_after_dot] = key
+
                         if (state, symbol_after_dot) not in parsing_table:
                             parsing_table[(state, symbol_after_dot)] = set()
                         if symbol_after_dot in grammar.nonterminals:
@@ -726,6 +730,10 @@ class CFG:
             for key, instance in states_dict.items():
                 if starting_item.items() == instance.items.items():
                     symbol_after_dot = item[index + 1]
+
+                    inst = states_dict[state]
+                    inst.transitions[symbol_after_dot] = key
+
                     if (state, symbol_after_dot) not in parsing_table:
                         parsing_table[(state, symbol_after_dot)] = set()
                     if symbol_after_dot in grammar.nonterminals:
@@ -737,6 +745,10 @@ class CFG:
 
         if not present:
             symbol_after_dot = item[index + 1]
+
+            inst = states_dict[state]
+            inst.transitions[symbol_after_dot] = new_state
+
             if (state, symbol_after_dot) not in parsing_table:
                 parsing_table[(state, symbol_after_dot)] = set()
             if symbol_after_dot in grammar.nonterminals:
