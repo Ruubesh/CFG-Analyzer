@@ -787,32 +787,37 @@ def is_lr0(window, file):
     os.remove(temp_file)
 
     # instances
-    # instance_dict = {}
-    # for name, cls in grammar.classes.items():
-    #     instance = cls()
-    #     instance.states = {}
-    #     instance_dict[name] = instance
+    states_dict = {}
+    state = 0
+    class_name = f'I{state}'
+    cls = type(class_name, (), {'name': class_name, 'items': {}, 'transitions': {}})
+    instance = cls()
+    states_dict[state] = instance
 
+    # create starting item
     init_rule = grammar.rules[grammar.initial_nonterminal][0].copy()
     init_rule.insert(0, '.')
     starting_item = [init_rule]
-    states = {0: starting_item}
+    instance.items[grammar.initial_nonterminal] = starting_item
     parsing_table = {}
 
-    CFG().compute_closure(grammar, starting_item)
+    # compute initial state
+    CFG().compute_closure(grammar, instance.items)
 
-    rules_dict = {}
+    rules_num_dict = {}
     count = 0
     for nonterminal, rules in grammar.rules.items():
         for rule in rules:
             if nonterminal != new_nt:
-                rules_dict[count] = (nonterminal, rule)
+                rules_num_dict[count] = (nonterminal, rule)
                 count += 1
 
-    CFG().compute_goto(grammar, states, parsing_table, rules_dict)
+    CFG().compute_lr0_items(grammar, states_dict, parsing_table, rules_num_dict)
 
-    print(states.items())
     print(parsing_table)
+    for key, value in states_dict.items():
+        for lhs, rhs in value.items.items():
+            print(key, lhs, rhs)
 
     # stack_transformation = Stack()
     # grammar_text = CFG().generate_grammar_text(file, {})
