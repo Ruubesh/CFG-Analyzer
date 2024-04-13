@@ -799,11 +799,11 @@ def is_lr0(window, file):
     init_rule.insert(0, '.')
     starting_item = [init_rule]
     instance.items[grammar.initial_nonterminal] = starting_item
-    parsing_table = {}
 
     # compute initial state
     CFG().compute_closure(grammar, instance.items)
 
+    # assign number for each production rule
     rules_num_dict = {}
     count = 0
     for nonterminal, rules in grammar.rules.items():
@@ -812,37 +812,19 @@ def is_lr0(window, file):
                 rules_num_dict[count] = (nonterminal, rule)
                 count += 1
 
-    CFG().compute_lr0_items(grammar, states_dict, parsing_table, rules_num_dict)
+    CFG().compute_lr0_items(grammar, states_dict)
 
-
-
-    # print(parsing_table)
     for key, value in states_dict.items():
-        for lhs, rhs in value.transitions.items():
-            print(key, lhs, rhs)
+        print(key)
+        for lhs, rhs in value.items.items():
+            t = []
+            for rh in rhs:
+                t.append(''.join(rh))
+            print(f'\t-{lhs}-\t', ','.join(t))
 
-    # stack_transformation = Stack()
-    # grammar_text = CFG().generate_grammar_text(file, {})
-    # transformation_text = ''
-    # for state, items in states.items():
-    #     transformation_text += f'State({state})\n'
-    #     if isinstance(items, list) and any(isinstance(item, list) for item in items):
-    #         for it in items:
-    #             transformation_text += f'\t{it}\n'
-    #     else:
-    #         transformation_text += f'\t{items}\n'
-    # explain_text = 'LR(0) items'
-    # stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
-    #                            "explain_text": explain_text})
-    #
-    # transformation_text = ''
-    # for key, value in parsing_table.items():
-    #     transformation_text += f'{key}: {value}\n'
-    # explain_text = 'Parsing table'
-    # stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
-    #                            "explain_text": explain_text})
-    #
-    # create_popup_window(window, stack_transformation, config, file, 'LR(0)')
+    # for key, value in states_dict.items():
+    #     for lhs, rhs in value.transitions.items():
+    #         print(key, lhs, rhs)
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):

@@ -691,57 +691,36 @@ class CFG:
                 for item in rhs:
                     for index, symbol in enumerate(item):
                         if symbol == '.':
-                            symbol_after_dot = item[index + 1]
-                            if symbol_after_dot in grammar.nonterminals:
-                                for rule in grammar.rules[symbol_after_dot]:
-                                    temp_rule = rule.copy()
-                                    temp_rule.insert(0, '.')
-                                    if symbol_after_dot not in items:
-                                        items[symbol_after_dot] = []
-                                    if temp_rule not in items[symbol_after_dot]:
-                                        items[symbol_after_dot].append(temp_rule)
-                                        updated = True
+                            if index == len(item) - 1:
+                                continue
+                            else:
+                                symbol_after_dot = item[index + 1]
+                                if symbol_after_dot in grammar.nonterminals:
+                                    for rule in grammar.rules[symbol_after_dot]:
+                                        temp_rule = rule.copy()
+                                        temp_rule.insert(0, '.')
+                                        if symbol_after_dot not in items:
+                                            items[symbol_after_dot] = []
+                                        if temp_rule not in items[symbol_after_dot]:
+                                            items[symbol_after_dot].append(temp_rule)
+                                            updated = True
             if not updated:
                 break
 
         return items
 
-    def populate_lr0_items(self, grammar, states_dict, starting_item, item, index, state, parsing_table, new_state, updated):
-        if isinstance(starting_item, tuple):
-            present = False
-            for key, instance in states_dict.items():
-                for lhs, value in instance.items.items():
-                    if starting_item[1] == value:
-                        symbol_after_dot = item[index + 1]
+    def create_lr0_state(self, states_dict, new_items, item, index, state, new_state, updated):
+        present = False
+        new_items = {k: sorted(v) for k, v in new_items.items()}
+        for key, instance in states_dict.items():
+            if new_items.items() == instance.items.items():
+                symbol_after_dot = item[index + 1]
 
-                        inst = states_dict[state]
-                        inst.transitions[symbol_after_dot] = key
+                inst = states_dict[state]
+                inst.transitions[symbol_after_dot] = key
 
-                        if (state, symbol_after_dot) not in parsing_table:
-                            parsing_table[(state, symbol_after_dot)] = set()
-                        if symbol_after_dot in grammar.nonterminals:
-                            parsing_table[(state, symbol_after_dot)].add(f'G{key}')
-                        else:
-                            parsing_table[(state, symbol_after_dot)].add(f'S{key}')
-                        present = True
-                        break
-        else:
-            present = False
-            for key, instance in states_dict.items():
-                if starting_item.items() == instance.items.items():
-                    symbol_after_dot = item[index + 1]
-
-                    inst = states_dict[state]
-                    inst.transitions[symbol_after_dot] = key
-
-                    if (state, symbol_after_dot) not in parsing_table:
-                        parsing_table[(state, symbol_after_dot)] = set()
-                    if symbol_after_dot in grammar.nonterminals:
-                        parsing_table[(state, symbol_after_dot)].add(f'G{key}')
-                    else:
-                        parsing_table[(state, symbol_after_dot)].add(f'S{key}')
-                    present = True
-                    break
+                present = True
+                break
 
         if not present:
             symbol_after_dot = item[index + 1]
@@ -749,70 +728,53 @@ class CFG:
             inst = states_dict[state]
             inst.transitions[symbol_after_dot] = new_state
 
-            if (state, symbol_after_dot) not in parsing_table:
-                parsing_table[(state, symbol_after_dot)] = set()
-            if symbol_after_dot in grammar.nonterminals:
-                parsing_table[(state, symbol_after_dot)].add(f'G{new_state}')
-            else:
-                parsing_table[(state, symbol_after_dot)].add(f'S{new_state}')
-
             class_name = f'I{new_state}'
             cls = type(class_name, (), {'name': class_name, 'items': {}, 'transitions': {}})
             instance = cls()
             states_dict[new_state] = instance
-            if isinstance(starting_item, tuple):
-                instance.items[starting_item[0]] = starting_item[1]
-            else:
-                instance.items = starting_item.copy()
+            instance.items = new_items
 
             new_state += 1
             updated = True
 
         return updated, new_state
 
-    def compute_lr0_items(self, grammar, states_dict, parsing_table, rules_num_dict):
+    def compute_lr0_items(self, grammar, states_dict):
         new_state = 1
+        reached_states = set()
         while True:
             updated = False
             for state, instance in list(states_dict.items()):
-                for lhs, rhs in instance.items.items():
-                    for item in rhs:
-                        for index, symbol in enumerate(item):
-                            if symbol == '.':
-                                if index == len(item) - 2:
-                                    starting_item = item.copy()
-                                    dot = starting_item.pop(index)
-                                    starting_item.insert(index + 1, dot)
-                                    starting_item = (lhs, [starting_item])
-                                    updated, new_state = self.populate_lr0_items(grammar, states_dict, starting_item,
-                                                                                 item, index, state, parsing_table,
-                                                                                 new_state, updated)
-                                elif index == len(item) - 1:
-                                    rule = rhs[0].copy()
-                                    rule.remove('.')
-                                    for st, rules in rules_num_dict.items():
-                                        if rule == rules[1]:
-                                            for terminal in grammar.terminals:
-                                                if (state, terminal) not in parsing_table:
-                                                    parsing_table[(state, terminal)] = set()
-                                                parsing_table[(state, terminal)].add(f'R{st}')
-                                else:
-                                    starting_item = item.copy()
-                                    dot = starting_item.pop(index)
-                                    starting_item.insert(index + 1, dot)
+                if state not in reached_states:
+                    reached_symbols = set()
+                    for lhs, rhs in instance.items.items():
+                        for item in rhs:
+                            for index, symbol in enumerate(item):
+                                if symbol == '.' and index != len(item) - 1:
+                                    symbol_after_dot = item[index + 1]
+                                    if symbol_after_dot not in reached_symbols:
+                                        starting_items = {}
+                                        for nonterminal, rules in instance.items.items():
+                                            for rule in rules:
+                                                for ind, sym in enumerate(rule):
+                                                    if sym == '.' and symbol_after_dot == rule[ind + 1]:
+                                                        if nonterminal not in starting_items:
+                                                            starting_items[nonterminal] = []
 
-                                    next_symbol = starting_item[index + 2]
-                                    if next_symbol in grammar.nonterminals:
-                                        temp_dict = {lhs: [starting_item]}
-                                        starting_item = self.compute_closure(grammar, temp_dict)
-                                        updated, new_state = self.populate_lr0_items(grammar, states_dict, starting_item,
-                                                                                     item, index, state, parsing_table,
-                                                                                     new_state, updated)
-                                    else:
-                                        starting_item = (lhs, [starting_item])
-                                        updated, new_state = self.populate_lr0_items(grammar, states_dict, starting_item,
-                                                                                     item, index, state, parsing_table,
-                                                                                     new_state, updated)
+                                                        temp_item = rule.copy()
+                                                        dot = temp_item.pop(ind)
+                                                        temp_item.insert(ind + 1, dot)
+
+                                                        starting_items[nonterminal].append(temp_item)
+
+                                        self.compute_closure(grammar, starting_items)
+                                        updated, new_state = self.create_lr0_state(states_dict, starting_items,
+                                                                                   item, index, state,
+                                                                                   new_state, updated)
+                                        reached_symbols.add(symbol_after_dot)
+
+                reached_states.add(state)
+
             if not updated:
                 break
 
