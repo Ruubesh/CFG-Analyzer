@@ -757,15 +757,16 @@ class CFG:
                                         for nonterminal, rules in instance.items.items():
                                             for rule in rules:
                                                 for ind, sym in enumerate(rule):
-                                                    if sym == '.' and symbol_after_dot == rule[ind + 1]:
-                                                        if nonterminal not in starting_items:
-                                                            starting_items[nonterminal] = []
+                                                    if ind != len(rule) - 1:
+                                                        if sym == '.' and symbol_after_dot == rule[ind + 1]:
+                                                            if nonterminal not in starting_items:
+                                                                starting_items[nonterminal] = []
 
-                                                        temp_item = rule.copy()
-                                                        dot = temp_item.pop(ind)
-                                                        temp_item.insert(ind + 1, dot)
+                                                            temp_item = rule.copy()
+                                                            dot = temp_item.pop(ind)
+                                                            temp_item.insert(ind + 1, dot)
 
-                                                        starting_items[nonterminal].append(temp_item)
+                                                            starting_items[nonterminal].append(temp_item)
 
                                         self.compute_closure(grammar, starting_items)
                                         updated, new_state = self.create_lr0_state(states_dict, starting_items,
