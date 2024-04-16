@@ -771,7 +771,7 @@ def is_ll1(window, file):
     create_popup_window(window, stack_transformation, config, file, 'LL(1)')
 
 
-def is_lr0(window, file):
+def create_augmented_grammar(file):
     config = CFG().read_config(file)
 
     # augmented grammar
@@ -784,8 +784,26 @@ def is_lr0(window, file):
     CFG().add_value(config, 'nonterminals', new_nt, temp_file)
 
     grammar = main(temp_file)
-    grammar.rules[new_nt][0].append('⊣')
     os.remove(temp_file)
+
+    return grammar
+
+
+def rules_numbering(grammar):
+    rules_num_dict = {}
+    count = 0
+    for nonterminal, rules in grammar.rules.items():
+        for rule in rules:
+            if nonterminal != grammar.initial_nonterminal:
+                rules_num_dict[count] = (nonterminal, rule)
+                count += 1
+
+    return rules_num_dict
+
+
+def is_lr0(window, file):
+    grammar = create_augmented_grammar(file)
+    grammar.rules[grammar.initial_nonterminal][0].append('⊣')
 
     # instances
     states_dict = {}
@@ -802,33 +820,56 @@ def is_lr0(window, file):
     instance.items[grammar.initial_nonterminal] = starting_item
 
     # compute initial state
-    CFG().compute_closure(grammar, instance.items)
+    CFG().compute_lr0_closure(grammar, instance.items)
 
     # compute LR(0) items
     CFG().compute_lr0_items(grammar, states_dict)
 
     # assign number for each production rule
-    rules_num_dict = {}
-    count = 0
-    for nonterminal, rules in grammar.rules.items():
-        for rule in rules:
-            if nonterminal != new_nt:
-                rules_num_dict[count] = (nonterminal, rule)
-                count += 1
+    rules_num_dict = rules_numbering(grammar)
 
     # compute action and goto table
-    action_dict = CFG().compute_action_table(states_dict, rules_num_dict)
-    goto_dict = CFG().compute_goto_table(states_dict)
+    action_dict = CFG().compute_lr0_action_table(states_dict, rules_num_dict)
+    goto_dict = CFG().compute_lr0_goto_table(states_dict)
 
-    result = "This grammar is LR(0)"
-    for state, actions in action_dict.items():
-        if len(actions) > 1:
-            result = "This grammar is not LR(0)"
-
-    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, result, 'LR(0)')
+    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, len(states_dict), 'LR(0)')
 
 
-def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, result, win_title):
+def is_lr1(window, file):
+    grammar = create_augmented_grammar(file)
+
+    # instances
+    states_dict = {}
+    state = 0
+    class_name = f'I{state}'
+    cls = type(class_name, (), {'name': class_name, 'items': {}, 'transitions': {}})
+    instance = cls()
+    states_dict[state] = instance
+
+    # create starting item
+    init_rule = grammar.rules[grammar.initial_nonterminal][0].copy()
+    init_rule.insert(0, '.')
+    instance.items[grammar.initial_nonterminal] = [(init_rule, '⊣')]
+
+    # compute FIRST
+    first_dict, _ = CFG().compute_first(grammar)
+
+    # compute initial state
+    CFG().compute_lr1_closure(grammar, instance.items, first_dict)
+
+    # compute LR(1) items
+    CFG().compute_lr1_items(grammar, states_dict, first_dict)
+
+    rules_num_dict = rules_numbering(grammar)
+
+    # compute action and goto table
+    action_dict = CFG().compute_lr1_action_table(grammar, states_dict, rules_num_dict)
+    goto_dict = CFG().compute_lr0_goto_table(states_dict)
+
+    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, len(states_dict), 'LR(1)')
+
+
+def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, num_states, win_title):
     popup_window = tk.Toplevel(window)
     popup_window.title(win_title)
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
@@ -840,6 +881,11 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, re
     grammar_frame.pack_propagate(0)
     grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
+
+    result = f"This grammar is {win_title}"
+    for state, actions in action_dict.items():
+        if len(actions) > 1:
+            result = f"This grammar is not {win_title}"
     result_label = tk.Label(master=grammar_frame, text=result)
     result_label.pack(pady=50)
 
@@ -855,33 +901,39 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, re
 
     # create action table
     action_table = ttk.Treeview(analysis_frame)
-    action_table['columns'] = ("states", "action")
-    action_table.column("#0", width=0, stretch=tk.NO)
-    action_table.column("states", width=80, anchor=tk.CENTER)
-    action_table.column("action", anchor=tk.CENTER)
-    action_table.heading("action", text="Action")
-    action_table.heading("states", text="States")
+    if win_title == 'LR(0)':
+        action_table['columns'] = ("states", "action")
+        action_table.column("#0", width=0, stretch=tk.NO)
+        action_table.column("states", width=80, anchor=tk.CENTER)
+        action_table.column("action", anchor=tk.CENTER)
+        action_table.heading("action", text="Action")
+        action_table.heading("states", text="States")
 
-    # insert data into action table
-    for state, actions in action_dict.items():
-        action_text = ''
-        count = 0
-        for action in actions:
-            if action != 'Shift' and action != 'Accept':
-                rule_number = int(action[1])
-                rule = rules_num_dict[rule_number]
-                action = f"{rule[0]} → {''.join(rule[1])}"
-            if count == 0:
-                action_text += action
-            else:
-                action_text += f' | {action}'
-        action_table.insert(parent='', index='end', values=(state, action_text))
+        # insert data into action table
+        for state, actions in action_dict.items():
+            action_text = ''
+            count = 0
+            for action in actions:
+                if action != 'Shift' and action != 'Accept':
+                    rule_number = int(action[1])
+                    rule = rules_num_dict[rule_number]
+                    action = f"{rule[0]} → {''.join(rule[1])}"
+                if count == 0:
+                    action_text += action
+                else:
+                    action_text += f' | {action}'
+            action_table.insert(parent='', index='end', values=(state, action_text))
 
-    action_table.pack(pady=20)
+        action_table.pack(pady=20)
+    else:
+        create_table(action_dict, num_states, action_table)
 
     # create goto table
     goto_table = ttk.Treeview(analysis_frame)
+    create_table(goto_dict, num_states, goto_table)
 
+
+def create_table(goto_dict, state, goto_table):
     # sort columns
     column_names = []
     for state_symbol, next_state in goto_dict.items():
@@ -892,7 +944,7 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, re
 
     # sort data
     rows = []
-    for stat in range(state + 1):
+    for stat in range(state):
         temp_dict = {}
         for state_symbol, next_state in goto_dict.items():
             st, sym = state_symbol[0], state_symbol[1]

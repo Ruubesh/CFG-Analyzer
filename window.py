@@ -193,6 +193,10 @@ def load_page1(file_error):
                         command=lambda: functions.is_lr0(window, file_variable.get()))
     lr0_btn.grid(row=0, column=4, padx=10)
 
+    lr1_btn = tk.Button(master=transform_frame, text="LR(1)", width=20,
+                        command=lambda: functions.is_lr1(window, file_variable.get()))
+    lr1_btn.grid(row=1, column=4, padx=10)
+
     error_label = tk.Label(master=page1_frame, fg="red")
     error_label.pack()
 

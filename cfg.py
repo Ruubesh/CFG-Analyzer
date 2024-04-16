@@ -684,7 +684,7 @@ class CFG:
                 else:
                     return False
 
-    def compute_closure(self, grammar, items):
+    def compute_lr0_closure(self, grammar, items):
         while True:
             updated = False
             for lhs, rhs in list(items.items()):
@@ -768,7 +768,7 @@ class CFG:
 
                                                             starting_items[nonterminal].append(temp_item)
 
-                                        self.compute_closure(grammar, starting_items)
+                                        self.compute_lr0_closure(grammar, starting_items)
                                         updated, new_state = self.create_lr0_state(states_dict, starting_items,
                                                                                    item, index, state,
                                                                                    new_state, updated)
@@ -779,7 +779,7 @@ class CFG:
             if not updated:
                 break
 
-    def compute_action_table(self, states_dict, rules_num_dict):
+    def compute_lr0_action_table(self, states_dict, rules_num_dict):
         action_dict = {}
         for state, instance in states_dict.items():
             for lhs, rhs in instance.items.items():
@@ -808,7 +808,7 @@ class CFG:
 
         return action_dict
 
-    def compute_goto_table(self, states_dict):
+    def compute_lr0_goto_table(self, states_dict):
         goto_dict = {}
         for state, instance in states_dict.items():
             for symbol, next_state in instance.transitions.items():
@@ -817,6 +817,117 @@ class CFG:
                 goto_dict[(state, symbol)].add(next_state)
 
         return goto_dict
+
+    def compute_lr1_closure(self, grammar, items, first_dict):
+        while True:
+            updated = False
+            for lhs, rhs in list(items.items()):
+                for element in rhs:
+                    item = element[0]
+                    look_ahead = set(element[1])
+                    for index, symbol in enumerate(item):
+                        if symbol == '.':
+                            if index == len(item) - 1:
+                                continue
+                            else:
+                                symbol_after_dot = item[index + 1]
+                                if symbol_after_dot in grammar.nonterminals:
+                                    if index + 1 != len(item) - 1:
+                                        sym = item[index + 2]
+                                        if sym in grammar.nonterminals:
+                                            look_ahead = first_dict[sym]
+                                        else:
+                                            look_ahead = set(sym)
+                                    for rule in grammar.rules[symbol_after_dot]:
+                                        temp_rule = rule.copy()
+                                        temp_rule.insert(0, '.')
+                                        if symbol_after_dot not in items:
+                                            items[symbol_after_dot] = []
+                                        if (temp_rule, look_ahead) not in items[symbol_after_dot]:
+                                            items[symbol_after_dot].append((temp_rule, look_ahead))
+                                            updated = True
+
+            if not updated:
+                break
+
+        return items
+
+    def compute_lr1_items(self, grammar, states_dict, first_dict):
+        new_state = 1
+        reached_states = set()
+        while True:
+            updated = False
+            for state, instance in list(states_dict.items()):
+                if state not in reached_states:
+                    reached_symbols = set()
+                    for lhs, rhs in instance.items.items():
+                        for element in rhs:
+                            item = element[0]
+                            for index, symbol in enumerate(item):
+                                if symbol == '.' and index != len(item) - 1:
+                                    symbol_after_dot = item[index + 1]
+                                    if symbol_after_dot not in reached_symbols:
+                                        starting_items = {}
+                                        for nonterminal, rules in instance.items.items():
+                                            for r in rules:
+                                                rule = r[0]
+                                                look_ahead = r[1]
+                                                for ind, sym in enumerate(rule):
+                                                    if ind != len(rule) - 1:
+                                                        if sym == '.' and symbol_after_dot == rule[ind + 1]:
+                                                            if nonterminal not in starting_items:
+                                                                starting_items[nonterminal] = []
+
+                                                            temp_item = rule.copy()
+                                                            dot = temp_item.pop(ind)
+                                                            temp_item.insert(ind + 1, dot)
+
+                                                            starting_items[nonterminal].append((temp_item, look_ahead))
+
+                                        self.compute_lr1_closure(grammar, starting_items, first_dict)
+                                        updated, new_state = self.create_lr0_state(states_dict, starting_items,
+                                                                                   item, index, state,
+                                                                                   new_state, updated)
+                                        reached_symbols.add(symbol_after_dot)
+
+                reached_states.add(state)
+
+            if not updated:
+                break
+
+    def compute_lr1_action_table(self, grammar, states_dict, rules_num_dict):
+        action_dict = {}
+        for state, instance in states_dict.items():
+            for lhs, rhs in instance.items.items():
+                for element in rhs:
+                    item = element[0]
+                    look_ahead = element[1]
+                    for index, symbol in enumerate(item):
+                        if symbol == '.' and index == len(item) - 1:
+                            temp_item = item.copy()
+                            temp_item.pop(index)
+
+                            # if '⊣' in temp_item:
+                            #     if state not in action_dict:
+                            #         action_dict[state] = set()
+                            #     action_dict[state].add('Accept')
+                            #     continue
+
+                            for rule_number, rule_tuple in rules_num_dict.items():
+                                nonterminal, rule = rule_tuple[0], rule_tuple[1]
+                                if lhs == nonterminal and temp_item == rule:
+                                    for lk_ahead in look_ahead:
+                                        if (state, lk_ahead) not in action_dict:
+                                            action_dict[(state, lk_ahead)] = set()
+                                        action_dict[(state, lk_ahead)].add(f'R{rule_number}')
+                        elif symbol == '.':
+                            symbol_after_dot = item[index + 1]
+                            if symbol_after_dot in grammar.terminals:
+                                if (state, symbol_after_dot) not in action_dict:
+                                    action_dict[(state, symbol_after_dot)] = set()
+                                action_dict[(state, symbol_after_dot)].add('Shift')
+
+        return action_dict
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
