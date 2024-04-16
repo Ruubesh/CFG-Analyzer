@@ -1,9 +1,9 @@
 [input]
-nonterminals = S,A
-terminals = a,b
-initial_nonterminal = S
+nonterminals = E,T
+terminals = n,(,),-
+initial_nonterminal = E
 
 [rules]
-S = AA
-A = aA,b
+E = E-T,T
+T = n,(E)
 

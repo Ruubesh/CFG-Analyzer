@@ -678,7 +678,7 @@ def compute_first_and_follow(window, file):
     for node, edges in node_dict.items():
         transformation_text += f"Node({node}):\n"
         for edge in edges:
-            transformation_text += f"\t-->{edge}\n"
+            transformation_text += f"\t→{edge}\n"
 
     grammar_text = CFG().generate_grammar_text(file, {})
     explain_text = "Nodes and their respective edges to other nodes"
@@ -784,6 +784,7 @@ def is_lr0(window, file):
     CFG().add_value(config, 'nonterminals', new_nt, temp_file)
 
     grammar = main(temp_file)
+    grammar.rules[new_nt][0].append('⊣')
     os.remove(temp_file)
 
     # instances
@@ -803,6 +804,9 @@ def is_lr0(window, file):
     # compute initial state
     CFG().compute_closure(grammar, instance.items)
 
+    # compute LR(0) items
+    CFG().compute_lr0_items(grammar, states_dict)
+
     # assign number for each production rule
     rules_num_dict = {}
     count = 0
@@ -812,19 +816,110 @@ def is_lr0(window, file):
                 rules_num_dict[count] = (nonterminal, rule)
                 count += 1
 
-    CFG().compute_lr0_items(grammar, states_dict)
+    # compute action and goto table
+    action_dict = CFG().compute_action_table(states_dict, rules_num_dict)
+    goto_dict = CFG().compute_goto_table(states_dict)
 
-    for key, value in states_dict.items():
-        print(key)
-        for lhs, rhs in value.items.items():
-            t = []
-            for rh in rhs:
-                t.append(''.join(rh))
-            print(f'\t-{lhs}-\t', ','.join(t))
+    result = "This grammar is LR(0)"
+    for state, actions in action_dict.items():
+        if len(actions) > 1:
+            result = "This grammar is not LR(0)"
 
-    # for key, value in states_dict.items():
-    #     for lhs, rhs in value.transitions.items():
-    #         print(key, lhs, rhs)
+    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, result, 'LR(0)')
+
+
+def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, result, win_title):
+    popup_window = tk.Toplevel(window)
+    popup_window.title(win_title)
+    popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
+    popup_window.focus()
+
+    # create grammar frame
+    grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=400)
+    grammar_frame.pack(side="left", fill=tk.Y)
+    grammar_frame.pack_propagate(0)
+    grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
+    grammar_text_widget.pack(fill="both", expand=1)
+    result_label = tk.Label(master=grammar_frame, text=result)
+    result_label.pack(pady=50)
+
+    # insert text into grammar widget
+    grammar_text = CFG().generate_grammar_text(file, {})
+    grammar_text_widget.insert("1.0", grammar_text)
+    grammar_text_widget.config(state=tk.DISABLED)
+
+    # create analysis frame
+    analysis_frame = tk.LabelFrame(master=popup_window, text="Analysis")
+    analysis_frame.pack(side="left", fill="both", expand=1)
+    analysis_frame.pack_propagate(0)
+
+    # create action table
+    action_table = ttk.Treeview(analysis_frame)
+    action_table['columns'] = ("states", "action")
+    action_table.column("#0", width=0, stretch=tk.NO)
+    action_table.column("states", width=80, anchor=tk.CENTER)
+    action_table.column("action", anchor=tk.CENTER)
+    action_table.heading("action", text="Action")
+    action_table.heading("states", text="States")
+
+    # insert data into action table
+    for state, actions in action_dict.items():
+        action_text = ''
+        count = 0
+        for action in actions:
+            if action != 'Shift' and action != 'Accept':
+                rule_number = int(action[1])
+                rule = rules_num_dict[rule_number]
+                action = f"{rule[0]} → {''.join(rule[1])}"
+            if count == 0:
+                action_text += action
+            else:
+                action_text += f' | {action}'
+        action_table.insert(parent='', index='end', values=(state, action_text))
+
+    action_table.pack(pady=20)
+
+    # create goto table
+    goto_table = ttk.Treeview(analysis_frame)
+
+    # sort columns
+    column_names = []
+    for state_symbol, next_state in goto_dict.items():
+        symbol = state_symbol[1]
+        if symbol not in column_names:
+            column_names.append(symbol)
+    column_names.sort()
+
+    # sort data
+    rows = []
+    for stat in range(state + 1):
+        temp_dict = {}
+        for state_symbol, next_state in goto_dict.items():
+            st, sym = state_symbol[0], state_symbol[1]
+            if stat == st:
+                temp_dict[sym] = next_state
+        row = []
+        for column_name in column_names:
+            if column_name not in temp_dict:
+                row.append('')
+            else:
+                row.append(temp_dict[column_name])
+        row.insert(0, stat)
+        rows.append(row)
+
+    # format headings
+    column_names.insert(0, 'States')
+    goto_table['columns'] = column_names
+    goto_table.column("#0", width=0, stretch=tk.NO)
+    for col_name in column_names:
+        goto_table.column(col_name, anchor=tk.CENTER, width=70)
+        goto_table.heading(col_name, text=col_name)
+
+    # insert data
+    for row in rows:
+        goto_table.insert(parent='', index='end', values=row)
+
+    goto_table.pack(pady=20)
 
 
 def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):

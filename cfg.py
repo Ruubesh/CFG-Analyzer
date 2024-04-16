@@ -779,6 +779,45 @@ class CFG:
             if not updated:
                 break
 
+    def compute_action_table(self, states_dict, rules_num_dict):
+        action_dict = {}
+        for state, instance in states_dict.items():
+            for lhs, rhs in instance.items.items():
+                for item in rhs:
+                    for index, symbol in enumerate(item):
+                        if symbol == '.' and index == len(item) - 1:
+                            temp_item = item.copy()
+                            temp_item.pop(index)
+
+                            if '⊣' in temp_item:
+                                if state not in action_dict:
+                                    action_dict[state] = set()
+                                action_dict[state].add('Accept')
+                                continue
+
+                            for rule_number, rule_tuple in rules_num_dict.items():
+                                nonterminal, rule = rule_tuple[0], rule_tuple[1]
+                                if lhs == nonterminal and temp_item == rule:
+                                    if state not in action_dict:
+                                        action_dict[state] = set()
+                                    action_dict[state].add(f'R{rule_number}')
+                        elif symbol == '.':
+                            if state not in action_dict:
+                                action_dict[state] = set()
+                            action_dict[state].add('Shift')
+
+        return action_dict
+
+    def compute_goto_table(self, states_dict):
+        goto_dict = {}
+        for state, instance in states_dict.items():
+            for symbol, next_state in instance.transitions.items():
+                if (state, symbol) not in goto_dict:
+                    goto_dict[(state, symbol)] = set()
+                goto_dict[(state, symbol)].add(next_state)
+
+        return goto_dict
+
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:
             self.rules[nonterminal] = []
