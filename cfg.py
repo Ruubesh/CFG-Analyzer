@@ -10,167 +10,7 @@ class CaseSensitiveConfigParser(configparser.ConfigParser):
         return optionstr
 
 
-class Stack:
-    def __init__(self):
-        self.data = []
-        self.index = -1
-
-    def push(self, item):
-        self.data = self.data[:self.index + 1]
-        self.data.append(item)
-        self.index += 1
-
-    def undo(self, format, nonterminals):
-        if self.index > 0:
-            self.index -= 1
-            if format == "S":
-                return self.printst(self.index), self.data[self.index]
-            if format == "T":
-                new_st = Stack()
-                new_st.data = self.data[0:self.index + 1]
-                return CFG().build_tree(new_st, nonterminals)
-        elif self.index == 0:
-            if format == 'S':
-                return self.data[self.index], self.data[self.index]
-            if format == 'T':
-                self.index = -1
-                return self.data[self.index]
-        else:
-            print("Nothing to undo")
-            return None
-
-    def redo(self, format, nonterminals):
-        if self.index < len(self.data) - 1:
-            self.index += 1
-            if format == "S":
-                return self.printst(self.index), self.data[self.index]
-            if format == "T":
-                new_st = Stack()
-                new_st.data = self.data[0:self.index + 1]
-                return CFG().build_tree(new_st, nonterminals)
-        else:
-            if format == "S":
-                print("Nothing to redo")
-            return None
-
-    def current(self):
-        if 0 <= self.index < len(self.data):
-            return self.data[self.index]
-        else:
-            return None
-
-    def printst(self, ind=""):
-        if ind:
-            endval = ind + 1
-        else:
-            endval = len(self.data)
-        sentence = ''
-        for i in range(endval):
-            if i == endval - 1:
-                print(f"{self.data[i]}")
-                sentence += f"{self.data[i]}"
-            else:
-                print(f"{self.data[i]} ==>", end=" ")
-                sentence += f"{self.data[i]} ==>"
-
-        return sentence
-
-
-class TreeNode:
-    def __init__(self, data):
-        self.data = data
-        self.children = []
-        self.parent = None
-
-    def get_level(self):
-        level = 0
-        p = self.parent
-        while p:
-            level += 1
-            p = p.parent
-        return level
-
-    def print_tree(self, tree='', indent=""):
-        prefix = indent[:-3] + "|_ " * bool(indent)
-        if self.data == "":
-            print(f'{prefix}\u03B5')
-            tree += f'{prefix}\u03B5\n'
-        else:
-            print(prefix + self.data)
-            tree += prefix + self.data + "\n"
-        for more, child in enumerate(self.children, 1 - len(self.children)):
-            childIndent = " |  " if more else "    "
-            tree = child.print_tree(tree, indent + childIndent)
-
-        return tree
-
-    def add_child(self, child):
-        child.parent = self
-        self.children.append(child)
-
-
-class CFG:
-    def __init__(self):
-        self.classes = {}
-        self.rules = {}
-        self.nonterminals = []
-        self.terminals = []
-        self.initial_nonterminal = ''
-        self.stack = Stack()
-        self.stack_tree = Stack()
-
-    def set_to_list(self, set_temp, set_list):
-        for temp in set_temp:
-            if temp not in set_list:
-                set_list.append(temp)
-
-    def generate_grammar_text(self, file, rules, label=False):
-        config = self.read_config(file)
-        red = "ஆ"
-        grammar_text = ''
-
-        for section in config.sections():
-            if section == 'rules':
-                grammar_text += f"[{section}]\n"
-                for nt in config[section]:
-                    grammar_text += f"{nt} → "
-                    rule_list = config[section][nt].split(',')
-                    for index, rule in enumerate(rule_list):
-                        if index == len(rule_list) - 1:
-                            if nt in rules.keys() and rule in rules[nt]:
-                                if rule == 'epsilon':
-                                    rule = '\u03B5'
-                                grammar_text += f"{red + rule + red}\n"
-                            else:
-                                if rule == 'epsilon':
-                                    rule = '\u03B5'
-                                grammar_text += f"{rule}\n"
-                        elif label:
-                            if nt in rules.keys() and rule in rules[nt]:
-                                if rule == 'epsilon':
-                                    rule = '\u03B5'
-                                grammar_text += f"{red + rule + red} | "
-                            else:
-                                if rule == 'epsilon':
-                                    rule = '\u03B5'
-                                grammar_text += f"{rule} | "
-                        else:
-                            if nt in rules.keys() and rule in rules[nt]:
-                                if rule == 'epsilon':
-                                    rule = '\u03B5'
-                                grammar_text += f"{red + rule + red}|"
-                            else:
-                                if rule == 'epsilon':
-                                    rule = '\u03B5'
-                                grammar_text += f"{rule}|"
-            else:
-                grammar_text += f"[{section}]\n"
-                for key, value in config.items(section):
-                    grammar_text += f"{key} = {value}\n"
-                grammar_text += '\n'
-
-        return grammar_text
-
+class Transform:
     def reduce_phase1(self, file, config, grammar, reduction_stack, set_t, set_list, i):
         not_set_t = set(grammar.nonterminals) - set_t
         set_temp = set_t.copy()
@@ -194,8 +34,8 @@ class CFG:
                         explain_text += f"\n{nt} = {rule}"
 
         if set_temp != set_t:
-            grammar_text = self.generate_grammar_text(file, rules)
-            self.set_to_list(set_t, set_list)
+            grammar_text = grammar.generate_grammar_text(file, rules)
+            grammar.set_to_list(set_t, set_list)
             reduction_text = f"T{i} = {set_list}"
             reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                   "explain_text": explain_text})
@@ -216,8 +56,8 @@ class CFG:
                         rules[nt].add(rule)
 
         if set_temp != set_d:
-            grammar_text = self.generate_grammar_text(file, rules)
-            self.set_to_list(set_d, set_list)
+            grammar_text = grammar.generate_grammar_text(file, rules)
+            grammar.set_to_list(set_d, set_list)
             reduction_text = f"D{i} = {set_list}"
             explain_text = f"Nonterminals that can be reached from {grammar.initial_nonterminal}\n{set_d - set_temp}"
             reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
@@ -257,8 +97,8 @@ class CFG:
                             explain_text += f"\n{nt} = {rule}"
 
         if set_temp != set_e:
-            grammar_text = self.generate_grammar_text(file, rules)
-            self.set_to_list(set_e, set_list)
+            grammar_text = CFG().generate_grammar_text(file, rules)
+            CFG().set_to_list(set_e, set_list)
             transformation_text = f"\u2107{i} = {set_list}"
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
@@ -282,8 +122,8 @@ class CFG:
                         explain_text += f"\n{nonterminal} = {rule}"
 
         if set_temp != set_nt:
-            grammar_text = self.generate_grammar_text(file, rules)
-            self.set_to_list(set_nt, set_list)
+            grammar_text = CFG().generate_grammar_text(file, rules)
+            CFG().set_to_list(set_nt, set_list)
             transformation_text = f"N({set_list[0]}){i} = {set_list}"
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
@@ -336,23 +176,7 @@ class CFG:
                         new_rules[nonterminal] = []
                     new_rules[nonterminal].append(rule)
 
-        self.rule_dict_to_config(config, new_rules)
-
-    def rule_dict_to_config(self, config, new_rules):
-        for nonterminal, rules in new_rules.items():
-            nonterminals = config['input']['nonterminals'].split(',')
-            if nonterminal not in nonterminals:
-                nonterminals.append(nonterminal)
-                config.set('input', 'nonterminals', ','.join(nonterminals))
-
-            rule_list = []
-            for rule in rules:
-                if rule == ['']:
-                    rule_list.append('epsilon')
-                else:
-                    rule_list.append(''.join(rule))
-
-            config.set('rules', nonterminal, ','.join(rule_list))
+        grammar.rule_dict_to_config(config, new_rules)
 
     def gnf_phase1(self, grammar, nonterminal, nt_dict, config, stack_transformation, file):
         rules = grammar.rules[nonterminal]
@@ -422,9 +246,9 @@ class CFG:
                 break
 
         if temp_rules != grammar.rules[nonterminal]:
-            grammar_text = self.generate_grammar_text(file, rule_highlight)
-            self.rule_dict_to_config(config, grammar.rules)
-            self.write_to_config(config, file)
+            grammar_text = grammar.generate_grammar_text(file, rule_highlight)
+            grammar.rule_dict_to_config(config, grammar.rules)
+            grammar.write_to_config(config, file)
             transformation_text = functions.generate_rules_text(config)
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
@@ -461,14 +285,16 @@ class CFG:
                     break
 
         if temp_rules != grammar.rules[nonterminal]:
-            grammar_text = self.generate_grammar_text(file, rule_highlight)
-            self.rule_dict_to_config(config, grammar.rules)
-            self.write_to_config(config, file)
+            grammar_text = grammar.generate_grammar_text(file, rule_highlight)
+            grammar.rule_dict_to_config(config, grammar.rules)
+            grammar.write_to_config(config, file)
             transformation_text = functions.generate_rules_text(config)
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
             self.gnf_phase2(grammar, nonterminal, config, stack_transformation, file)
 
+
+class LLParser:
     def compute_first(self, grammar):
         first_dict = {}
         node_dict = {}
@@ -684,6 +510,8 @@ class CFG:
                 else:
                     return False
 
+
+class LRParser:
     def compute_lr0_closure(self, grammar, items):
         while True:
             updated = False
@@ -928,6 +756,184 @@ class CFG:
                                 action_dict[(state, symbol_after_dot)].add('Shift')
 
         return action_dict
+
+
+class Stack:
+    def __init__(self):
+        self.data = []
+        self.index = -1
+
+    def push(self, item):
+        self.data = self.data[:self.index + 1]
+        self.data.append(item)
+        self.index += 1
+
+    def undo(self, format, nonterminals):
+        if self.index > 0:
+            self.index -= 1
+            if format == "S":
+                return self.printst(self.index), self.data[self.index]
+            if format == "T":
+                new_st = Stack()
+                new_st.data = self.data[0:self.index + 1]
+                return CFG().build_tree(new_st, nonterminals)
+        elif self.index == 0:
+            if format == 'S':
+                return self.data[self.index], self.data[self.index]
+            if format == 'T':
+                self.index = -1
+                return self.data[self.index]
+        else:
+            print("Nothing to undo")
+            return None
+
+    def redo(self, format, nonterminals):
+        if self.index < len(self.data) - 1:
+            self.index += 1
+            if format == "S":
+                return self.printst(self.index), self.data[self.index]
+            if format == "T":
+                new_st = Stack()
+                new_st.data = self.data[0:self.index + 1]
+                return CFG().build_tree(new_st, nonterminals)
+        else:
+            if format == "S":
+                print("Nothing to redo")
+            return None
+
+    def current(self):
+        if 0 <= self.index < len(self.data):
+            return self.data[self.index]
+        else:
+            return None
+
+    def printst(self, ind=""):
+        if ind:
+            endval = ind + 1
+        else:
+            endval = len(self.data)
+        sentence = ''
+        for i in range(endval):
+            if i == endval - 1:
+                print(f"{self.data[i]}")
+                sentence += f"{self.data[i]}"
+            else:
+                print(f"{self.data[i]} ==>", end=" ")
+                sentence += f"{self.data[i]} ==>"
+
+        return sentence
+
+
+class TreeNode:
+    def __init__(self, data):
+        self.data = data
+        self.children = []
+        self.parent = None
+
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+        return level
+
+    def print_tree(self, tree='', indent=""):
+        prefix = indent[:-3] + "|_ " * bool(indent)
+        if self.data == "":
+            print(f'{prefix}\u03B5')
+            tree += f'{prefix}\u03B5\n'
+        else:
+            print(prefix + self.data)
+            tree += prefix + self.data + "\n"
+        for more, child in enumerate(self.children, 1 - len(self.children)):
+            childIndent = " |  " if more else "    "
+            tree = child.print_tree(tree, indent + childIndent)
+
+        return tree
+
+    def add_child(self, child):
+        child.parent = self
+        self.children.append(child)
+
+
+class CFG:
+    def __init__(self):
+        self.classes = {}
+        self.rules = {}
+        self.nonterminals = []
+        self.terminals = []
+        self.initial_nonterminal = ''
+        self.stack = Stack()
+        self.stack_tree = Stack()
+
+    def set_to_list(self, set_temp, set_list):
+        for temp in set_temp:
+            if temp not in set_list:
+                set_list.append(temp)
+
+    def generate_grammar_text(self, file, rules, label=False):
+        config = self.read_config(file)
+        red = "ஆ"
+        grammar_text = ''
+
+        for section in config.sections():
+            if section == 'rules':
+                grammar_text += f"[{section}]\n"
+                for nt in config[section]:
+                    grammar_text += f"{nt} → "
+                    rule_list = config[section][nt].split(',')
+                    for index, rule in enumerate(rule_list):
+                        if index == len(rule_list) - 1:
+                            if nt in rules.keys() and rule in rules[nt]:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
+                                grammar_text += f"{red + rule + red}\n"
+                            else:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
+                                grammar_text += f"{rule}\n"
+                        elif label:
+                            if nt in rules.keys() and rule in rules[nt]:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
+                                grammar_text += f"{red + rule + red} | "
+                            else:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
+                                grammar_text += f"{rule} | "
+                        else:
+                            if nt in rules.keys() and rule in rules[nt]:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
+                                grammar_text += f"{red + rule + red}|"
+                            else:
+                                if rule == 'epsilon':
+                                    rule = '\u03B5'
+                                grammar_text += f"{rule}|"
+            else:
+                grammar_text += f"[{section}]\n"
+                for key, value in config.items(section):
+                    grammar_text += f"{key} = {value}\n"
+                grammar_text += '\n'
+
+        return grammar_text
+
+    def rule_dict_to_config(self, config, new_rules):
+        for nonterminal, rules in new_rules.items():
+            nonterminals = config['input']['nonterminals'].split(',')
+            if nonterminal not in nonterminals:
+                nonterminals.append(nonterminal)
+                config.set('input', 'nonterminals', ','.join(nonterminals))
+
+            rule_list = []
+            for rule in rules:
+                if rule == ['']:
+                    rule_list.append('epsilon')
+                else:
+                    rule_list.append(''.join(rule))
+
+            config.set('rules', nonterminal, ','.join(rule_list))
 
     def add_rule(self, nonterminal, expansions):
         if nonterminal not in self.rules:

@@ -1,5 +1,5 @@
 from tkinter import filedialog, ttk
-from cfg import CFG, main, Stack
+from cfg import CFG, main, Stack, Transform, LLParser, LRParser
 import tkinter as tk
 from itertools import combinations
 import os
@@ -302,7 +302,7 @@ def reduce(window, file_variable):
 
     set_t = set()
     set_list = []
-    grammar.reduce_phase1(file_variable, config, grammar, stack_transformation, set_t, set_list, '\u2080')
+    Transform().reduce_phase1(file_variable, config, grammar, stack_transformation, set_t, set_list, '\u2080')
 
     grammar_text = CFG().generate_grammar_text(file_variable, {})
     transform_text = f"\nT = {set_list}"
@@ -319,7 +319,7 @@ def reduce(window, file_variable):
     explain_text = f"{grammar.initial_nonterminal} is the initial nonterminal"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                "explain_text": explain_text})
-    grammar.reduce_phase2(file_variable, config, grammar, stack_transformation, set_t, set_d, set_list, '\u2081')
+    Transform().reduce_phase2(file_variable, config, grammar, stack_transformation, set_t, set_d, set_list, '\u2081')
 
     transform_text = f"\nD = {set_list}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": ''})
@@ -345,7 +345,7 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
 
     set_e = set()
     set_list = []
-    CFG().remove_epsilon_rules(file_variable, config, stack_transformation, set_e, set_list, '\u2080')
+    Transform().remove_epsilon_rules(file_variable, config, stack_transformation, set_e, set_list, '\u2080')
 
     transform_text = f"\n\u2107 = {set_list}"
     explain_text = f"Nonterminals {set_list} can generate epsilon"
@@ -445,7 +445,7 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
         transformation_text = f"N({nonterminal})\u2080 = {set_list}"
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                    "explain_text": ''})
-        CFG().remove_unit_rules(file, config, stack_transformation, set_nt, set_list, '\u2081')
+        Transform().remove_unit_rules(file, config, stack_transformation, set_nt, set_list, '\u2081')
 
         transform_sets[nonterminal] = set_list
 
@@ -489,7 +489,7 @@ def chomsky_normal_form(window, file):
     grammar = main(file)
 
     # Step 1
-    CFG().decompose_rules(config, grammar)
+    Transform().decompose_rules(config, grammar)
 
     grammar_text = CFG().generate_grammar_text(file, {})
     transformation_text = 'Step 1:'
@@ -641,7 +641,7 @@ def greibach_normal_form(window, file):
                                "explain_text": explain_text})
 
     for nonterminal in nt_dict.keys():
-        CFG().gnf_phase1(grammar, nonterminal, nt_dict, config, stack_transformation, copy_file)
+        Transform().gnf_phase1(grammar, nonterminal, nt_dict, config, stack_transformation, copy_file)
 
     # Step 4
     grammar_text = CFG().generate_grammar_text(copy_file, {})
@@ -654,7 +654,7 @@ def greibach_normal_form(window, file):
                                "explain_text": explain_text})
 
     for nonterminal in grammar.rules.keys():
-        CFG().gnf_phase2(grammar, nonterminal, config, stack_transformation, copy_file)
+        Transform().gnf_phase2(grammar, nonterminal, config, stack_transformation, copy_file)
 
     explain_text = stack_transformation.data[-1]["explain_text"]
     explain_text += "\n\nThe grammar is now in Greibach Normal Form"
@@ -671,7 +671,7 @@ def compute_first_and_follow(window, file):
     grammar = main(file)
 
     # compute_first
-    first_dict, node_dict = CFG().compute_first(grammar)
+    first_dict, node_dict = LLParser().compute_first(grammar)
 
     # nodes and edges
     transformation_text = ''
@@ -699,7 +699,7 @@ def compute_first_and_follow(window, file):
                                "explain_text": explain_text})
 
     # compute_follow
-    follow_dict = CFG().compute_follow(grammar, first_dict)
+    follow_dict = LLParser().compute_follow(grammar, first_dict)
 
     # FOLLOW
     transformation_text = '\n'
@@ -718,8 +718,8 @@ def is_ll1(window, file):
     stack_transformation = Stack()
     config = CFG().read_config(file)
 
-    first_dict, _ = CFG().compute_first(grammar)
-    follow_dict = CFG().compute_follow(grammar, first_dict)
+    first_dict, _ = LLParser().compute_first(grammar)
+    follow_dict = LLParser().compute_follow(grammar, first_dict)
 
     grammar_text = CFG().generate_grammar_text(file, {})
 
@@ -751,14 +751,14 @@ def is_ll1(window, file):
             instance.first_rules = {}
             instance_dict[name] = instance
 
-            CFG().compute_first_rules(grammar, instance, first_dict, follow_dict)
+            LLParser().compute_first_rules(grammar, instance, first_dict, follow_dict)
 
-            conflict = CFG().is_mutually_disjoint(instance, stack_transformation, grammar_text)
+            conflict = LLParser().is_mutually_disjoint(instance, stack_transformation, grammar_text)
 
             if conflict:
                 break
 
-            conflict = CFG().ll1_c3(instance, stack_transformation, grammar_text, first_dict, follow_dict)
+            conflict = LLParser().ll1_c3(instance, stack_transformation, grammar_text, first_dict, follow_dict)
 
             if conflict:
                 break
@@ -820,17 +820,17 @@ def is_lr0(window, file):
     instance.items[grammar.initial_nonterminal] = starting_item
 
     # compute initial state
-    CFG().compute_lr0_closure(grammar, instance.items)
+    LRParser().compute_lr0_closure(grammar, instance.items)
 
     # compute LR(0) items
-    CFG().compute_lr0_items(grammar, states_dict)
+    LRParser().compute_lr0_items(grammar, states_dict)
 
     # assign number for each production rule
     rules_num_dict = rules_numbering(grammar)
 
     # compute action and goto table
-    action_dict = CFG().compute_lr0_action_table(states_dict, rules_num_dict)
-    goto_dict = CFG().compute_lr0_goto_table(states_dict)
+    action_dict = LRParser().compute_lr0_action_table(states_dict, rules_num_dict)
+    goto_dict = LRParser().compute_lr0_goto_table(states_dict)
 
     create_table_window(window, file, rules_num_dict, action_dict, goto_dict, len(states_dict), 'LR(0)')
 
@@ -852,19 +852,19 @@ def is_lr1(window, file):
     instance.items[grammar.initial_nonterminal] = [(init_rule, '⊣')]
 
     # compute FIRST
-    first_dict, _ = CFG().compute_first(grammar)
+    first_dict, _ = LLParser().compute_first(grammar)
 
     # compute initial state
-    CFG().compute_lr1_closure(grammar, instance.items, first_dict)
+    LRParser().compute_lr1_closure(grammar, instance.items, first_dict)
 
     # compute LR(1) items
-    CFG().compute_lr1_items(grammar, states_dict, first_dict)
+    LRParser().compute_lr1_items(grammar, states_dict, first_dict)
 
     rules_num_dict = rules_numbering(grammar)
 
     # compute action and goto table
-    action_dict = CFG().compute_lr1_action_table(grammar, states_dict, rules_num_dict)
-    goto_dict = CFG().compute_lr0_goto_table(states_dict)
+    action_dict = LRParser().compute_lr1_action_table(grammar, states_dict, rules_num_dict)
+    goto_dict = LRParser().compute_lr0_goto_table(states_dict)
 
     create_table_window(window, file, rules_num_dict, action_dict, goto_dict, len(states_dict), 'LR(1)')
 
@@ -920,6 +920,7 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, nu
                     action = f"{rule[0]} → {''.join(rule[1])}"
                 if count == 0:
                     action_text += action
+                    count += 1
                 else:
                     action_text += f' | {action}'
             action_table.insert(parent='', index='end', values=(state, action_text))
