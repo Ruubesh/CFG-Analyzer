@@ -525,7 +525,10 @@ class LRParser:
                                 symbol_after_dot = item[index + 1]
                                 if symbol_after_dot in grammar.nonterminals:
                                     for rule in grammar.rules[symbol_after_dot]:
-                                        temp_rule = rule.copy()
+                                        if rule == ['']:
+                                            temp_rule = []
+                                        else:
+                                            temp_rule = rule.copy()
                                         temp_rule.insert(0, '.')
                                         if symbol_after_dot not in items:
                                             items[symbol_after_dot] = []
@@ -615,7 +618,10 @@ class LRParser:
                     for index, symbol in enumerate(item):
                         if symbol == '.' and index == len(item) - 1:
                             temp_item = item.copy()
-                            temp_item.pop(index)
+                            if temp_item == ['.']:
+                                temp_item = ['']
+                            else:
+                                temp_item.pop(index)
 
                             if '⊣' in temp_item:
                                 if state not in action_dict:
@@ -747,7 +753,7 @@ class LRParser:
                                     for lk_ahead in look_ahead:
                                         if (state, lk_ahead) not in action_dict:
                                             action_dict[(state, lk_ahead)] = set()
-                                        action_dict[(state, lk_ahead)].add(f'R{rule_number}')
+                                        action_dict[(state, lk_ahead)].add(f'{nonterminal} → {"".join(rule)}')
                         elif symbol == '.':
                             symbol_after_dot = item[index + 1]
                             if symbol_after_dot in grammar.terminals:

@@ -832,7 +832,7 @@ def is_lr0(window, file):
     action_dict = LRParser().compute_lr0_action_table(states_dict, rules_num_dict)
     goto_dict = LRParser().compute_lr0_goto_table(states_dict)
 
-    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, len(states_dict), 'LR(0)')
+    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, states_dict, 'LR(0)')
 
 
 def is_lr1(window, file):
@@ -866,10 +866,74 @@ def is_lr1(window, file):
     action_dict = LRParser().compute_lr1_action_table(grammar, states_dict, rules_num_dict)
     goto_dict = LRParser().compute_lr0_goto_table(states_dict)
 
-    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, len(states_dict), 'LR(1)')
+    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, states_dict, 'LR(1)')
 
 
-def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, num_states, win_title):
+def map_table_rows(table):
+    row_map = {}
+    for row_id in table.get_children():
+        values = table.item(row_id, 'values')
+        identifier = values[0]
+        row_map[identifier] = row_id
+    return row_map
+
+
+def clear_table(table):
+    table.delete(*table.get_children())
+
+
+def highlight_matching_row(event, source_table, target_table, source_to_target_map, states_dict, item_table):
+    clear_table(item_table)
+    item = source_table.selection()[0]
+    values = source_table.item(item, 'values')
+    identifier = values[0]
+
+    if identifier in source_to_target_map:
+        target_row_id = source_to_target_map[identifier]
+        target_table.selection_set(target_row_id)
+        target_table.focus(target_row_id)
+
+        selected_row = target_table.item(target_row_id, 'values')[0]
+        for state, instance in states_dict.items():
+            if int(state) == int(selected_row):
+                item_table['columns'] = ()
+                item_table['columns'] = ('state',)
+                item_table.column("#0", width=0, stretch=tk.NO)
+                item_table.column("state", anchor=tk.W)
+                item_table.heading("state", text=state)
+                for lhs, rhs in instance.items.items():
+                    for element in rhs:
+                        if isinstance(element, tuple):
+                            item_text = f"{lhs} → {''.join(element[0])}     {','.join(element[1])}"
+                        else:
+                            item_text = f"{lhs} → {''.join(element)}"
+                        print(item_text)
+                        item_table.insert(parent='', index='end', values=(item_text,))
+                item_table.pack(pady=20)
+
+
+def create_table_with_scrollbar(master_frame, frame_height, text, row):
+    table_frame = tk.LabelFrame(master=master_frame, text=text, height=frame_height)
+    table_frame.pack(fill=tk.BOTH, expand=1, side=tk.TOP)
+    table_frame.pack_propagate(0)
+
+    # Vertical scrollbar
+    table_scroll_y = ttk.Scrollbar(table_frame, orient=tk.VERTICAL)
+    table_scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
+
+    # Horizontal scrollbar
+    table_scroll_x = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL)
+    table_scroll_x.pack(side=tk.BOTTOM, fill=tk.X)
+
+    # Treeview widget
+    table = ttk.Treeview(table_frame, yscrollcommand=table_scroll_y.set, xscrollcommand=table_scroll_x.set)
+    table_scroll_y.config(command=table.yview)
+    table_scroll_x.config(command=table.xview)
+
+    return table
+
+
+def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, states_dict, win_title):
     popup_window = tk.Toplevel(window)
     popup_window.title(win_title)
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
@@ -883,6 +947,7 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, nu
     grammar_text_widget.pack(fill="both", expand=1)
 
     result = f"This grammar is {win_title}"
+    num_states = len(states_dict)
     for state, actions in action_dict.items():
         if len(actions) > 1:
             result = f"This grammar is not {win_title}"
@@ -899,8 +964,12 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, nu
     analysis_frame.pack(side="left", fill="both", expand=1)
     analysis_frame.pack_propagate(0)
 
+    canvas = create_scrollbars(analysis_frame)
+    frame_hieght = analysis_frame.winfo_height() // 3
+
+
     # create action table
-    action_table = ttk.Treeview(analysis_frame)
+    action_table = create_table_with_scrollbar(canvas, frame_hieght, "Action table", 0)
     if win_title == 'LR(0)':
         action_table['columns'] = ("states", "action")
         action_table.column("#0", width=0, stretch=tk.NO)
@@ -913,28 +982,50 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, nu
         for state, actions in action_dict.items():
             action_text = ''
             count = 0
+            tag = ""
             for action in actions:
                 if action != 'Shift' and action != 'Accept':
                     rule_number = int(action[1])
                     rule = rules_num_dict[rule_number]
-                    action = f"{rule[0]} → {''.join(rule[1])}"
+                    nonterminal, production = rule[0], rule[1]
+                    if production == ['']:
+                        production = ['ε']
+                    action = f"{nonterminal} → {''.join(production)}"
                 if count == 0:
                     action_text += action
                     count += 1
                 else:
                     action_text += f' | {action}'
-            action_table.insert(parent='', index='end', values=(state, action_text))
-
-        action_table.pack(pady=20)
+                    tag = "conflict"
+            action_table.insert(parent='', index='end', values=(state, action_text), tags=(tag,))
+            action_table.tag_configure("conflict", foreground="red")
+        action_table.pack()
     else:
-        create_table(action_dict, num_states, action_table)
+        create_table(action_dict, num_states, action_table, True)
 
     # create goto table
-    goto_table = ttk.Treeview(analysis_frame)
+    goto_table = create_table_with_scrollbar(canvas, frame_hieght, "Goto table", 1)
     create_table(goto_dict, num_states, goto_table)
 
+    # create item table
+    item_table = create_table_with_scrollbar(canvas, frame_hieght, "Items", 2)
 
-def create_table(goto_dict, state, goto_table):
+    # map rows from action_table to goto_table
+    action_to_goto_map = map_table_rows(action_table)
+
+    # map rows from goto_table to action_table
+    goto_to_action_map = map_table_rows(goto_table)
+
+    # Bind click event to action_table
+    action_table.bind('<ButtonRelease-1>', lambda event: highlight_matching_row(event, action_table, goto_table,
+                      action_to_goto_map, states_dict, item_table))
+
+    # Bind click event to table2
+    goto_table.bind('<ButtonRelease-1>', lambda event: highlight_matching_row(event, goto_table, action_table,
+                    goto_to_action_map, states_dict, item_table))
+
+
+def create_table(goto_dict, state, goto_table, action=False):
     # sort columns
     column_names = []
     for state_symbol, next_state in goto_dict.items():
@@ -965,13 +1056,21 @@ def create_table(goto_dict, state, goto_table):
     goto_table['columns'] = column_names
     goto_table.column("#0", width=0, stretch=tk.NO)
     for col_name in column_names:
-        goto_table.column(col_name, anchor=tk.CENTER, width=70)
+        if action:
+            goto_table.column(col_name, anchor=tk.CENTER)
+        else:
+            goto_table.column(col_name, anchor=tk.CENTER, width=70)
         goto_table.heading(col_name, text=col_name)
 
     # insert data
     for row in rows:
-        goto_table.insert(parent='', index='end', values=row)
-
+        tag = ""
+        for column in row:
+            if isinstance(column, set):
+                if len(column) > 1:
+                    tag = "conflict"
+        goto_table.insert(parent='', index='end', values=row, tags=(tag,))
+    goto_table.tag_configure("conflict", foreground="red")
     goto_table.pack(pady=20)
 
 
