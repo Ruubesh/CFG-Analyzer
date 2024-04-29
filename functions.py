@@ -907,7 +907,6 @@ def highlight_matching_row(event, source_table, target_table, source_to_target_m
                             item_text = f"{lhs} → {''.join(element[0])}     {','.join(element[1])}"
                         else:
                             item_text = f"{lhs} → {''.join(element)}"
-                        print(item_text)
                         item_table.insert(parent='', index='end', values=(item_text,))
                 item_table.pack(pady=20)
 
