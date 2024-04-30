@@ -118,12 +118,12 @@ def load_page1(file_error):
     edit_f2.pack(pady=10)
 
     add_btn = tk.Button(master=edit_f2, text="Add", width=7,
-                        command=lambda: functions.add(file_variable.get(), choice.get(), entry_str.get(), grammar_str,
+                        command=lambda: functions.add(file_variable, choice.get(), entry_str.get(), grammar_str,
                                                       init_combo, rule_combo, rules, error_label))
     add_btn.pack(side="left", padx=10)
 
     remove_btn = tk.Button(master=edit_f2, text="Remove", width=7,
-                           command=lambda: functions.remove(file_variable.get(), choice.get(), entry_str.get(),
+                           command=lambda: functions.remove(file_variable, choice.get(), entry_str.get(),
                                                             grammar_str, init_combo, rule_combo, rules, error_label))
     remove_btn.pack(side="left", padx=10)
 

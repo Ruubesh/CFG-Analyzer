@@ -435,6 +435,7 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
                                    "explain_text": explain_text})
 
+    grammar_text = CFG().generate_grammar_text(file, {})
     transform_sets = {}
     for nonterminal in config['rules']:
         set_nt = set()
@@ -1102,23 +1103,25 @@ def on_select_rule(file, rule_val, rules):
             rules.set(grammar['rules'][i])
 
 
-def add(file, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
+def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
+    file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().add_value(config, val_type, val, file)
 
     if error_text is None:
-        submit(file, grammar_str, init_combo, rule_combo, rules)
+        submit(file_variable, grammar_str, init_combo, rule_combo, rules)
         error_label.config(text="")
     else:
         error_label.config(text=error_text)
 
 
-def remove(file, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
+def remove(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
+    file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().remove_value(config, val_type, val, file)
 
     if error_text is None:
-        submit(file, grammar_str, init_combo, rule_combo, rules)
+        submit(file_variable, grammar_str, init_combo, rule_combo, rules)
         error_label.config(text="")
     else:
         error_label.config(text=error_text)
