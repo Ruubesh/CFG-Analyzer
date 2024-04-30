@@ -652,6 +652,32 @@ class LRParser:
 
         return goto_dict
 
+    def compute_look_ahead(self, item, index, grammar, first_dict):
+        look_ahead = set()
+        for i in range(index + 2, len(item)):
+            sym = item[i]
+            # sym = item[index + 2]
+            if sym in grammar.nonterminals:
+                if 'epsilon' in first_dict[sym]:
+                    if i == len(item) - 1:
+                        for s in first_dict[sym]:
+                            if s != 'epsilon':
+                                look_ahead.add(s)
+                        look_ahead.add('⊣')
+                    else:
+                        for s in first_dict[sym]:
+                            if s != 'epsilon':
+                                look_ahead.add(s)
+                else:
+                    for s in first_dict[sym]:
+                        look_ahead.add(s)
+                    break
+            else:
+                look_ahead.add(sym)
+                break
+
+        return look_ahead
+
     def compute_lr1_closure(self, grammar, items, first_dict):
         while True:
             updated = False
@@ -667,13 +693,12 @@ class LRParser:
                                 symbol_after_dot = item[index + 1]
                                 if symbol_after_dot in grammar.nonterminals:
                                     if index + 1 != len(item) - 1:
-                                        sym = item[index + 2]
-                                        if sym in grammar.nonterminals:
-                                            look_ahead = first_dict[sym]
-                                        else:
-                                            look_ahead = set(sym)
+                                        look_ahead = self.compute_look_ahead(item, index, grammar, first_dict)
                                     for rule in grammar.rules[symbol_after_dot]:
-                                        temp_rule = rule.copy()
+                                        if rule == ['']:
+                                            temp_rule = []
+                                        else:
+                                            temp_rule = rule.copy()
                                         temp_rule.insert(0, '.')
                                         if symbol_after_dot not in items:
                                             items[symbol_after_dot] = []
@@ -753,6 +778,8 @@ class LRParser:
                                     for lk_ahead in look_ahead:
                                         if (state, lk_ahead) not in action_dict:
                                             action_dict[(state, lk_ahead)] = set()
+                                        if rule == ['']:
+                                            rule = ['ε']
                                         action_dict[(state, lk_ahead)].add(f'{nonterminal} → {"".join(rule)}')
                         elif symbol == '.':
                             symbol_after_dot = item[index + 1]
