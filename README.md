@@ -17,11 +17,11 @@ Once Python is installed on your system, you can run the application using the c
 
 On Windows, open a command prompt and navigate to the directory where the application files are located. Then, use the following command:
 
-python app.py
+python cfganalyzer.py
 
 On Linux, open a terminal and navigate to the directory where the application files are located. Then, use the following command:
 
-python3 app.py
+python3 cfganalyzer.py
 
 After executing the appropriate command, the application will launch, and you can start using it to edit, transform and analyze grammar files.
 
