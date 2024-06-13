@@ -3,6 +3,7 @@ from cfg import CFG, main, Stack, Transform, LLParser, LRParser
 import tkinter as tk
 from itertools import combinations
 import os
+from tooltips import CreateToolTip
 
 
 def create_scrollbars(frame):
@@ -29,7 +30,8 @@ def update_options(combobox, options):
     combobox.current(0)
 
 
-def open_files(listbox, listbox_items):
+def open_files(listbox, listbox_items, file_error):
+    file_error.config(text='')
     filenames = filedialog.askopenfilenames(
         initialdir="/Users/ruube/PycharmProjects/Thesis",
         title="Select A File",
@@ -42,12 +44,15 @@ def open_files(listbox, listbox_items):
             listbox_items.append(filename)
 
 
-def remove_file(listbox, listbox_items):
-    selected_index = listbox.curselection()
-    if selected_index:
-        listbox.delete(selected_index)
-        for index in selected_index:
+def remove_file(listbox, listbox_items, file_error):
+    file_error.config(text='')
+    selected_indices = listbox.curselection()
+    if selected_indices:
+        for index in reversed(selected_indices):
+            listbox.delete(index)
             del listbox_items[index]
+    else:
+        file_error.config(text='Please select one or more files to remove')
 
 
 def read_file(file):
@@ -56,7 +61,8 @@ def read_file(file):
         return text
 
 
-def display_grammar(file, grammar_str, file_variable):
+def display_grammar(file, grammar_str, file_variable, file_error):
+    file_error.config(text='')
     file_variable.set(file)
     text = CFG().generate_grammar_text(file, {}, label=True)
     grammar_str.set(text)
@@ -64,13 +70,22 @@ def display_grammar(file, grammar_str, file_variable):
 
 def submit(file_variable, grammar_str, init_combo, rule_combo, rules):
     file = file_variable.get()
-    display_grammar(file, grammar_str, file_variable)
+
+    # dummy label
+    file_error = tk.Label()
+
+    display_grammar(file, grammar_str, file_variable, file_error)
 
     grammar = CFG().read_config(file)
-    init_combo['values'] = grammar['input']['nonterminals'].split(',')
-    init_combo.current(0)
 
-    rule_combo['values'] = grammar['input']['nonterminals'].split(',')
+    nonterminals = grammar['input']['nonterminals'].split(',')
+    initial_nonterminal = grammar['input']['initial_nonterminal']
+    init_nt_index = nonterminals.index(initial_nonterminal)
+
+    init_combo['values'] = nonterminals
+    init_combo.current(init_nt_index)
+
+    rule_combo['values'] = nonterminals
     rule_combo.current(0)
     rules.set(grammar['rules'][rule_combo['values'][0]])
 
@@ -199,8 +214,8 @@ def on_popup_window_close(window, config, file):
 
 def create_popup_window(window, stack_transformation, config, file, win_title):
     popup_window = tk.Toplevel(window)
-    popup_window.title(win_title)
     popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
+    popup_window.title(win_title)
     popup_window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight() - 80}+0+0')
     popup_window.focus()
 
@@ -268,6 +283,12 @@ def create_popup_window(window, stack_transformation, config, file, win_title):
     popup_window.bind("<Left>", lambda event: on_pressing_left(grammar_text_widget, transform_str, explain_str,
                                                                stack_transformation, index, back_btn, forward_btn,
                                                                transform_canvas))
+
+    # Tooltips
+    CreateToolTip(close_btn, "Close this window")
+    CreateToolTip(back_btn, "Previous step")
+    CreateToolTip(forward_btn, "Next step")
+    CreateToolTip(save_btn, "Save the transformed grammar")
 
 
 def generate_rules_text(config):
@@ -1074,11 +1095,11 @@ def create_table(goto_dict, state, goto_table, action=False):
     goto_table.pack(pady=20)
 
 
-def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
-    grammar = CFG().read_config(file)
-    grammar.set('input', 'initial_nonterminal', init_val.get())
+def save_to_tempfile(file, rule_val, rules, init_val, grammar_str, error_label):
+    config = CFG().read_config(file)
+    config.set('input', 'initial_nonterminal', init_val.get())
 
-    substrings = grammar['input']['nonterminals'].split(',') + grammar['input']['terminals'].split(',') + ['epsilon']
+    substrings = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',') + ['epsilon']
     substrings = sorted(substrings, key=lambda x: not x.startswith('<'))
     new_rule = []
     for rule in rules.get().split(','):
@@ -1090,10 +1111,15 @@ def save_to_config(file, rule_val, rules, init_val, grammar_str, error_label):
             return
 
     new_rules = [item for item in new_rule if item != '']
-    grammar.set('rules', rule_val.get(), ','.join(new_rules))
-    CFG().write_to_config(grammar, file)
+    config.set('rules', rule_val.get(), ','.join(new_rules))
+    CFG().write_to_config(config, file)
     text = CFG().generate_grammar_text(file, {}, label=True)
     grammar_str.set(text)
+
+
+def saveas_newfile(temp_file, window):
+    config = CFG().read_config(temp_file)
+    save_as_transformed_grammar(config, window)
 
 
 def on_select_rule(file, rule_val, rules):

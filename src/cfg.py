@@ -851,8 +851,8 @@ class Stack:
                 print(f"{self.data[i]}")
                 sentence += f"{self.data[i]}"
             else:
-                print(f"{self.data[i]} ==>", end=" ")
-                sentence += f"{self.data[i]} ==>"
+                print(f"{self.data[i]} ⇒ ", end=" ")
+                sentence += f"{self.data[i]} ⇒ "
 
         return sentence
 
