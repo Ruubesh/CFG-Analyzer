@@ -1,0 +1,10 @@
+[input]
+nonterminals = R,U,B,E
+terminals = a,b,i
+initial_nonterminal = R
+
+[rules]
+R = aU,Bb,Ea
+U = Ui,ab
+B = Ub
+E = iB,BB
