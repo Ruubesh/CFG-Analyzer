@@ -1112,6 +1112,7 @@ class CFG:
         if config['input'][val_type]:
             data = config['input'][val_type].split(',')
             inputs = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')
+            inputs = [inp for inp in inputs if inp != '']
         else:
             data = []
             inputs = []
