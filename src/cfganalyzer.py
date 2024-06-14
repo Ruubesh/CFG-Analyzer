@@ -152,7 +152,7 @@ def load_create_page():
     rule_entry.config(state=tk.DISABLED)
 
     # pack widgets
-    error_label.pack()
+    error_label.pack(pady=10)
     grammar_frame.pack(fill=tk.BOTH, expand=1)
 
     # create new temp file
@@ -302,7 +302,7 @@ def load_page1(file_error, listbox):
         lr1_btn.grid(row=1, column=4, padx=10)
 
         # pack widgets
-        error_label.pack()
+        error_label.pack(pady=10)
         grammar_frame.pack(fill="x")
 
         # load rule specifications to combo boxes

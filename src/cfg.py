@@ -1117,7 +1117,9 @@ class CFG:
             inputs = []
 
         if val not in inputs and val != '':
-            # check = self.check_value(inputs, val)
+            check = self.check_value(inputs, val)
+            if check:
+                return check
 
             data.append(val)
             new_val = ','.join(data)
