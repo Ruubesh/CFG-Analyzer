@@ -61,35 +61,6 @@ def read_file(file):
         return text
 
 
-def display_grammar(file, grammar_str, file_variable, file_error):
-    file_error.config(text='')
-    file_variable.set(file)
-    text = CFG().generate_grammar_text(file, {}, label=True)
-    grammar_str.set(text)
-
-
-def submit(file_variable, grammar_str, init_combo, rule_combo, rules):
-    file = file_variable.get()
-
-    # dummy label
-    file_error = tk.Label()
-
-    display_grammar(file, grammar_str, file_variable, file_error)
-
-    grammar = CFG().read_config(file)
-
-    nonterminals = grammar['input']['nonterminals'].split(',')
-    initial_nonterminal = grammar['input']['initial_nonterminal']
-    init_nt_index = nonterminals.index(initial_nonterminal)
-
-    init_combo['values'] = nonterminals
-    init_combo.current(init_nt_index)
-
-    rule_combo['values'] = nonterminals
-    rule_combo.current(0)
-    rules.set(grammar['rules'][rule_combo['values'][0]])
-
-
 def on_pressing_right(grammar_text_widget, transform_str, explain_str, stack_transformation, index, back_btn,
                       forward_btn, transform_canvas):
     if index.get() < len(stack_transformation.data) - 1:
@@ -1123,31 +1094,87 @@ def saveas_newfile(temp_file, window):
 
 
 def on_select_rule(file, rule_val, rules):
-    grammar = CFG().read_config(file)
-    for i in grammar['rules']:
-        if i == rule_val.get():
-            rules.set(grammar['rules'][i])
+    config = CFG().read_config(file)
+    val = rule_val.get()
+    if val in config['rules']:
+        rules.set(config['rules'][val])
+    else:
+        rules.set('')
 
 
-def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
+def display_grammar(file, grammar_str, file_variable, file_error):
+    file_error.config(text='')
+    file_variable.set(file)
+    text = CFG().generate_grammar_text(file, {}, label=True)
+    grammar_str.set(text)
+
+
+def submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry):
+    file = file_variable.get()
+
+    # dummy label
+    file_error = tk.Label()
+
+    display_grammar(file, grammar_str, file_variable, file_error)
+
+    config = CFG().read_config(file)
+
+    nonterminals = config['input']['nonterminals'].split(',')
+    initial_nonterminal = config['input']['initial_nonterminal']
+
+    # for new config
+    if initial_nonterminal not in nonterminals:
+        initial_nonterminal = nonterminals[0]
+        config.set('input', 'initial_nonterminal', initial_nonterminal)
+        CFG().write_to_config(config, file)
+        text = CFG().generate_grammar_text(file, {}, label=True)
+        grammar_str.set(text)
+
+    if nonterminals == ['']:
+        init_combo.set('')
+        rule_combo.set('')
+        rules.set('')
+        init_combo.config(state=tk.DISABLED)
+        rule_combo.config(state=tk.DISABLED)
+        rule_entry.config(state=tk.DISABLED)
+    else:
+        init_combo.config(state='readonly')
+        rule_combo.config(state='readonly')
+        rule_entry.config(state=tk.NORMAL)
+
+        init_nt_index = nonterminals.index(initial_nonterminal)
+
+        init_combo['values'] = nonterminals
+        init_combo.current(init_nt_index)
+
+        rule_combo['values'] = nonterminals
+        last_val = len(nonterminals) - 1
+        rule_combo.current(last_val)
+        if rule_combo['values'][last_val] in config['rules']:
+            rules.set(config['rules'][rule_combo['values'][last_val]])
+        else:
+            rules.set('')
+
+
+def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry):
     file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().add_value(config, val_type, val, file)
 
     if error_text is None:
-        submit(file_variable, grammar_str, init_combo, rule_combo, rules)
+        submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry)
         error_label.config(text="")
     else:
         error_label.config(text=error_text)
 
 
-def remove(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label):
+def remove(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry):
     file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().remove_value(config, val_type, val, file)
 
     if error_text is None:
-        submit(file_variable, grammar_str, init_combo, rule_combo, rules)
+        submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry)
         error_label.config(text="")
     else:
         error_label.config(text=error_text)

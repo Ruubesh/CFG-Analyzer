@@ -1057,6 +1057,20 @@ class CFG:
         root.print_tree()
         return root
 
+    def new_config(self):
+        config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
+
+        # Add sections
+        config.add_section('input')
+        config.add_section('rules')
+
+        # Populate the 'input' section
+        config.set('input', 'nonterminals', '')
+        config.set('input', 'terminals', '')
+        config.set('input', 'initial_nonterminal', '')
+
+        return config
+
     def read_config(self, file):
         config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
         config.read(file)
@@ -1082,10 +1096,29 @@ class CFG:
                 rule = rule.replace(substring, '')
         return not rule
 
+    def check_value(self, inputs, val):
+        check = ''
+        for inp in inputs:
+            if val in inp:
+                check = f"'{val}' is a substring of '{inp}'.\n Please enclose '{val}' within '<>'. i.e: <{val}>"
+                return check
+            elif inp in val:
+                check = f"'{val}' is a superstring of '{inp}'.\n Please enclose '{val}' within '<>'. i.e: <{val}>"
+                return check
+
+        return check
+
     def add_value(self, config, val_type, val, file, overwrite=True):
-        data = config['input'][val_type].split(',')
-        inputs = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')
+        if config['input'][val_type]:
+            data = config['input'][val_type].split(',')
+            inputs = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')
+        else:
+            data = []
+            inputs = []
+
         if val not in inputs and val != '':
+            # check = self.check_value(inputs, val)
+
             data.append(val)
             new_val = ','.join(data)
             config.set('input', val_type, new_val)
