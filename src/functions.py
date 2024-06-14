@@ -6,6 +6,16 @@ import os
 from tooltips import CreateToolTip
 
 
+def create_text_scrollbar(text_widget):
+    v_scrollbar = ttk.Scrollbar(text_widget, orient=tk.VERTICAL, command=text_widget.yview)
+    v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    h_scrollbar = ttk.Scrollbar(text_widget, orient=tk.HORIZONTAL, command=text_widget.xview)
+    h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+
+
 def create_scrollbars(frame):
     vertical_scrollbar = ttk.Scrollbar(master=frame, orient="vertical")
     horizontal_scrollbar = ttk.Scrollbar(master=frame, orient="horizontal")
@@ -217,8 +227,10 @@ def create_popup_window(window, stack_transformation, config, file, win_title):
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=popup_window.winfo_width() / 3)
     grammar_frame.pack(side="left", fill="both", expand=1)
     grammar_frame.pack_propagate(0)
-    grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
+    grammar_text_widget = tk.Text(master=grammar_frame, wrap=tk.NONE, width=15, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
+
+    create_text_scrollbar(grammar_text_widget)
 
     transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps",
                                     width=popup_window.winfo_width() / 3)
@@ -1394,6 +1406,10 @@ def get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, gr
     else:
         process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal,
                      execute_btn, selected_expansion, undo_btn, redo_btn, sentential_canvas)
+
+
+def execute1():
+    pass
 
 
 def execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal, execute_btn,
