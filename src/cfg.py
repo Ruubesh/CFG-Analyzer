@@ -848,10 +848,10 @@ class Stack:
         sentence = ''
         for i in range(endval):
             if i == endval - 1:
-                print(f"{self.data[i]}")
+                # print(f"{self.data[i]}")
                 sentence += f"{self.data[i]}"
             else:
-                print(f"{self.data[i]} ⇒ ", end=" ")
+                # print(f"{self.data[i]} ⇒ ", end=" ")
                 sentence += f"{self.data[i]} ⇒ "
 
         return sentence
@@ -874,10 +874,10 @@ class TreeNode:
     def print_tree(self, tree='', indent=""):
         prefix = indent[:-3] + "|_ " * bool(indent)
         if self.data == "":
-            print(f'{prefix}\u03B5')
+            # print(f'{prefix}\u03B5')
             tree += f'{prefix}\u03B5\n'
         else:
-            print(prefix + self.data)
+            # print(prefix + self.data)
             tree += prefix + self.data + "\n"
         for more, child in enumerate(self.children, 1 - len(self.children)):
             childIndent = " |  " if more else "    "
@@ -1140,7 +1140,7 @@ class CFG:
         for nt in config['rules']:
             for rlist in config['rules'][nt].split(','):
                 if val in rlist:
-                    print(f'Rule {nt} has dependency on {val}: {"".join(rlist)}')
+                    # print(f'Rule {nt} has dependency on {val}: {"".join(rlist)}')
                     dlist.append("".join(rlist))
         return dlist
 
@@ -1300,4 +1300,5 @@ def main(file_variable):
 
 
 if __name__ == "__main__":
-    main()
+    grammar = main('C:\\Users\\ruube\\PycharmProjects\\Thesis\\grammars\\grammar.txt')
+    grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)

@@ -6,6 +6,10 @@ import os
 from tooltips import CreateToolTip
 
 
+def update_scrollregion(canvas):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+
 def create_text_scrollbar(text_widget):
     v_scrollbar = ttk.Scrollbar(text_widget, orient=tk.VERTICAL, command=text_widget.yview)
     v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -971,7 +975,6 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, st
     canvas = create_scrollbars(analysis_frame)
     frame_hieght = analysis_frame.winfo_height() // 3
 
-
     # create action table
     action_table = create_table_with_scrollbar(canvas, frame_hieght, "Action table", 0)
     if win_title == 'LR(0)':
@@ -1269,11 +1272,8 @@ def draw_lines_between_nodes(canvas, parent_pos, child_pos):
     canvas.create_line(parent_x, parent_y, child_x, child_y - 15, arrow=tk.LAST)
 
 
-def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn,
-         sentential_canvas):
+def undo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
     redo_btn.config(state="normal")
-    execute_btn.config(state='normal')
-    execute_e1.config(state='readonly')
 
     sentence, ldata = grammar.stack.undo('S', grammar.nonterminals)
     tree = grammar.stack_tree.undo('T', grammar.nonterminals)
@@ -1286,19 +1286,17 @@ def undo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, exe
         canvas.delete("all")
         canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
         canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
-        execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, ldata, execute_btn, undo_btn,
-                redo_btn, sentential_canvas, tree)
+        execute1(grammar, ldata, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
         update_label(sentential_str, sentence)
         update_sentential_scrollregion(sentential_canvas, sentential_str)
         canvas.delete("all")
         draw_tree(canvas, tree, 400, 50, 50, 60)
-        get_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, ldata,
-                        undo_btn, redo_btn, sentential_canvas, tree)
+        current_sentence = ldata.split(' ')
+        execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
 
 
-def redo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn, redo_btn,
-         sentential_canvas):
+def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
     undo_btn.config(state="normal")
 
     sentence, ldata = grammar.stack.redo('S', grammar.nonterminals)
@@ -1311,131 +1309,74 @@ def redo(output_str, input_str, sentential_str, canvas, execute_e1, grammar, exe
     draw_tree(canvas, tree, 400, 50, 50, 60)
     nt = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
     if nt:
-        get_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, ldata,
-                        undo_btn,
-                        redo_btn, sentential_canvas)
+        current_sentence = ldata.split(' ')
+        execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
-        execute_btn.config(state='disabled')
-        execute_e1.config(state='disabled')
-        update_label(input_str, '')
-        update_label(output_str, f'Result: {ldata}')
+        label = tk.Label(master=input_frame, text=ldata)
+        label.pack()
 
 
-def choose_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, undo_btn,
-                       redo_btn, sentential_canvas, undo_tree):
-    non_terminal = input_str.get()
-    execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, non_terminal, execute_btn, undo_btn,
-            redo_btn, sentential_canvas, undo_tree)
+def perform_derivation(grammar, rule, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn,
+                       nonterminal, position):
+    clear_widgets(input_frame)
+    undo_btn.config(state=tk.NORMAL)
+    redo_btn.config(state=tk.DISABLED)
 
-
-def get_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, ldata, undo_btn,
-                    redo_btn, sentential_canvas, undo_tree=None):
-    val = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
-    if val:
-        if len(val) == 1:
-            non_terminal = val[0]
-            execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, non_terminal, execute_btn,
-                    undo_btn, redo_btn, sentential_canvas, undo_tree)
-        else:
-            update_label(output_str,
-                         f"\nLast expansion : {ldata} \nChoose the next non terminal for expansion: \n ")
-            update_options(execute_e1, val)
-            execute_btn.config(
-                command=lambda: choose_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar,
-                                                   execute_btn, undo_btn, redo_btn, sentential_canvas, undo_tree))
-
-
-def process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal, execute_btn,
-                 selected_expansion, undo_btn, redo_btn, sentential_canvas):
-    undo_btn.config(state="normal")
-    redo_btn.config(state="disabled")
-
-    if grammar.stack.current().count(initial_nonterminal) > 1:
-        position = int(input_str.get())
-    else:
-        position = 1
-
-    if "\u03B5" in selected_expansion:
-        selected_expansion[0] = ''
-
-    ldata = grammar.replacer(grammar.stack.current(), initial_nonterminal, " ".join(selected_expansion), position)
-    ldata = " ".join(ldata.split())
+    ldata = grammar.replacer(grammar.stack.current(), nonterminal, ' '.join(rule), position)
+    current_sentence = ldata.split(' ')
     grammar.stack.push(ldata)
-    sentence = grammar.create_sentential_form(grammar.stack.data, initial_nonterminal, "".join(selected_expansion),
-                                              position)
+    sentence = grammar.create_sentential_form(grammar.stack.data, nonterminal, ''.join(rule), position)
     update_label(sentential_str, sentence)
     update_sentential_scrollregion(sentential_canvas, sentential_str)
-    grammar.stack_tree.push({initial_nonterminal: selected_expansion, "position": position})
+    grammar.stack_tree.push({nonterminal: rule, "position": position})
     tree = grammar.build_tree(grammar.stack_tree, grammar.nonterminals)
     canvas.delete("all")
     draw_tree(canvas, tree, 400, 50, 50, 60)
-    nt = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
+    nt = [elem for elem in grammar.nonterminals if elem in current_sentence]
     if nt:
-        get_nonterminal(output_str, input_str, sentential_str, canvas, execute_e1, grammar, execute_btn, ldata,
-                        undo_btn, redo_btn, sentential_canvas)
+        execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
-        execute_btn.config(state='disabled')
-        execute_e1.config(state='disabled')
-        update_label(input_str, '')
-        update_label(output_str, f'Result: {ldata}')
+        label = tk.Label(master=input_frame, text=ldata)
+        label.pack()
 
 
-def get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal, execute_btn,
-                   undo_btn, redo_btn, sentential_canvas, undo_tree):
-    selected_expansion = input_str.get().split()
-    if grammar.stack.current().count(initial_nonterminal) > 1:
-        update_label(output_str,
-                     f"Enter the occurrence of '{initial_nonterminal}' to expand in '{grammar.stack.current()}' : \n ")
-        occurrences = []
-        for i in range(1, grammar.stack.current().count(initial_nonterminal) + 1):
-            occurrences.append(i)
-        update_options(execute_e1, occurrences)
+def choose_rule(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn, nonterminal,
+                position):
+    clear_widgets(input_frame)
 
-        if undo_tree is None:
-            tree = grammar.build_tree(grammar.stack_tree, grammar.nonterminals)
-            canvas.delete("all")
-            draw_tree(canvas, tree, 400, 50, 50, 60, initial_nonterminal)
+    for production in grammar.rules[nonterminal]:
+        btn_txt = ''.join(production)
+        if btn_txt == '':
+            btn_txt = '\u03B5'
+        button = tk.Button(master=input_frame, text=btn_txt, relief='flat', bg='lightblue',
+                           command=lambda rule=production: perform_derivation(grammar, rule, input_frame,
+                                                                              sentential_str, sentential_canvas,
+                                                                              canvas, undo_btn, redo_btn,
+                                                                              nonterminal, position))
+        button.pack(side=tk.LEFT, pady=10, padx=10)
+
+
+def execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
+    clear_widgets(input_frame)
+
+    symbol_positions = {symbol: 0 for symbol in grammar.nonterminals}
+
+    for symbol in current_sentence:
+        if symbol in grammar.nonterminals:
+            symbol_positions[symbol] += 1
+            position = symbol_positions[symbol]
+
+            button = tk.Button(master=input_frame, text=symbol, relief='flat', bg='lightblue',
+                               command=lambda sym=symbol, pos=position: choose_rule(grammar, input_frame,
+                                                                                    sentential_str,
+                                                                                    sentential_canvas, canvas, undo_btn,
+                                                                                    redo_btn, sym, pos))
+            button.pack(side=tk.LEFT, pady=10, padx=10)
         else:
-            canvas.delete("all")
-            draw_tree(canvas, undo_tree, 400, 50, 50, 60, initial_nonterminal)
-
-        execute_btn.config(
-            command=lambda: process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar,
-                                         initial_nonterminal, execute_btn, selected_expansion, undo_btn, redo_btn,
-                                         sentential_canvas))
-    else:
-        process_data(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal,
-                     execute_btn, selected_expansion, undo_btn, redo_btn, sentential_canvas)
+            label = tk.Label(master=input_frame, text=symbol)
+            label.pack(side=tk.LEFT, pady=10, padx=10)
 
 
-def execute1():
-    pass
-
-
-def execute(output_str, input_str, sentential_str, canvas, execute_e1, grammar, initial_nonterminal, execute_btn,
-            undo_btn, redo_btn, sentential_canvas, undo_tree, init_val=False):
-    if initial_nonterminal not in grammar.rules:
-        return initial_nonterminal
-
-    if init_val:
-        x = 400
-        y = 50
-        update_label(sentential_str, initial_nonterminal)
-        update_sentential_scrollregion(sentential_canvas, sentential_str)
-        canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
-        canvas.create_text(x + 15, y + 15, text=initial_nonterminal)
-
-    update_label(output_str, f"Choose the next expansion for '{initial_nonterminal}':")
-    options = []
-    for i, option in enumerate(grammar.rules[initial_nonterminal], 1):
-        if option[0] == '':
-            options.append("\u03B5")
-        else:
-            options.append(' '.join(option))
-
-    update_options(execute_e1, options)
-
-    execute_btn.config(
-        command=lambda: get_occurrence(output_str, input_str, sentential_str, canvas, execute_e1, grammar,
-                                       initial_nonterminal, execute_btn, undo_btn, redo_btn, sentential_canvas,
-                                       undo_tree))
+def clear_widgets(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()

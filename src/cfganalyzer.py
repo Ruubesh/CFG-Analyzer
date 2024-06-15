@@ -3,13 +3,9 @@ import tkinter as tk
 from tkinter import ttk
 import functions
 import cfg
+from src.functions import clear_widgets
 from tooltips import CreateToolTip
 import os
-
-
-def clear_widgets(frame):
-    for widget in frame.winfo_children():
-        widget.destroy()
 
 
 def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry):
@@ -333,9 +329,29 @@ def load_page2():
     top_frame = tk.Frame(master=page2_frame)
     top_frame.pack(fill='both', expand=1)
 
+    # topleft_frame
+    topleft_frame = tk.Frame(master=top_frame)
+    topleft_frame.pack(side="left", fill='both', expand=1)
+    topleft_frame.pack_propagate(0)
+
+    # grammar frame
+    grammar_frame = tk.LabelFrame(master=topleft_frame, text="Grammar")
+    grammar_frame.pack(fill="both", expand=1)
+    grammar_frame.pack_propagate(0)
+    grammar_text_widget = tk.Text(master=grammar_frame, wrap=tk.NONE, width=15, bg="#d3d3d3")
+    grammar_text_widget.pack(fill="both", expand=1)
+
+    functions.create_text_scrollbar(grammar_text_widget)
+
+    grammar_text = cfg.CFG().generate_grammar_text(file_variable.get(), {})
+    grammar_text_widget.insert("1.0", grammar_text)
+    # grammar_text_widget.tag_configure("highlight", foreground="red")
+    # functions.highlight_text(grammar_text_widget)
+    grammar_text_widget.config(state=tk.DISABLED)
+
     # execute_frame
-    execute_frame = tk.LabelFrame(master=top_frame, text="Execute")
-    execute_frame.pack(side="left", fill='both', expand=1)
+    execute_frame = tk.LabelFrame(master=topleft_frame, text='Execute', height=300)
+    execute_frame.pack(fill=tk.X)
     execute_frame.pack_propagate(0)
 
     # button_frame
@@ -346,33 +362,41 @@ def load_page2():
     back_btn.pack(side='left', padx=10)
 
     redo_btn = tk.Button(master=button_frame, text="-->",
-                         command=lambda: functions.redo(output_str, input_str, sentential_str, canvas, execute_e1,
-                                                        grammar, execute_btn, undo_btn, redo_btn, sentential_canvas),
+                         command=lambda: functions.redo(grammar, input_frame, sentential_str, sentential_canvas, canvas,
+                                                        undo_btn, redo_btn),
                          state="disabled")
     redo_btn.pack(side='right', padx=10)
 
     undo_btn = tk.Button(master=button_frame, text="<--",
-                         command=lambda: functions.undo(output_str, input_str, sentential_str, canvas, execute_e1,
-                                                        grammar, execute_btn, undo_btn, redo_btn, sentential_canvas),
+                         command=lambda: functions.undo(grammar, input_frame, sentential_str, sentential_canvas, canvas,
+                                                        undo_btn, redo_btn),
                          state="disabled")
     undo_btn.pack(side='right')
 
-    output_str = tk.StringVar()
-    execute_l1 = tk.Label(master=execute_frame, textvariable=output_str, justify='left')
-    execute_l1.pack()
+    # canvas
+    execute_canvas = tk.Canvas(execute_frame)
+    execute_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
-    input_str = tk.StringVar()
-    options = [grammar.initial_nonterminal]
-    execute_e1 = ttk.Combobox(master=execute_frame, textvariable=input_str, values=options, state='readonly')
-    execute_e1.current(0)
-    execute_e1.pack()
+    scrollbar = ttk.Scrollbar(execute_canvas, orient=tk.HORIZONTAL, command=execute_canvas.xview)
+    scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-    execute_btn = tk.Button(master=execute_frame, text="Execute",
-                            command=lambda: functions.execute(output_str, input_str, sentential_str, canvas,
-                                                              execute_e1, grammar, grammar.initial_nonterminal,
-                                                              execute_btn, undo_btn, redo_btn, sentential_canvas, True,
-                                                              True))
-    execute_btn.pack(pady=10)
+    execute_canvas.configure(xscrollcommand=scrollbar.set)
+
+    input_frame = tk.Frame(execute_canvas)
+
+    # center frame
+    canvas_width = execute_canvas.winfo_reqwidth()
+    canvas_height = execute_canvas.winfo_reqheight()
+
+    frame_width = input_frame.winfo_reqwidth()
+    frame_height = input_frame.winfo_reqheight()
+
+    x = (canvas_width - frame_width) / 2
+    y = (canvas_height - frame_height) / 2
+
+    execute_canvas.create_window((x, y), window=input_frame, anchor="nw")
+
+    input_frame.bind("<Configure>", lambda event: functions.update_scrollregion(execute_canvas))
 
     # tree_frame
     tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree")
@@ -400,8 +424,10 @@ def load_page2():
     CreateToolTip(back_btn, "Go to previous page")
     CreateToolTip(undo_btn, "Undo")
     CreateToolTip(redo_btn, "Redo")
-    CreateToolTip(execute_e1, "Choose an option")
-    CreateToolTip(execute_btn, "Submit the chosen option")
+
+    # run
+    functions.execute1(grammar, grammar.initial_nonterminal, input_frame, sentential_str, sentential_canvas, canvas,
+                       undo_btn, redo_btn)
 
 
 def on_close():
