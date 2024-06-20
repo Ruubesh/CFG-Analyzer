@@ -1,0 +1,9 @@
+[input]
+nonterminals = E,T,P
+terminals = a,+,*
+initial_nonterminal = E
+
+[rules]
+E = T,E+T
+T = P,T*P
+P = a
