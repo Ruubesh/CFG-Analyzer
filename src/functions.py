@@ -4,6 +4,11 @@ import tkinter as tk
 from itertools import combinations
 import os
 from tooltips import CreateToolTip
+from recognizer import Recognizer
+
+
+def derive_automatically():
+    pass
 
 
 def update_scrollregion(canvas):
@@ -1286,14 +1291,14 @@ def undo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_b
         canvas.delete("all")
         canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
         canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
-        execute1(grammar, ldata, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, ldata, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
         update_label(sentential_str, sentence)
         update_sentential_scrollregion(sentential_canvas, sentential_str)
         canvas.delete("all")
         draw_tree(canvas, tree, 400, 50, 50, 60)
         current_sentence = ldata.split(' ')
-        execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
 
 
 def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
@@ -1310,7 +1315,7 @@ def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_b
     nt = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
     if nt:
         current_sentence = ldata.split(' ')
-        execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
         label = tk.Label(master=input_frame, text=ldata)
         label.pack()
@@ -1334,7 +1339,7 @@ def perform_derivation(grammar, rule, input_frame, sentential_str, sentential_ca
     draw_tree(canvas, tree, 400, 50, 50, 60)
     nt = [elem for elem in grammar.nonterminals if elem in current_sentence]
     if nt:
-        execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
         label = tk.Label(master=input_frame, text=ldata)
         label.pack()
@@ -1356,7 +1361,7 @@ def choose_rule(grammar, input_frame, sentential_str, sentential_canvas, canvas,
         button.pack(side=tk.LEFT, pady=10, padx=10)
 
 
-def execute1(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
+def execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
     clear_widgets(input_frame)
 
     symbol_positions = {symbol: 0 for symbol in grammar.nonterminals}

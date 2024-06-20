@@ -1300,5 +1300,6 @@ def main(file_variable):
 
 
 if __name__ == "__main__":
-    grammar = main('C:\\Users\\ruube\\PycharmProjects\\Thesis\\grammars\\grammar.txt')
-    grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)
+    grammar = main('C:\\Users\\ruube\\PycharmProjects\\Thesis\\grammars\\ae_grammar.txt')
+    # grammar.expand(grammar.initial_nonterminal, grammar.stack, grammar.stack_tree, grammar.nonterminals)
+    print(grammar.nonterminals)

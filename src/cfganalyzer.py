@@ -426,8 +426,8 @@ def load_page2():
     CreateToolTip(redo_btn, "Redo")
 
     # run
-    functions.execute1(grammar, grammar.initial_nonterminal, input_frame, sentential_str, sentential_canvas, canvas,
-                       undo_btn, redo_btn)
+    functions.execute(grammar, grammar.initial_nonterminal, input_frame, sentential_str, sentential_canvas, canvas,
+                      undo_btn, redo_btn)
 
 
 def on_close():
