@@ -610,6 +610,43 @@ class LRParser:
             if not updated:
                 break
 
+    def compute_slr_action_table(self, states_dict, rules_num_dict, follow_dict, grammar):
+        action_dict = {}
+        for state, instance in states_dict.items():
+            for lhs, rhs in instance.items.items():
+                for item in rhs:
+                    for index, symbol in enumerate(item):
+                        if symbol == '.' and index == len(item) - 1:
+                            temp_item = item.copy()
+                            if temp_item == ['.']:
+                                temp_item = ['']
+                            else:
+                                temp_item.pop(index)
+
+                            if '⊣' in temp_item:
+                                for follow in follow_dict[lhs]:
+                                    if (state, follow) not in action_dict:
+                                        action_dict[(state, follow)] = set()
+                                    action_dict[(state, follow)].add('Accept')
+                                    continue
+
+                            for rule_number, rule_tuple in rules_num_dict.items():
+                                nonterminal, rule = rule_tuple[0], rule_tuple[1]
+                                if lhs == nonterminal and temp_item == rule:
+                                    for follow in follow_dict[lhs]:
+                                        if (state, follow) not in action_dict:
+                                            action_dict[(state, follow)] = set()
+                                        if rule == ['']:
+                                            rule = ['ε']
+                                        action_dict[(state, follow)].add(f'{nonterminal} → {"".join(rule)}')
+                        elif symbol == '.':
+                            for terminal in grammar.terminals:
+                                if (state, terminal) not in action_dict:
+                                    action_dict[(state, terminal)] = set()
+                                action_dict[(state, terminal)].add('Shift')
+
+        return action_dict
+
     def compute_lr0_action_table(self, states_dict, rules_num_dict):
         action_dict = {}
         for state, instance in states_dict.items():

@@ -297,6 +297,10 @@ def load_page1(file_error, listbox):
                             command=lambda: functions.is_lr1(window, file_variable.get()))
         lr1_btn.grid(row=1, column=4, padx=10)
 
+        slr_btn = tk.Button(master=transform_frame, text="SLR(1)", width=20,
+                            command=lambda: functions.is_slr(window, file_variable.get()))
+        slr_btn.grid(row=0, column=5, padx=10)
+
         # pack widgets
         error_label.pack(pady=10)
         grammar_frame.pack(fill="x")

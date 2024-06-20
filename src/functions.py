@@ -391,7 +391,7 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
         config.set('rules', nonterminal, ','.join(new_production_rules))
 
     if grammar.initial_nonterminal in set_e:
-        new_init_nt = f"{grammar.initial_nonterminal}_prime"
+        new_init_nt = 'Φ'
         CFG().add_value(config, 'nonterminals', new_init_nt, file_variable, overwrite=False)
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
         config.set('input', 'initial_nonterminal', new_init_nt)
@@ -400,7 +400,7 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
         for nonterminal, production_rules in grammar.rules.items():
             for rule in production_rules:
                 if grammar.initial_nonterminal in rule:
-                    new_init_nt = f"{grammar.initial_nonterminal}_prime"
+                    new_init_nt = 'Φ'
                     CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
                     new_init_rule = [grammar.initial_nonterminal]
                     config.set('input', 'initial_nonterminal', new_init_nt)
@@ -790,7 +790,7 @@ def create_augmented_grammar(file):
 
     # augmented grammar
     init_nt = config['input']['initial_nonterminal']
-    new_nt = f'{init_nt}_prime'
+    new_nt = 'Φ'
     config.set('rules', new_nt, init_nt)
     temp_file = CFG().write_to_config_copy(config, file)
     config['input']['initial_nonterminal'] = new_nt
@@ -815,7 +815,7 @@ def rules_numbering(grammar):
     return rules_num_dict
 
 
-def is_lr0(window, file):
+def get_lr0_items(file):
     grammar = create_augmented_grammar(file)
     grammar.rules[grammar.initial_nonterminal][0].append('⊣')
 
@@ -841,6 +841,25 @@ def is_lr0(window, file):
 
     # assign number for each production rule
     rules_num_dict = rules_numbering(grammar)
+
+    return states_dict, rules_num_dict, grammar
+
+
+def is_slr(window, file):
+    states_dict, rules_num_dict, grammar = get_lr0_items(file)
+
+    first_dict, _ = LLParser().compute_first(grammar)
+    follow_dict = LLParser().compute_follow(grammar, first_dict)
+
+    # compute parsing tables
+    action_dict = LRParser().compute_slr_action_table(states_dict, rules_num_dict, follow_dict, grammar)
+    goto_dict = LRParser().compute_lr0_goto_table(states_dict)
+
+    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, states_dict, 'SLR(1)')
+
+
+def is_lr0(window, file):
+    states_dict, rules_num_dict, _ = get_lr0_items(file)
 
     # compute action and goto table
     action_dict = LRParser().compute_lr0_action_table(states_dict, rules_num_dict)
@@ -1030,11 +1049,13 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, st
 
     # Bind click event to action_table
     action_table.bind('<ButtonRelease-1>', lambda event: highlight_matching_row(event, action_table, goto_table,
-                      action_to_goto_map, states_dict, item_table))
+                                                                                action_to_goto_map, states_dict,
+                                                                                item_table))
 
     # Bind click event to table2
     goto_table.bind('<ButtonRelease-1>', lambda event: highlight_matching_row(event, goto_table, action_table,
-                    goto_to_action_map, states_dict, item_table))
+                                                                              goto_to_action_map, states_dict,
+                                                                              item_table))
 
 
 def create_table(goto_dict, state, goto_table, action=False):
