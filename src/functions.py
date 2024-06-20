@@ -184,7 +184,7 @@ def highlight_text(text_widget):
         text_widget.tag_add("highlight", index[0], f"{index[1]}+1c")
 
 
-def save_as_transformed_grammar(config, popup_window):
+def save_as_transformed_grammar(config, popup_window, listbox_items):
     file = filedialog.asksaveasfilename(parent=popup_window,
                                         defaultextension=".*",
                                         initialdir="/Users/ruube/PycharmProjects/Thesis",
@@ -194,6 +194,7 @@ def save_as_transformed_grammar(config, popup_window):
 
     if file:
         CFG().write_to_config(config, file)
+        listbox_items.append(file)
 
 
 def on_popup_window_close(window, config, file):
@@ -202,7 +203,7 @@ def on_popup_window_close(window, config, file):
     window.destroy()
 
 
-def create_popup_window(window, stack_transformation, config, file, win_title):
+def create_popup_window(window, stack_transformation, config, file, win_title, listbox_items):
     popup_window = tk.Toplevel(window)
     popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
     popup_window.title(win_title)
@@ -225,7 +226,7 @@ def create_popup_window(window, stack_transformation, config, file, win_title):
                          state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
     save_btn = tk.Button(master=center_button_frame, text="Save",
-                         command=lambda: save_as_transformed_grammar(config, popup_window))
+                         command=lambda: save_as_transformed_grammar(config, popup_window, listbox_items))
     save_btn.pack(side=tk.LEFT, padx=20, pady=15)
     forward_btn = tk.Button(master=center_button_frame, text="-->",
                             command=lambda: on_pressing_right(grammar_text_widget, transform_str, explain_str,
@@ -308,7 +309,7 @@ def update_reduction_rules(config, grammar, file_variable, set_transformation, s
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": text, "explain_text": explain_text})
 
 
-def reduce(window, file_variable):
+def reduce(window, file_variable, listbox_items):
     stack_transformation = Stack()
     grammar = main(file_variable)
     config = CFG().read_config(file_variable)
@@ -339,10 +340,10 @@ def reduce(window, file_variable):
 
     update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
 
-    create_popup_window(window, stack_transformation, config, file_variable, 'Reduction')
+    create_popup_window(window, stack_transformation, config, file_variable, 'Reduction', listbox_items)
 
 
-def remove_epsilon_rules(window, file_variable, other_stack=None, other_transform=False):
+def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None, other_transform=False):
     grammar_text = CFG().generate_grammar_text(file_variable, {})
     if other_transform:
         stack_transformation = other_stack
@@ -420,10 +421,10 @@ def remove_epsilon_rules(window, file_variable, other_stack=None, other_transfor
     else:
         CFG().write_to_config_copy(config, file_variable)
 
-        create_popup_window(window, stack_transformation, config, file_variable, 'Remove Epsilon Rules')
+        create_popup_window(window, stack_transformation, config, file_variable, 'Remove Epsilon Rules', listbox_items)
 
 
-def remove_unit_rules(window, file, other_stack=None, other_transform=False):
+def remove_unit_rules(listbox_items, window, file, other_stack=None, other_transform=False):
     grammar_text = CFG().generate_grammar_text(file, {})
     config = CFG().read_config(file)
     epsilon = False
@@ -439,7 +440,7 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
             for rule in config['rules'][nonterminal].split(','):
                 if rule == 'epsilon':
                     file = CFG().write_to_config_copy(config, file)
-                    remove_epsilon_rules(window, file, Stack(), other_transform=True)
+                    remove_epsilon_rules(listbox_items, window, file, Stack(), other_transform=True)
                     epsilon = True
 
         config = CFG().read_config(file)
@@ -490,14 +491,14 @@ def remove_unit_rules(window, file, other_stack=None, other_transform=False):
         CFG().write_to_config(config, file)
     elif epsilon:
         os.remove(file)
-        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules')
+        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules', listbox_items)
     else:
         CFG().write_to_config_copy(config, file)
 
-        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules')
+        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules', listbox_items)
 
 
-def chomsky_normal_form(window, file):
+def chomsky_normal_form(window, file, listbox_items):
     stack_transformation = Stack()
     config = CFG().read_config(file)
     grammar = main(file)
@@ -519,10 +520,10 @@ def chomsky_normal_form(window, file):
     copy_file = CFG().write_to_config_copy(config, file)
 
     # Step 2
-    remove_epsilon_rules(window, copy_file, stack_transformation, other_transform=True)
+    remove_epsilon_rules(listbox_items, window, copy_file, stack_transformation, other_transform=True)
 
     # Step 3
-    remove_unit_rules(window, copy_file, stack_transformation, other_transform=True)
+    remove_unit_rules(listbox_items, window, copy_file, stack_transformation, other_transform=True)
 
     # Step 4
     config = CFG().read_config(copy_file)
@@ -571,19 +572,19 @@ def chomsky_normal_form(window, file):
 
     CFG().write_to_config(config, copy_file)
 
-    create_popup_window(window, stack_transformation, config, file, 'Chomsky Normal Form')
+    create_popup_window(window, stack_transformation, config, file, 'Chomsky Normal Form', listbox_items)
 
 
-def greibach_normal_form(window, file):
+def greibach_normal_form(window, file, listbox_items):
     config = CFG().read_config(file)
     copy_file = CFG().write_to_config_copy(config, file)
     stack_transformation = Stack()
 
     # Remove Epsilon Rules
-    remove_epsilon_rules(window, copy_file, Stack(), other_transform=True)
+    remove_epsilon_rules(listbox_items, window, copy_file, Stack(), other_transform=True)
 
     # Remove Unit Rules
-    remove_unit_rules(window, copy_file, Stack(), other_transform=True)
+    remove_unit_rules(listbox_items, window, copy_file, Stack(), other_transform=True)
 
     # Step 1
     config = CFG().read_config(copy_file)
@@ -676,7 +677,7 @@ def greibach_normal_form(window, file):
 
     CFG().write_to_config_copy(config, file)
 
-    create_popup_window(window, stack_transformation, config, file, 'Greibach Normal Form')
+    create_popup_window(window, stack_transformation, config, file, 'Greibach Normal Form', listbox_items)
 
 
 def compute_first_and_follow(window, file):
@@ -724,7 +725,7 @@ def compute_first_and_follow(window, file):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    create_popup_window(window, stack_transformation, config, file, 'First and Follow')
+    create_popup_window(window, stack_transformation, config, file, 'First and Follow', None)
 
 
 def is_ll1(window, file):
@@ -782,7 +783,7 @@ def is_ll1(window, file):
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
                                    "explain_text": explain_text})
 
-    create_popup_window(window, stack_transformation, config, file, 'LL(1)')
+    create_popup_window(window, stack_transformation, config, file, 'LL(1)', None)
 
 
 def create_augmented_grammar(file):
@@ -1129,9 +1130,9 @@ def save_to_tempfile(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar_str.set(text)
 
 
-def saveas_newfile(temp_file, window):
+def saveas_newfile(temp_file, window, listbox_items):
     config = CFG().read_config(temp_file)
-    save_as_transformed_grammar(config, window)
+    save_as_transformed_grammar(config, window, listbox_items)
 
 
 def on_select_rule(file, rule_val, rules):

@@ -106,7 +106,7 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
                                                              grammar_str, error_label))
 
     save_btn = tk.Button(master=rule_frame, text="Save", width=7,
-                         command=lambda: functions.saveas_newfile(temp_file, window))
+                         command=lambda: functions.saveas_newfile(temp_file, window, listbox_items))
     save_btn.grid(row=2, columnspan=3, pady=10)
 
     # Tooltips for edit frame
@@ -262,23 +262,23 @@ def load_page1(file_error, listbox):
         transform_frame.pack(fill='x', expand=1)
 
         reduce_btn = tk.Button(master=transform_frame, text="Reduce", width=20,
-                               command=lambda: functions.reduce(window, file_variable.get()))
+                               command=lambda: functions.reduce(window, file_variable.get(), listbox_items))
         reduce_btn.grid(row=0, column=0, padx=10)
 
         epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", width=20,
-                                command=lambda: functions.remove_epsilon_rules(window, file_variable.get()))
+                                command=lambda: functions.remove_epsilon_rules(listbox_items, window, file_variable.get()))
         epsilon_btn.grid(row=1, column=0, pady=10)
 
         unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", width=20,
-                             command=lambda: functions.remove_unit_rules(window, file_variable.get()))
+                             command=lambda: functions.remove_unit_rules(listbox_items, window, file_variable.get()))
         unit_btn.grid(row=0, column=1)
 
         chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", width=20,
-                                command=lambda: functions.chomsky_normal_form(window, file_variable.get()))
+                                command=lambda: functions.chomsky_normal_form(window, file_variable.get(), listbox_items))
         chomsky_btn.grid(row=0, column=2, padx=20)
 
         greibach_btn = tk.Button(master=transform_frame, text="Greibach Normal Form", width=20,
-                                 command=lambda: functions.greibach_normal_form(window, file_variable.get()))
+                                 command=lambda: functions.greibach_normal_form(window, file_variable.get(), listbox_items))
         greibach_btn.grid(row=1, column=2)
 
         first_btn = tk.Button(master=transform_frame, text="FIRST and FOLLOW", width=20,
