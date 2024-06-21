@@ -624,11 +624,10 @@ class LRParser:
                                 temp_item.pop(index)
 
                             if '⊣' in temp_item:
-                                for follow in follow_dict[lhs]:
-                                    if (state, follow) not in action_dict:
-                                        action_dict[(state, follow)] = set()
-                                    action_dict[(state, follow)].add('Accept')
-                                    continue
+                                if (state, '⊣') not in action_dict:
+                                    action_dict[(state, '⊣')] = set()
+                                action_dict[(state, '⊣')].add('Accept')
+                                continue
 
                             for rule_number, rule_tuple in rules_num_dict.items():
                                 nonterminal, rule = rule_tuple[0], rule_tuple[1]
@@ -640,10 +639,11 @@ class LRParser:
                                             rule = ['ε']
                                         action_dict[(state, follow)].add(f'{nonterminal} → {"".join(rule)}')
                         elif symbol == '.':
-                            for terminal in grammar.terminals:
-                                if (state, terminal) not in action_dict:
-                                    action_dict[(state, terminal)] = set()
-                                action_dict[(state, terminal)].add('Shift')
+                            symbol_after_dot = item[index + 1]
+                            if symbol_after_dot in grammar.terminals:
+                                if (state, symbol_after_dot) not in action_dict:
+                                    action_dict[(state, symbol_after_dot)] = set()
+                                action_dict[(state, symbol_after_dot)].add('Shift')
 
         return action_dict
 
@@ -982,7 +982,10 @@ class CFG:
                                     rule = '\u03B5'
                                 grammar_text += f"{rule}|"
             else:
-                grammar_text += f"[{section}]\n"
+                if section == 'input':
+                    grammar_text += f"[{section}]\n"
+                else:
+                    grammar_text += f"\n\n\n\n[{section}]\n"
                 for key, value in config.items(section):
                     grammar_text += f"{key} = {value}\n"
                 grammar_text += '\n'
@@ -1110,7 +1113,8 @@ class CFG:
 
     def read_config(self, file):
         config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
-        config.read(file)
+        with open(file, 'r', encoding='utf-8') as f:
+            config.read_file(f)
         return config
 
     def write_to_config(self, config, file):

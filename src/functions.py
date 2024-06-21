@@ -4,6 +4,7 @@ import tkinter as tk
 from itertools import combinations
 import os
 from tooltips import CreateToolTip
+import tempfile
 from recognizer import Recognizer
 
 
@@ -847,16 +848,30 @@ def get_lr0_items(file):
 
 
 def is_slr(window, file):
-    states_dict, rules_num_dict, grammar = get_lr0_items(file)
+    grammar = main(file)
 
     first_dict, _ = LLParser().compute_first(grammar)
     follow_dict = LLParser().compute_follow(grammar, first_dict)
+
+    states_dict, rules_num_dict, grammar = get_lr0_items(file)
 
     # compute parsing tables
     action_dict = LRParser().compute_slr_action_table(states_dict, rules_num_dict, follow_dict, grammar)
     goto_dict = LRParser().compute_lr0_goto_table(states_dict)
 
-    create_table_window(window, file, rules_num_dict, action_dict, goto_dict, states_dict, 'SLR(1)')
+    # display FOLLOW sets below grammar
+    config = CFG().read_config(file)
+    config.add_section('FOLLOW')
+    for nonterminal, follow in follow_dict.items():
+        config.set('FOLLOW', nonterminal, ','.join(follow))
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp:
+        temp_file = temp.name
+        CFG().write_to_config(config, temp_file)
+
+        create_table_window(window, temp_file, rules_num_dict, action_dict, goto_dict, states_dict, 'SLR(1)')
+        temp.close()
+        os.remove(temp_file)
 
 
 def is_lr0(window, file):

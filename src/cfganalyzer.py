@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import functions
 import cfg
-from src.functions import clear_widgets
+from functions import clear_widgets
 from tooltips import CreateToolTip
 import os
 
