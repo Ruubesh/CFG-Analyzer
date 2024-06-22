@@ -125,6 +125,94 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
     return init_combo, rule_combo, rules, rule_entry
 
 
+def load_transform_page(listbox, file_error):
+    try:
+        selected = listbox.curselection()
+        if not selected:
+            file_error.config(text="No file selected. Please select a file")
+        elif len(selected) > 1:
+            file_error.config(text="Multiple files selected. Please select only one file")
+        else:
+            clear_widgets(initial_page_frame)
+            initial_page_frame.pack_forget()
+            transform_page_frame.pack(fill=tk.BOTH, expand=1)
+
+            back_btn = tk.Button(master=transform_page_frame, text='Back', width=7, command=lambda: load_initial_page())
+            back_btn.pack(pady=20)
+
+            # transform frame
+            transform_frame = tk.LabelFrame(master=transform_page_frame, text='Transform', height=155)
+            transform_frame.pack(fill=tk.X)
+
+            reduce_btn = tk.Button(master=transform_frame, text="Reduce", width=20,
+                                   command=lambda: functions.reduce(window, file_variable.get(), listbox_items))
+            reduce_btn.grid(row=0, column=0, padx=10)
+
+            epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", width=20,
+                                    command=lambda: functions.remove_epsilon_rules(listbox_items, window,
+                                                                                   file_variable.get()))
+            epsilon_btn.grid(row=1, column=0, pady=10)
+
+            unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", width=20,
+                                 command=lambda: functions.remove_unit_rules(listbox_items, window,
+                                                                             file_variable.get()))
+            unit_btn.grid(row=0, column=1)
+
+            chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", width=20,
+                                    command=lambda: functions.chomsky_normal_form(window, file_variable.get(),
+                                                                                  listbox_items))
+            chomsky_btn.grid(row=0, column=2, padx=80)
+
+            greibach_btn = tk.Button(master=transform_frame, text="Greibach Normal Form", width=20,
+                                     command=lambda: functions.greibach_normal_form(window, file_variable.get(),
+                                                                                    listbox_items))
+            greibach_btn.grid(row=1, column=2)
+
+            first_btn = tk.Button(master=transform_frame, text="FIRST and FOLLOW", width=20,
+                                  command=lambda: functions.compute_first_and_follow(window, file_variable.get()))
+            first_btn.grid(row=0, column=3, padx=10)
+
+            ll1_btn = tk.Button(master=transform_frame, text="LL(1)", width=20,
+                                command=lambda: functions.is_ll1(window, file_variable.get()))
+            ll1_btn.grid(row=1, column=3, padx=10)
+
+            lr0_btn = tk.Button(master=transform_frame, text="LR(0)", width=20,
+                                command=lambda: functions.is_lr0(window, file_variable.get()))
+            lr0_btn.grid(row=0, column=4, padx=10)
+
+            lr1_btn = tk.Button(master=transform_frame, text="LR(1)", width=20,
+                                command=lambda: functions.is_lr1(window, file_variable.get()))
+            lr1_btn.grid(row=1, column=4, padx=10)
+
+            slr_btn = tk.Button(master=transform_frame, text="SLR(1)", width=20,
+                                command=lambda: functions.is_slr(window, file_variable.get()))
+            slr_btn.grid(row=0, column=5, padx=10)
+
+            # grammar frame
+            grammar_frame = tk.LabelFrame(master=transform_page_frame, text="Grammar")
+            grammar_frame.pack(fill=tk.BOTH, expand=1)
+            # grammar_frame.pack_propagate(0)
+
+            grammar_text = cfg.CFG().generate_grammar_text(file_variable.get(), {}, True)
+            grammar_l1 = tk.Label(master=grammar_frame, text=grammar_text, justify='left')
+            grammar_l1.pack()
+
+            # Tooltips for transform frame
+            CreateToolTip(back_btn, "Go to previous page")
+            CreateToolTip(reduce_btn, "Perform reduction")
+            CreateToolTip(epsilon_btn, "Remove epsilon rules")
+            CreateToolTip(unit_btn, "Eliminate unit rules")
+            CreateToolTip(chomsky_btn, "Convert to Chomsky Normal Form")
+            CreateToolTip(greibach_btn, "Convert to Greibach Normal Form")
+            CreateToolTip(first_btn, "Compute FIRST and FOLLOW sets")
+            CreateToolTip(ll1_btn, "Check if the grammar is LL(1)")
+            CreateToolTip(lr0_btn, "Check if the grammar is LR(0)")
+            CreateToolTip(lr1_btn, "Check if the grammar is LR(1)")
+            CreateToolTip(slr_btn, "Check if the grammar is SLR(1)")
+    except Exception as e:
+        load_initial_page(f"Invalid grammar file format.\nerror: {e}")
+
+
 def load_create_page():
     clear_widgets(initial_page_frame)
     initial_page_frame.pack_forget()
@@ -160,30 +248,20 @@ def load_create_page():
 
 
 def load_initial_page(error_text=''):
-    clear_widgets(create_page_frame)
     clear_widgets(page1_frame)
     clear_widgets(page2_frame)
+    clear_widgets(create_page_frame)
+    clear_widgets(transform_page_frame)
     page1_frame.pack_forget()
     page2_frame.pack_forget()
     create_page_frame.pack_forget()
+    transform_page_frame.pack_forget()
+
     initial_page_frame.pack(fill=tk.BOTH, expand=1)
 
     # top_frame
     top_frame = tk.Frame(master=initial_page_frame, height=initial_page_frame.winfo_height() / 2)
     top_frame.pack(fill='x', expand=1)
-
-    # list_frame
-    list_frame = tk.Frame(master=top_frame)
-    list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-
-    listbox = tk.Listbox(master=list_frame, selectmode=tk.EXTENDED, height=25, width=80)
-    listbox.pack(padx=80, pady=10, anchor=tk.E)
-    listbox.bind("<<ListboxSelect>>",
-                 lambda event: functions.display_grammar(listbox.get(tk.ANCHOR), grammar_str, file_variable,
-                                                         file_error))
-
-    for item in listbox_items:
-        listbox.insert(tk.END, item)
 
     # btn_frame
     btn_frame = tk.Frame(master=top_frame)
@@ -191,21 +269,42 @@ def load_initial_page(error_text=''):
 
     new_btn = tk.Button(master=btn_frame, text="New", width=10,
                         command=lambda: load_create_page())
-    new_btn.pack(anchor=tk.W)
+    new_btn.pack(anchor=tk.E)
 
     add_btn = tk.Button(master=btn_frame, text="Add", width=10,
                         command=lambda: functions.open_files(listbox, listbox_items, file_error))
-    add_btn.pack(pady=40, anchor=tk.W)
+    add_btn.pack(pady=40, anchor=tk.E)
 
     remove_btn = tk.Button(master=btn_frame, text="Remove", width=10,
                            command=lambda: functions.remove_file(listbox, listbox_items, file_error))
-    remove_btn.pack(anchor=tk.W)
+    remove_btn.pack(anchor=tk.E)
 
-    edit_btn = tk.Button(master=btn_frame, text="Edit", width=10,
+    # list_frame
+    list_frame = tk.Frame(master=top_frame)
+    list_frame.pack(side=tk.LEFT, padx=60)
+
+    listbox = tk.Listbox(master=list_frame, selectmode=tk.EXTENDED, height=25, width=80)
+    listbox.pack(pady=10)
+    listbox.bind("<<ListboxSelect>>",
+                 lambda event: functions.display_grammar(listbox.get(tk.ANCHOR), grammar_str, file_variable,
+                                                         file_error))
+
+    for item in listbox_items:
+        listbox.insert(tk.END, item)
+
+    # btn frame 1
+    btn_frame1 = tk.Frame(master=top_frame)
+    btn_frame1.pack(side=tk.LEFT, fill=tk.BOTH, expand=1, pady=60)
+
+    edit_btn = tk.Button(master=btn_frame1, text="Edit", width=10,
                          command=lambda: load_page1(file_error, listbox))
-    edit_btn.pack(pady=40, anchor=tk.W)
+    edit_btn.pack(anchor=tk.W)
 
-    run_btn = tk.Button(master=btn_frame, text="Run", width=10,
+    transform_btn = tk.Button(master=btn_frame1, text="Transform", width=10,
+                              command=lambda: load_transform_page(listbox, file_error))
+    transform_btn.pack(pady=40, anchor=tk.W)
+
+    run_btn = tk.Button(master=btn_frame1, text="Run", width=10,
                         command=lambda: execute_run(listbox, file_error))
     run_btn.pack(anchor=tk.W)
 
@@ -224,9 +323,10 @@ def load_initial_page(error_text=''):
     # Tooltips
     CreateToolTip(add_btn, "Add one or more grammars from your computer to the list box")
     CreateToolTip(remove_btn, "Remove one or more grammars from the list box")
-    CreateToolTip(edit_btn, "Edit the selected grammar or perform operations on it")
+    CreateToolTip(edit_btn, "Edit the selected grammar")
     CreateToolTip(run_btn, "Construct derivations on the selected grammar")
     CreateToolTip(new_btn, "Create a new grammar file")
+    CreateToolTip(transform_btn, "Perform operations on the selected grammar")
 
 
 def load_page1(file_error, listbox):
@@ -260,67 +360,12 @@ def load_page1(file_error, listbox):
         config = cfg.CFG().read_config(file_variable.get())
         cfg.CFG().write_to_config(config, temp_file)
 
-        # transform frame
-        transform_frame = tk.LabelFrame(master=page1_frame, text='Transform', height=155)
-        transform_frame.pack(fill='x', expand=1)
-
-        reduce_btn = tk.Button(master=transform_frame, text="Reduce", width=20,
-                               command=lambda: functions.reduce(window, file_variable.get(), listbox_items))
-        reduce_btn.grid(row=0, column=0, padx=10)
-
-        epsilon_btn = tk.Button(master=transform_frame, text="Remove Epsilon Rules", width=20,
-                                command=lambda: functions.remove_epsilon_rules(listbox_items, window, file_variable.get()))
-        epsilon_btn.grid(row=1, column=0, pady=10)
-
-        unit_btn = tk.Button(master=transform_frame, text="Remove Unit Rules", width=20,
-                             command=lambda: functions.remove_unit_rules(listbox_items, window, file_variable.get()))
-        unit_btn.grid(row=0, column=1)
-
-        chomsky_btn = tk.Button(master=transform_frame, text="Chomsky Normal Form", width=20,
-                                command=lambda: functions.chomsky_normal_form(window, file_variable.get(), listbox_items))
-        chomsky_btn.grid(row=0, column=2, padx=20)
-
-        greibach_btn = tk.Button(master=transform_frame, text="Greibach Normal Form", width=20,
-                                 command=lambda: functions.greibach_normal_form(window, file_variable.get(), listbox_items))
-        greibach_btn.grid(row=1, column=2)
-
-        first_btn = tk.Button(master=transform_frame, text="FIRST and FOLLOW", width=20,
-                              command=lambda: functions.compute_first_and_follow(window, file_variable.get()))
-        first_btn.grid(row=0, column=3, padx=10)
-
-        ll1_btn = tk.Button(master=transform_frame, text="LL(1)", width=20,
-                            command=lambda: functions.is_ll1(window, file_variable.get()))
-        ll1_btn.grid(row=1, column=3, padx=10)
-
-        lr0_btn = tk.Button(master=transform_frame, text="LR(0)", width=20,
-                            command=lambda: functions.is_lr0(window, file_variable.get()))
-        lr0_btn.grid(row=0, column=4, padx=10)
-
-        lr1_btn = tk.Button(master=transform_frame, text="LR(1)", width=20,
-                            command=lambda: functions.is_lr1(window, file_variable.get()))
-        lr1_btn.grid(row=1, column=4, padx=10)
-
-        slr_btn = tk.Button(master=transform_frame, text="SLR(1)", width=20,
-                            command=lambda: functions.is_slr(window, file_variable.get()))
-        slr_btn.grid(row=0, column=5, padx=10)
-
         # pack widgets
         error_label.pack(pady=10)
         grammar_frame.pack(fill="x")
 
         # load rule specifications to combo boxes
         execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry)
-
-        # Tooltips for transform frame
-        CreateToolTip(reduce_btn, "Perform reduction")
-        CreateToolTip(epsilon_btn, "Remove epsilon rules")
-        CreateToolTip(unit_btn, "Eliminate unit rules")
-        CreateToolTip(chomsky_btn, "Convert to Chomsky Normal Form")
-        CreateToolTip(greibach_btn, "Convert to Greibach Normal Form")
-        CreateToolTip(first_btn, "Compute FIRST and FOLLOW sets")
-        CreateToolTip(ll1_btn, "Check if the grammar is LL(1)")
-        CreateToolTip(lr0_btn, "Check if the grammar is LR(0)")
-        CreateToolTip(lr1_btn, "Check if the grammar is LR(1)")
 
 
 def load_page2():
@@ -460,6 +505,9 @@ initial_page_frame = tk.Frame(master=window)
 
 # create_page
 create_page_frame = tk.Frame(master=window)
+
+# transform_page
+transform_page_frame = tk.Frame(master=window)
 
 # page1
 page1_frame = tk.Frame(master=window)
