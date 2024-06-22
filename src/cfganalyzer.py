@@ -6,6 +6,23 @@ import cfg
 from functions import clear_widgets
 from tooltips import CreateToolTip
 import os
+import shutil
+
+
+def back_without_saving(filename, error_label):
+    if not filename:
+        error_label.config(text="Please enter a FileName")
+    else:
+        new_file_path = os.path.join(temp_dir, filename)
+        shutil.copy(temp_file, new_file_path)
+
+        listbox_dict[filename] = new_file_path
+        if filename not in listbox_items:
+            listbox_items.append(new_file_path)
+        else:
+            error_label.config(text="FileName already exists")
+
+        load_initial_page()
 
 
 def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry):
@@ -30,9 +47,24 @@ def execute_run(listbox, file_error):
 
 
 def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
-    edit_frame = tk.LabelFrame(master=master_frame, text=frame_name, height=165)
+    edit_frame = tk.LabelFrame(master=master_frame, text=frame_name, height=210)
     edit_frame.pack(fill="x")
     edit_frame.pack_propagate(0)
+
+    top_frame = tk.Frame(master=edit_frame)
+    top_frame.pack(fill=tk.X, pady=5)
+
+    name_frame = tk.Frame(master=top_frame)
+    name_frame.pack(padx=(0, 200), pady=(0, 20))
+
+    name_label = tk.Label(master=name_frame, text='FileName:')
+    name_label.pack(side=tk.LEFT)
+
+    name_str = tk.StringVar()
+    name_entry = tk.Entry(master=name_frame, textvariable=name_str, width=30)
+    name_entry.pack(side=tk.LEFT)
+
+    name_entry.bind('<KeyPress>', functions.ignore_space)
 
     nt_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 2)
     nt_frame.pack(side='left', fill='x', expand=1, padx=100)
@@ -110,8 +142,12 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
                                                              grammar_str, error_label))
 
     save_btn = tk.Button(master=rule_frame, text="Save", width=7,
-                         command=lambda: functions.saveas_newfile(temp_file, window, listbox_items))
-    save_btn.grid(row=2, columnspan=3, pady=10)
+                         command=lambda: functions.saveas_newfile(temp_file, window, listbox_items, name_str.get()))
+    save_btn.grid(row=2, column=1, pady=10)
+
+    continue_btn = tk.Button(master=rule_frame, text="Continue", width=10,
+                             command=lambda: back_without_saving(name_str.get(), error_label))
+    continue_btn.grid(row=2, column=2)
 
     # Tooltips for edit frame
     CreateToolTip(back_btn, "Go to previous page")
@@ -121,9 +157,11 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
     CreateToolTip(init_combo, "Choose the initial nonterminal")
     CreateToolTip(rule_combo, "Choose a nonterminal to modify its production rules")
     CreateToolTip(rule_entry, "Modify the production rules of the chosen nonterminal")
-    CreateToolTip(save_btn, "Save the modified grammar")
+    CreateToolTip(save_btn, "Save the grammar")
+    CreateToolTip(name_entry, "Enter a name for the grammar")
+    CreateToolTip(continue_btn, "Continue without saving")
 
-    return init_combo, rule_combo, rules, rule_entry
+    return init_combo, rule_combo, rules, rule_entry, name_str
 
 
 def load_transform_page(listbox, file_error):
@@ -231,8 +269,8 @@ def load_create_page():
 
     # Create frame
     frame_name = 'Create'
-    init_combo, rule_combo, rules, rule_entry = create_edit_frame(create_page_frame, frame_name, grammar_str,
-                                                                  error_label)
+    init_combo, rule_combo, rules, rule_entry, name_str = create_edit_frame(create_page_frame, frame_name, grammar_str,
+                                                                            error_label)
 
     # disable widgets
     init_combo.config(state=tk.DISABLED)
@@ -337,6 +375,8 @@ def load_page1(file_error, listbox):
     elif len(selected) > 1:
         file_error.config(text="Multiple files selected. Please select only one file")
     else:
+        filename = listbox.get(tk.ANCHOR)
+
         clear_widgets(initial_page_frame)
         clear_widgets(page2_frame)
         initial_page_frame.pack_forget()
@@ -355,7 +395,8 @@ def load_page1(file_error, listbox):
 
         # edit_frame
         frame_name = 'Edit'
-        init_combo, rule_combo, rules, rule_entry = create_edit_frame(page1_frame, frame_name, grammar_str, error_label)
+        init_combo, rule_combo, rules, rule_entry, name_str = create_edit_frame(page1_frame, frame_name, grammar_str,
+                                                                                error_label)
 
         # write selected grammar to temp file
         config = cfg.CFG().read_config(file_variable.get())
@@ -366,6 +407,7 @@ def load_page1(file_error, listbox):
         grammar_frame.pack(fill="x")
 
         # load rule specifications to combo boxes
+        name_str.set(filename)
         execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry)
 
 
@@ -484,6 +526,7 @@ def load_page2():
 
 
 def on_close():
+    shutil.rmtree(temp_dir)
     os.remove(temp_file)
     window.destroy()
 
@@ -498,6 +541,8 @@ window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight()
 file_variable = tk.StringVar()
 listbox_items = []
 listbox_dict = {}
+
+temp_dir = tempfile.mkdtemp()
 
 temp = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
 temp_file = temp.name

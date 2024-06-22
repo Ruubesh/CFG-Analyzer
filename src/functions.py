@@ -192,10 +192,11 @@ def highlight_text(text_widget):
         text_widget.tag_add("highlight", index[0], f"{index[1]}+1c")
 
 
-def save_as_transformed_grammar(config, popup_window, listbox_items):
+def save_as_transformed_grammar(config, popup_window, listbox_items, filename):
     file = filedialog.asksaveasfilename(parent=popup_window,
                                         defaultextension=".*",
                                         initialdir="/Users/ruube/PycharmProjects/Thesis",
+                                        initialfile=filename,
                                         title="Save File",
                                         filetypes=(("Text files", "*.txt"), ("All files", "*.*"))
                                         )
@@ -234,7 +235,7 @@ def create_popup_window(window, stack_transformation, config, file, win_title, l
                          state=tk.DISABLED)
     back_btn.pack(side=tk.LEFT, padx=20)
     save_btn = tk.Button(master=center_button_frame, text="Save",
-                         command=lambda: save_as_transformed_grammar(config, popup_window, listbox_items))
+                         command=lambda: save_as_transformed_grammar(config, popup_window, listbox_items, ''))
     save_btn.pack(side=tk.LEFT, padx=20, pady=15)
     forward_btn = tk.Button(master=center_button_frame, text="-->",
                             command=lambda: on_pressing_right(grammar_text_widget, transform_str, explain_str,
@@ -1152,9 +1153,9 @@ def save_to_tempfile(file, rule_val, rules, init_val, grammar_str, error_label):
     grammar_str.set(text)
 
 
-def saveas_newfile(temp_file, window, listbox_items):
+def saveas_newfile(temp_file, window, listbox_items, filename):
     config = CFG().read_config(temp_file)
-    save_as_transformed_grammar(config, window, listbox_items)
+    save_as_transformed_grammar(config, window, listbox_items, filename)
 
 
 def on_select_rule(file, rule_val, rules):
