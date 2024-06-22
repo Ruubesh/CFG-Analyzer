@@ -50,7 +50,7 @@ def update_options(combobox, options):
     combobox.current(0)
 
 
-def open_files(listbox, listbox_items, file_error):
+def open_files(listbox, listbox_items, file_error, listbox_dict):
     file_error.config(text='')
     filenames = filedialog.askopenfilenames(
         initialdir="/Users/ruube/PycharmProjects/Thesis",
@@ -59,17 +59,24 @@ def open_files(listbox, listbox_items, file_error):
     )
 
     for filename in filenames:
-        if filename not in listbox.get(0, tk.END):
-            listbox.insert(tk.END, filename)
+        directory, keytype = os.path.split(filename)
+        key = os.path.splitext(keytype)[0]
+        listbox_dict[key] = filename
+
+        if key not in listbox.get(0, tk.END):
+            listbox.insert(tk.END, key)
             listbox_items.append(filename)
 
 
-def remove_file(listbox, listbox_items, file_error):
+def remove_file(listbox, listbox_items, file_error, listbox_dict):
     file_error.config(text='')
     selected_indices = listbox.curselection()
     if selected_indices:
         for index in reversed(selected_indices):
             listbox.delete(index)
+            key = [k for k, v in listbox_dict.items() if v == listbox_items[index]]
+            key = ''.join(key)
+            del listbox_dict[key]
             del listbox_items[index]
     else:
         file_error.config(text='Please select one or more files to remove')
@@ -1159,20 +1166,27 @@ def on_select_rule(file, rule_val, rules):
         rules.set('')
 
 
-def display_grammar(file, grammar_str, file_variable, file_error):
+def display_grammar(file, grammar_str, file_variable, file_error, listbox_dict, filepath):
     file_error.config(text='')
-    file_variable.set(file)
-    text = CFG().generate_grammar_text(file, {}, label=True)
-    grammar_str.set(text)
+    if file not in listbox_dict:
+        file = filepath
+    else:
+        file = listbox_dict[file]
+    if file != '':
+        file_variable.set(file)
+        text = CFG().generate_grammar_text(file, {}, label=True)
+        grammar_str.set(text)
 
 
-def submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry):
+def submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry, listbox_dict):
     file = file_variable.get()
 
     # dummy label
     file_error = tk.Label()
 
-    display_grammar(file, grammar_str, file_variable, file_error)
+    directory, filetype = os.path.split(file)
+    filename = os.path.splitext(filetype)[0]
+    display_grammar(filename, grammar_str, file_variable, file_error, listbox_dict, file)
 
     config = CFG().read_config(file)
 
@@ -1218,25 +1232,29 @@ def ignore_space(event):
         return 'break'
 
 
-def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry):
+def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry,
+        listbox_dict):
+
     file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().add_value(config, val_type, val, file)
 
     if error_text is None:
-        submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry)
+        submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry, listbox_dict)
         error_label.config(text="")
     else:
         error_label.config(text=error_text)
 
 
-def remove(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry):
+def remove(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry,
+           listbox_dict):
+
     file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().remove_value(config, val_type, val, file)
 
     if error_text is None:
-        submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry)
+        submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry, listbox_dict)
         error_label.config(text="")
     else:
         error_label.config(text=error_text)

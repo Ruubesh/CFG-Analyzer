@@ -11,7 +11,7 @@ import os
 def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry):
     try:
         file_error.pack_forget()
-        functions.submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry)
+        functions.submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry, listbox_dict)
     except Exception as e:
         load_initial_page(f"Invalid grammar file format.\nerror: {e}")
 
@@ -65,13 +65,14 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
 
     add_btn = tk.Button(master=edit_f2, text="Add", width=7,
                         command=lambda: functions.add(temp_variable, choice.get(), entry_str.get(), grammar_str,
-                                                      init_combo, rule_combo, rules, error_label, rule_entry))
+                                                      init_combo, rule_combo, rules, error_label, rule_entry,
+                                                      listbox_dict))
     add_btn.pack(side="left", padx=10)
 
     remove_btn = tk.Button(master=edit_f2, text="Remove", width=7,
                            command=lambda: functions.remove(temp_variable, choice.get(), entry_str.get(),
                                                             grammar_str, init_combo, rule_combo, rules,
-                                                            error_label, rule_entry))
+                                                            error_label, rule_entry, listbox_dict))
     remove_btn.pack(side="left", padx=10)
 
     rule_frame = tk.Frame(master=edit_frame, height=155, width=edit_frame.winfo_width() / 2)
@@ -272,11 +273,11 @@ def load_initial_page(error_text=''):
     new_btn.pack(anchor=tk.E)
 
     add_btn = tk.Button(master=btn_frame, text="Add", width=10,
-                        command=lambda: functions.open_files(listbox, listbox_items, file_error))
+                        command=lambda: functions.open_files(listbox, listbox_items, file_error, listbox_dict))
     add_btn.pack(pady=40, anchor=tk.E)
 
     remove_btn = tk.Button(master=btn_frame, text="Remove", width=10,
-                           command=lambda: functions.remove_file(listbox, listbox_items, file_error))
+                           command=lambda: functions.remove_file(listbox, listbox_items, file_error, listbox_dict))
     remove_btn.pack(anchor=tk.E)
 
     # list_frame
@@ -287,9 +288,9 @@ def load_initial_page(error_text=''):
     listbox.pack(pady=10)
     listbox.bind("<<ListboxSelect>>",
                  lambda event: functions.display_grammar(listbox.get(tk.ANCHOR), grammar_str, file_variable,
-                                                         file_error))
+                                                         file_error, listbox_dict, ''))
 
-    for item in listbox_items:
+    for item in listbox_dict.keys():
         listbox.insert(tk.END, item)
 
     # btn frame 1
@@ -496,6 +497,8 @@ window.geometry(f'{window.winfo_screenwidth() - 16}x{window.winfo_screenheight()
 # global variables
 file_variable = tk.StringVar()
 listbox_items = []
+listbox_dict = {}
+
 temp = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
 temp_file = temp.name
 temp.close()
