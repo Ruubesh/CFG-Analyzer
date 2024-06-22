@@ -1354,7 +1354,13 @@ def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_b
         current_sentence = ldata.split(' ')
         execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
-        label = tk.Label(master=input_frame, text=ldata)
+        clear_widgets(input_frame)
+
+        derived_string = ldata.split(' ')
+        derived_string = [item for item in derived_string if item != '']
+        derived_string = ' '.join(derived_string)
+
+        label = tk.Label(master=input_frame, text=derived_string)
         label.pack()
 
 
@@ -1378,7 +1384,11 @@ def perform_derivation(grammar, rule, input_frame, sentential_str, sentential_ca
     if nt:
         execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
-        label = tk.Label(master=input_frame, text=ldata)
+        derived_string = current_sentence.copy()
+        derived_string = [item for item in derived_string if item != '']
+        derived_string = ' '.join(derived_string)
+
+        label = tk.Label(master=input_frame, text=derived_string)
         label.pack()
 
 
@@ -1415,8 +1425,9 @@ def execute(grammar, current_sentence, input_frame, sentential_str, sentential_c
                                                                                     redo_btn, sym, pos))
             button.pack(side=tk.LEFT, pady=10, padx=10)
         else:
-            label = tk.Label(master=input_frame, text=symbol)
-            label.pack(side=tk.LEFT, pady=10, padx=10)
+            if symbol != '':
+                label = tk.Label(master=input_frame, text=symbol)
+                label.pack(side=tk.LEFT, pady=10, padx=10)
 
 
 def clear_widgets(frame):

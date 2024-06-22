@@ -884,12 +884,16 @@ class Stack:
             endval = len(self.data)
         sentence = ''
         for i in range(endval):
+            data = self.data[i].split(' ')
+            data = [item for item in data if item != '']
+            data = ' '.join(data)
+
             if i == endval - 1:
                 # print(f"{self.data[i]}")
-                sentence += f"{self.data[i]}"
+                sentence += f"{data}"
             else:
                 # print(f"{self.data[i]} ⇒ ", end=" ")
-                sentence += f"{self.data[i]} ⇒ "
+                sentence += f"{data} ⇒ "
 
         return sentence
 
