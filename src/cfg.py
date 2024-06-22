@@ -1154,9 +1154,12 @@ class CFG:
         return check
 
     def add_value(self, config, val_type, val, file, overwrite=True):
-        if config['input'][val_type]:
+        nonterminals = config['input']['nonterminals']
+        terminals = config['input']['terminals']
+        if nonterminals or terminals:
             data = config['input'][val_type].split(',')
-            inputs = config['input']['nonterminals'].split(',') + config['input']['terminals'].split(',')
+            data = [inp for inp in data if inp != '']
+            inputs = nonterminals.split(',') + terminals.split(',')
             inputs = [inp for inp in inputs if inp != '']
         else:
             data = []

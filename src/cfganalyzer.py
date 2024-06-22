@@ -44,6 +44,9 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
     entry = tk.Entry(master=nt_frame, textvariable=entry_str)
     entry.pack(pady=5)
 
+    # ignore space key press
+    entry.bind('<KeyPress>', functions.ignore_space)
+
     edit_f1 = tk.Frame(master=nt_frame)
     edit_f1.pack(pady=10)
 

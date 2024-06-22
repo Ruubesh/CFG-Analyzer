@@ -1213,6 +1213,11 @@ def submit(file_variable, grammar_str, init_combo, rule_combo, rules, rule_entry
             rules.set('')
 
 
+def ignore_space(event):
+    if event.char == ' ':
+        return 'break'
+
+
 def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry):
     file = file_variable.get()
     config = CFG().read_config(file)
