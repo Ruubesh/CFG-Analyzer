@@ -369,46 +369,49 @@ def load_initial_page(error_text=''):
 
 
 def load_page1(file_error, listbox):
-    selected = listbox.curselection()
-    if not selected:
-        file_error.config(text="No file selected. Please select a file")
-    elif len(selected) > 1:
-        file_error.config(text="Multiple files selected. Please select only one file")
-    else:
-        filename = listbox.get(tk.ANCHOR)
+    try:
+        selected = listbox.curselection()
+        if not selected:
+            file_error.config(text="No file selected. Please select a file")
+        elif len(selected) > 1:
+            file_error.config(text="Multiple files selected. Please select only one file")
+        else:
+            filename = listbox.get(tk.ANCHOR)
 
-        clear_widgets(initial_page_frame)
-        clear_widgets(page2_frame)
-        initial_page_frame.pack_forget()
-        page2_frame.pack_forget()
-        page1_frame.pack(fill="both")
+            clear_widgets(initial_page_frame)
+            clear_widgets(page2_frame)
+            initial_page_frame.pack_forget()
+            page2_frame.pack_forget()
+            page1_frame.pack(fill="both")
 
-        # grammar_frame
-        grammar_frame = tk.LabelFrame(master=page1_frame, text="Grammar", height=400)
-        # grammar_frame.pack_propagate(0)
+            # grammar_frame
+            grammar_frame = tk.LabelFrame(master=page1_frame, text="Grammar", height=400)
+            # grammar_frame.pack_propagate(0)
 
-        grammar_str = tk.StringVar()
-        grammar_l1 = tk.Label(master=grammar_frame, textvariable=grammar_str, justify='left')
-        grammar_l1.pack()
+            grammar_str = tk.StringVar()
+            grammar_l1 = tk.Label(master=grammar_frame, textvariable=grammar_str, justify='left')
+            grammar_l1.pack()
 
-        error_label = tk.Label(master=page1_frame, fg="red")
+            error_label = tk.Label(master=page1_frame, fg="red")
 
-        # edit_frame
-        frame_name = 'Edit'
-        init_combo, rule_combo, rules, rule_entry, name_str = create_edit_frame(page1_frame, frame_name, grammar_str,
-                                                                                error_label)
+            # edit_frame
+            frame_name = 'Edit'
+            init_combo, rule_combo, rules, rule_entry, name_str = create_edit_frame(page1_frame, frame_name, grammar_str,
+                                                                                    error_label)
 
-        # write selected grammar to temp file
-        config = cfg.CFG().read_config(file_variable.get())
-        cfg.CFG().write_to_config(config, temp_file)
+            # write selected grammar to temp file
+            config = cfg.CFG().read_config(file_variable.get())
+            cfg.CFG().write_to_config(config, temp_file)
 
-        # pack widgets
-        error_label.pack(pady=10)
-        grammar_frame.pack(fill="x")
+            # pack widgets
+            error_label.pack(pady=10)
+            grammar_frame.pack(fill="x")
 
-        # load rule specifications to combo boxes
-        name_str.set(filename)
-        execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry)
+            # load rule specifications to combo boxes
+            name_str.set(filename)
+            execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry)
+    except Exception as e:
+        load_initial_page(f"Invalid grammar file format.\nerror: {e}")
 
 
 def load_page2():
