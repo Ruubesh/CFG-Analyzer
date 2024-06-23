@@ -532,6 +532,15 @@ def load_page2():
     CreateToolTip(undo_btn, "Undo")
     CreateToolTip(redo_btn, "Redo")
 
+    # set initials
+    functions.update_label(sentential_str, grammar.stack.data[0])
+    sentential_canvas.create_text(760, 30, text=sentential_str.get())
+    x = 400
+    y = 50
+    canvas.delete("all")
+    canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
+    canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
+
     # run
     functions.execute(grammar, grammar.initial_nonterminal, input_frame, rule_frame, sentential_str, sentential_canvas,
                       canvas, undo_btn, redo_btn)
