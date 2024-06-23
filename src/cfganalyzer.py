@@ -457,14 +457,14 @@ def load_page2():
     back_btn.pack(side='left', padx=10)
 
     redo_btn = tk.Button(master=button_frame, text="-->",
-                         command=lambda: functions.redo(grammar, input_frame, sentential_str, sentential_canvas, canvas,
-                                                        undo_btn, redo_btn),
+                         command=lambda: functions.redo(grammar, input_frame, rule_frame,
+                                                        sentential_str, sentential_canvas, canvas, undo_btn, redo_btn),
                          state="disabled")
     redo_btn.pack(side='right', padx=10)
 
     undo_btn = tk.Button(master=button_frame, text="<--",
-                         command=lambda: functions.undo(grammar, input_frame, sentential_str, sentential_canvas, canvas,
-                                                        undo_btn, redo_btn),
+                         command=lambda: functions.undo(grammar, input_frame, rule_frame, sentential_str,
+                                                        sentential_canvas, canvas, undo_btn, redo_btn),
                          state="disabled")
     undo_btn.pack(side='right')
 
@@ -477,21 +477,33 @@ def load_page2():
 
     execute_canvas.configure(xscrollcommand=scrollbar.set)
 
+    # input frame
     input_frame = tk.Frame(execute_canvas)
 
     # center frame
     canvas_width = execute_canvas.winfo_reqwidth()
-    canvas_height = execute_canvas.winfo_reqheight()
+    # canvas_height = execute_canvas.winfo_reqheight()
 
     frame_width = input_frame.winfo_reqwidth()
-    frame_height = input_frame.winfo_reqheight()
+    # frame_height = input_frame.winfo_reqheight()
 
     x = (canvas_width - frame_width) / 2
-    y = (canvas_height - frame_height) / 2
+    # y = (canvas_height - frame_height) / 2
 
-    execute_canvas.create_window((x, y), window=input_frame, anchor="nw")
+    execute_canvas.create_window((x + 60, 10), window=input_frame, anchor="nw")
 
     input_frame.bind("<Configure>", lambda event: functions.update_scrollregion(execute_canvas))
+
+    # rule frame
+    rule_frame = tk.Frame(execute_canvas)
+
+    canvas_width = execute_canvas.winfo_reqwidth()
+    frame_width = rule_frame.winfo_reqwidth()
+    x = (canvas_width - frame_width) / 2
+
+    execute_canvas.create_window((x + 60, 150), window=rule_frame, anchor="nw")
+
+    rule_frame.bind("<Configure>", lambda event: functions.update_scrollregion(execute_canvas))
 
     # tree_frame
     tree_frame = tk.LabelFrame(master=top_frame, text="Derivation Tree")
@@ -521,8 +533,8 @@ def load_page2():
     CreateToolTip(redo_btn, "Redo")
 
     # run
-    functions.execute(grammar, grammar.initial_nonterminal, input_frame, sentential_str, sentential_canvas, canvas,
-                      undo_btn, redo_btn)
+    functions.execute(grammar, grammar.initial_nonterminal, input_frame, rule_frame, sentential_str, sentential_canvas,
+                      canvas, undo_btn, redo_btn)
 
 
 def on_close():

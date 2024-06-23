@@ -1235,7 +1235,6 @@ def ignore_space(event):
 
 def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry,
         listbox_dict):
-
     file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().add_value(config, val_type, val, file)
@@ -1249,7 +1248,6 @@ def add(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules
 
 def remove(file_variable, val_type, val, grammar_str, init_combo, rule_combo, rules, error_label, rule_entry,
            listbox_dict):
-
     file = file_variable.get()
     config = CFG().read_config(file)
     error_text = CFG().remove_value(config, val_type, val, file)
@@ -1338,7 +1336,7 @@ def draw_lines_between_nodes(canvas, parent_pos, child_pos):
     canvas.create_line(parent_x, parent_y, child_x, child_y - 15, arrow=tk.LAST)
 
 
-def undo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
+def undo(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
     redo_btn.config(state="normal")
 
     sentence, ldata = grammar.stack.undo('S', grammar.nonterminals)
@@ -1352,17 +1350,18 @@ def undo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_b
         canvas.delete("all")
         canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
         canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
-        execute(grammar, ldata, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, ldata, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
     else:
         update_label(sentential_str, sentence)
         update_sentential_scrollregion(sentential_canvas, sentential_str)
         canvas.delete("all")
         draw_tree(canvas, tree, 400, 50, 50, 60)
         current_sentence = ldata.split(' ')
-        execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
+                redo_btn)
 
 
-def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
+def redo(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
     undo_btn.config(state="normal")
 
     sentence, ldata = grammar.stack.redo('S', grammar.nonterminals)
@@ -1376,7 +1375,8 @@ def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_b
     nt = [elem for elem in grammar.nonterminals if elem in ldata.split(" ")]
     if nt:
         current_sentence = ldata.split(' ')
-        execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
+                redo_btn)
     else:
         clear_widgets(input_frame)
 
@@ -1388,8 +1388,8 @@ def redo(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_b
         label.pack()
 
 
-def perform_derivation(grammar, rule, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn,
-                       nonterminal, position):
+def perform_derivation(grammar, rule, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
+                       redo_btn, nonterminal, position):
     clear_widgets(input_frame)
     undo_btn.config(state=tk.NORMAL)
     redo_btn.config(state=tk.DISABLED)
@@ -1406,34 +1406,41 @@ def perform_derivation(grammar, rule, input_frame, sentential_str, sentential_ca
     draw_tree(canvas, tree, 400, 50, 50, 60)
     nt = [elem for elem in grammar.nonterminals if elem in current_sentence]
     if nt:
-        execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
+                redo_btn)
     else:
+        clear_widgets(rule_frame)
+
         derived_string = current_sentence.copy()
         derived_string = [item for item in derived_string if item != '']
         derived_string = ' '.join(derived_string)
 
         label = tk.Label(master=input_frame, text=derived_string)
-        label.pack()
+        label.pack(padx=90)
 
 
-def choose_rule(grammar, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn, nonterminal,
-                position):
-    clear_widgets(input_frame)
+def choose_rule(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn,
+                nonterminal, position, nt_btn):
+    clear_widgets(rule_frame)
+    reset_button_colour(input_frame)
+    nt_btn.config(bg='pink')
 
     for production in grammar.rules[nonterminal]:
         btn_txt = ''.join(production)
         if btn_txt == '':
             btn_txt = '\u03B5'
-        button = tk.Button(master=input_frame, text=btn_txt, relief='flat', bg='lightblue',
-                           command=lambda rule=production: perform_derivation(grammar, rule, input_frame,
+        button = tk.Button(master=rule_frame, text=btn_txt, relief='flat', bg='lightblue',
+                           command=lambda rule=production: perform_derivation(grammar, rule, input_frame, rule_frame,
                                                                               sentential_str, sentential_canvas,
                                                                               canvas, undo_btn, redo_btn,
                                                                               nonterminal, position))
         button.pack(side=tk.LEFT, pady=10, padx=10)
 
 
-def execute(grammar, current_sentence, input_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
+def execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
+            redo_btn):
     clear_widgets(input_frame)
+    clear_widgets(rule_frame)
 
     symbol_positions = {symbol: 0 for symbol in grammar.nonterminals}
 
@@ -1442,11 +1449,14 @@ def execute(grammar, current_sentence, input_frame, sentential_str, sentential_c
             symbol_positions[symbol] += 1
             position = symbol_positions[symbol]
 
-            button = tk.Button(master=input_frame, text=symbol, relief='flat', bg='lightblue',
-                               command=lambda sym=symbol, pos=position: choose_rule(grammar, input_frame,
-                                                                                    sentential_str,
-                                                                                    sentential_canvas, canvas, undo_btn,
-                                                                                    redo_btn, sym, pos))
+            button = tk.Button(master=input_frame, text=symbol, relief='flat', bg='lightblue')
+            button.config(command=lambda sym=symbol, pos=position, nt_btn=button: choose_rule(grammar, input_frame,
+                                                                                              rule_frame,
+                                                                                              sentential_str,
+                                                                                              sentential_canvas,
+                                                                                              canvas, undo_btn,
+                                                                                              redo_btn, sym, pos,
+                                                                                              nt_btn))
             button.pack(side=tk.LEFT, pady=10, padx=10)
         else:
             if symbol != '':
@@ -1457,3 +1467,9 @@ def execute(grammar, current_sentence, input_frame, sentential_str, sentential_c
 def clear_widgets(frame):
     for widget in frame.winfo_children():
         widget.destroy()
+
+
+def reset_button_colour(frame):
+    for widget in frame.winfo_children():
+        if isinstance(widget, tk.Button):
+            widget.config(bg='lightblue')
