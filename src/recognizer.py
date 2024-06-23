@@ -67,10 +67,8 @@ class Recognizer:
                     symbol_after_dot = rhs[dot]
 
                 if dot == len(rhs) and state_number < len(tokens):
-                    for upcoming_token in tokens[state_number:]:
-                        if upcoming_token == look_ahead:
-                            self.complete(state_sets, states, state, tokens)
-                            break
+                    if token == look_ahead:
+                        self.complete(state_sets, states, state, tokens)
                 elif symbol_after_dot in grammar.nonterminals:
                     self.predict(rhs, dot, look_ahead, state_number, grammar, states)
                 else:
