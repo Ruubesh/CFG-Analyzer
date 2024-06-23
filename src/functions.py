@@ -1310,7 +1310,7 @@ def calculate_positions(canvas, tree, x, y, x_space, y_space, level=0, positions
             x_offset += child_width + x_space
 
 
-def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120, nonterminal=None):
+def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120, nonterminal=None, nt_pos=None):
     calculate_positions(canvas, tree, x, y, x_space, y_space, level=0, positions=None, nonterminal=nonterminal)
 
     occ = 0
@@ -1324,8 +1324,11 @@ def draw_tree(canvas, tree, x=400, y=50, x_space=100, y_space=120, nonterminal=N
         if "occ" in tags:
             occ += 1
             x, y, x1, y1 = canvas.bbox(widget)
-            canvas.create_oval(x - 10, y - 8, x1 + 10, y1 + 8, fill="pink", tags='oval')
-            canvas.create_text(x1 - 4, y1 + 20, text=occ, tags="occ")
+            if occ == nt_pos:
+                canvas.create_oval(x - 10, y - 8, x1 + 10, y1 + 8, fill="pink", tags='oval')
+            else:
+                canvas.create_oval(x - 10, y - 8, x1 + 10, y1 + 8, fill="lightblue", tags='oval')
+            # canvas.create_text(x1 - 4, y1 + 20, text=occ, tags="occ")
             canvas.tag_raise('occ')
             canvas.config(scrollregion=canvas.bbox("all"))
 
@@ -1350,7 +1353,8 @@ def undo(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, ca
         canvas.delete("all")
         canvas.create_oval(x, y, x + 30, y + 30, fill="lightblue")
         canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
-        execute(grammar, ldata, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn)
+        execute(grammar, ldata, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn,
+                tree)
     else:
         update_label(sentential_str, sentence)
         update_sentential_scrollregion(sentential_canvas, sentential_str)
@@ -1358,7 +1362,7 @@ def undo(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, ca
         draw_tree(canvas, tree, 400, 50, 50, 60)
         current_sentence = ldata.split(' ')
         execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
-                redo_btn)
+                redo_btn, tree)
 
 
 def redo(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn):
@@ -1420,10 +1424,27 @@ def perform_derivation(grammar, rule, input_frame, rule_frame, sentential_str, s
 
 
 def choose_rule(grammar, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn, redo_btn,
-                nonterminal, position, nt_btn):
+                nonterminal, position, nt_btn, undo_tree):
     clear_widgets(rule_frame)
+
+    # highlight selected button
     reset_button_colour(input_frame)
     nt_btn.config(bg='pink')
+
+    # highlight graphical tree
+    if undo_tree is None:
+        tree = grammar.build_tree(grammar.stack_tree, grammar.nonterminals)
+        canvas.delete("all")
+        draw_tree(canvas, tree, 400, 50, 50, 60, nonterminal, position)
+    else:
+        canvas.delete("all")
+        if isinstance(undo_tree, dict):
+            x = 400
+            y = 50
+            canvas.create_oval(x, y, x + 30, y + 30, fill="pink")
+            canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
+        else:
+            draw_tree(canvas, undo_tree, 400, 50, 50, 60, nonterminal, position)
 
     for production in grammar.rules[nonterminal]:
         btn_txt = ''.join(production)
@@ -1438,7 +1459,7 @@ def choose_rule(grammar, input_frame, rule_frame, sentential_str, sentential_can
 
 
 def execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, sentential_canvas, canvas, undo_btn,
-            redo_btn):
+            redo_btn, undo_tree=None):
     clear_widgets(input_frame)
     clear_widgets(rule_frame)
 
@@ -1456,7 +1477,7 @@ def execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, 
                                                                                               sentential_canvas,
                                                                                               canvas, undo_btn,
                                                                                               redo_btn, sym, pos,
-                                                                                              nt_btn))
+                                                                                              nt_btn, undo_tree))
             button.pack(side=tk.LEFT, pady=10, padx=10)
         else:
             if symbol != '':

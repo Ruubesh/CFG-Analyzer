@@ -542,8 +542,9 @@ def load_page2():
     canvas.create_text(x + 15, y + 15, text=grammar.stack.data[0])
 
     # run
+    undo_tree = {'just': 'temp'}
     functions.execute(grammar, grammar.initial_nonterminal, input_frame, rule_frame, sentential_str, sentential_canvas,
-                      canvas, undo_btn, redo_btn)
+                      canvas, undo_btn, redo_btn, undo_tree)
 
 
 def on_close():
