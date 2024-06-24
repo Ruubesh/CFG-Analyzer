@@ -396,8 +396,8 @@ def load_page1(file_error, listbox):
 
             # edit_frame
             frame_name = 'Edit'
-            init_combo, rule_combo, rules, rule_entry, name_str = create_edit_frame(page1_frame, frame_name, grammar_str,
-                                                                                    error_label)
+            init_combo, rule_combo, rules, rule_entry, name_str = create_edit_frame(page1_frame, frame_name,
+                                                                                    grammar_str, error_label)
 
             # write selected grammar to temp file
             config = cfg.CFG().read_config(file_variable.get())
@@ -458,6 +458,15 @@ def load_page2():
 
     back_btn = tk.Button(master=button_frame, text="Back", command=lambda: load_initial_page())
     back_btn.pack(side='left', padx=10)
+
+    derivation_str = tk.StringVar()
+    derivation_str.set("Automatic")
+    derivation_btn = tk.Button(master=button_frame, textvariable=derivation_str,
+                               command=lambda: functions.change_derivation(derivation_str, input_frame, grammar,
+                                                                           rule_frame, sentential_str,
+                                                                           sentential_canvas, canvas, undo_btn,
+                                                                           redo_btn))
+    derivation_btn.pack(side=tk.LEFT, padx=10)
 
     redo_btn = tk.Button(master=button_frame, text="-->",
                          command=lambda: functions.redo(grammar, input_frame, rule_frame,

@@ -55,6 +55,9 @@ class Recognizer:
 
         state = (lhs, rhs, dot, look_ahead, origin)
 
+        #
+        final_state = (lhs, rhs, dot + 2, look_ahead, origin)
+
         state_sets[(0, tokens[0])].append(state)
 
         # iterate through state sets in order
@@ -75,4 +78,4 @@ class Recognizer:
                     if symbol_after_dot == token:
                         self.scan(state, state_number, tokens, state_sets)
 
-        return state_sets
+        return state_sets, final_state
