@@ -2,6 +2,9 @@ class Recognizer:
     def predict(self, rhs, dot, look_ahead, state_number, grammar, states):
         symbol_after_dot = rhs[dot]
         for rule in grammar.rules[symbol_after_dot]:
+            if rule == ['']:
+                rule = []
+
             if dot == len(rhs) - 1:
                 new_state = (symbol_after_dot, rule, 0, look_ahead, state_number)
             else:
@@ -28,13 +31,16 @@ class Recognizer:
         for old_state in state_sets[(origin, tokens[origin])]:
             old_lhs, old_rhs, old_dot, old_lkahead, old_origin = old_state
 
+            if old_dot == len(old_rhs):
+                continue
+
             if lhs == old_rhs[old_dot]:
                 old_dot += 1
                 new_state = (old_lhs, old_rhs, old_dot, old_lkahead, old_origin)
                 if new_state not in states:
                     states.append(new_state)
 
-    def parse(self, grammar, tokens, k=1):
+    def parse(self, grammar, tokens):
         # add end marker to input string
         tokens.append('⊣')
 
