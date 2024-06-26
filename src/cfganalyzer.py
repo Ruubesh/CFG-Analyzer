@@ -136,6 +136,8 @@ def create_edit_frame(master_frame, frame_name, grammar_str, error_label):
     rule_entry = tk.Entry(master=rule_frame, width=30, textvariable=rules)
     rule_entry.grid(row=1, column=2, padx=10)
 
+    rule_entry.bind('<KeyPress>', functions.ignore_space)
+
     # bind rules entry box
     rule_entry.bind("<KeyRelease>",
                     lambda event: functions.save_to_tempfile(temp_file, rule_val, rules, init_val,

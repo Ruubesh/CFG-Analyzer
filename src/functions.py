@@ -1481,8 +1481,23 @@ def execute(grammar, current_sentence, input_frame, rule_frame, sentential_str, 
                 label.pack(side=tk.LEFT, pady=10, padx=10)
 
 
+def get_tokens(string, grammar):
+    tokens = []
+    temp = ''
+
+    for char in string:
+        temp += char
+        for substring in grammar.terminals:
+            if temp == substring:
+                tokens.append(substring)
+                temp = ''
+                break
+
+    return tokens
+
+
 def derive_automatically(result_str, entry_str, grammar):
-    tokens = (entry_str.get()).split(' ')
+    tokens = get_tokens(entry_str.get(), grammar)
     state_sets, final_state = Recognizer().parse(grammar, tokens)
 
     final_state_set = len(state_sets) - 1
@@ -1530,6 +1545,8 @@ def change_derivation(derivation_str, input_frame, grammar, rule_frame, sententi
         entry_str = tk.StringVar()
         entry = tk.Entry(master=frame, textvariable=entry_str)
         entry.pack(side=tk.LEFT)
+
+        entry.bind('<KeyPress>', ignore_space)
 
         # result label
         result_str = tk.StringVar()
