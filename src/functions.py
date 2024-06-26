@@ -1498,6 +1498,10 @@ def get_tokens(string, grammar):
 
 def derive_automatically(result_str, entry_str, grammar):
     tokens = get_tokens(entry_str.get(), grammar)
+
+    # add end marker to input string
+    tokens.append('⊣')
+
     state_sets, final_state = Recognizer().parse(grammar, tokens)
 
     final_state_set = len(state_sets) - 1

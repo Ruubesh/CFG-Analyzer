@@ -1,4 +1,29 @@
 class Recognizer:
+    def create_state_sets(self, grammar, tokens):
+        # create state sets corresponding to input tokens
+        state_number = 0
+        state_sets = {}
+        for token in tokens:
+            state_sets[(state_number, token)] = []
+            state_number += 1
+        state_sets[(state_number, '')] = []
+
+        # add initial state to state 0
+        lhs = 'Φ'
+        rhs = [grammar.initial_nonterminal, '⊣']
+        dot = 0
+        look_ahead = '⊣'
+        origin = 0
+
+        state = (lhs, rhs, dot, look_ahead, origin)
+
+        # final state
+        final_state = (lhs, rhs, dot + 2, look_ahead, origin)
+
+        state_sets[(0, tokens[0])].append(state)
+
+        return state_sets, final_state
+
     def predict(self, rhs, dot, look_ahead, state_number, grammar, states):
         symbol_after_dot = rhs[dot]
         for rule in grammar.rules[symbol_after_dot]:
@@ -41,30 +66,10 @@ class Recognizer:
                     states.append(new_state)
 
     def parse(self, grammar, tokens):
-        # add end marker to input string
-        tokens.append('⊣')
+        # create state sets
+        state_sets, final_state = self.create_state_sets(grammar, tokens)
 
-        # create state sets corresponding to input tokens
-        state_number = 0
-        state_sets = {}
-        for token in tokens:
-            state_sets[(state_number, token)] = []
-            state_number += 1
-        state_sets[(state_number, '')] = []
-
-        # add initial state to state 0
-        lhs = 'Φ'
-        rhs = [grammar.initial_nonterminal, '⊣']
-        dot = 0
-        look_ahead = '⊣'
-        origin = 0
-
-        state = (lhs, rhs, dot, look_ahead, origin)
-
-        #
-        final_state = (lhs, rhs, dot + 2, look_ahead, origin)
-
-        state_sets[(0, tokens[0])].append(state)
+        pointers_dict = {}
 
         # iterate through state sets in order
         for state_token, states in state_sets.items():
