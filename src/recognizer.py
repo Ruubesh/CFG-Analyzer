@@ -39,21 +39,38 @@ class Recognizer:
             if new_state not in states:
                 states.append(new_state)
 
-    def scan(self, state, state_number, tokens, state_sets):
+    def scan(self, states, state, state_number, tokens, state_sets, pointers_dict):
         lhs, rhs, dot, look_ahead, origin = state
         dot += 1
         new_state = (lhs, rhs, dot, look_ahead, origin)
 
-        next_state_set = state_number + 1
-        if next_state_set == len(tokens):
-            state_sets[(next_state_set, '')].append(new_state)
-        else:
-            state_sets[(next_state_set, tokens[next_state_set])].append(new_state)
+        next_state_number = state_number + 1
+        state_index = states.index(state)
 
-    def complete(self, state_sets, states, state, tokens):
+        if next_state_number == len(tokens):
+            next_states = state_sets[(next_state_number, '')]
+
+            if (state_number, state_index) in pointers_dict:
+                next_state_index = len(next_states)
+                pointers = pointers_dict[(state_number, state_index)]
+                pointers_dict[(next_state_number, next_state_index)] = pointers
+
+            next_states.append(new_state)
+        else:
+            next_states = state_sets[(next_state_number, tokens[next_state_number])]
+
+            if (state_number, state_index) in pointers_dict:
+                next_state_index = len(next_states)
+                pointers = pointers_dict[(state_number, state_index)]
+                pointers_dict[(next_state_number, next_state_index)] = pointers
+
+            next_states.append(new_state)
+
+    def complete(self, state_number, state_sets, states, state, tokens, pointers_dict):
         lhs, rhs, dot, look_ahead, origin = state
 
-        for old_state in state_sets[(origin, tokens[origin])]:
+        old_states = state_sets[(origin, tokens[origin])]
+        for old_state in old_states:
             old_lhs, old_rhs, old_dot, old_lkahead, old_origin = old_state
 
             if old_dot == len(old_rhs):
@@ -63,6 +80,19 @@ class Recognizer:
                 old_dot += 1
                 new_state = (old_lhs, old_rhs, old_dot, old_lkahead, old_origin)
                 if new_state not in states:
+                    old_state_index = old_states.index(old_state)
+                    state_index = states.index(state)
+                    new_state_index = len(states)
+
+                    pointers = []
+                    if (origin, old_state_index) in pointers_dict:
+                        old_pointers = pointers_dict[(origin, old_state_index)]
+                        pointers = old_pointers.copy()
+
+                    pointers.append((state_number, state_index))
+
+                    pointers_dict[(state_number, new_state_index)] = pointers
+
                     states.append(new_state)
 
     def parse(self, grammar, tokens):
@@ -82,11 +112,11 @@ class Recognizer:
 
                 if dot == len(rhs) and state_number < len(tokens):
                     if token == look_ahead:
-                        self.complete(state_sets, states, state, tokens)
+                        self.complete(state_number, state_sets, states, state, tokens, pointers_dict)
                 elif symbol_after_dot in grammar.nonterminals:
                     self.predict(rhs, dot, look_ahead, state_number, grammar, states)
                 else:
                     if symbol_after_dot == token:
-                        self.scan(state, state_number, tokens, state_sets)
+                        self.scan(states, state, state_number, tokens, state_sets, pointers_dict)
 
-        return state_sets, final_state
+        return state_sets, final_state, pointers_dict

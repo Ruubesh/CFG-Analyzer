@@ -543,6 +543,7 @@ def load_page2():
 
     # Tooltips
     CreateToolTip(back_btn, "Go to previous page")
+    CreateToolTip(derivation_btn, "Switch between automatic and manual derivation modes")
     CreateToolTip(undo_btn, "Undo")
     CreateToolTip(redo_btn, "Redo")
 
