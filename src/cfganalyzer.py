@@ -320,6 +320,10 @@ def load_initial_page(error_text=''):
                            command=lambda: functions.remove_file(listbox, listbox_items, file_error, listbox_dict))
     remove_btn.pack(anchor=tk.E)
 
+    exit_btn = tk.Button(master=btn_frame, text="Exit", width=10,
+                         command=lambda: on_close())
+    exit_btn.pack(anchor=tk.E, pady=40)
+
     # list_frame
     list_frame = tk.Frame(master=top_frame)
     list_frame.pack(side=tk.LEFT, padx=60)

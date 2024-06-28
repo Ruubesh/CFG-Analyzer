@@ -1006,6 +1006,10 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, st
     result_label = tk.Label(master=grammar_frame, text=result)
     result_label.pack(pady=50)
 
+    close_btn = tk.Button(master=grammar_frame, text="Close",
+                          command=lambda: popup_window.destroy())
+    close_btn.pack(pady=(0, 50))
+
     # insert text into grammar widget
     grammar_text = CFG().generate_grammar_text(file, {})
     grammar_text_widget.insert("1.0", grammar_text)
