@@ -802,6 +802,9 @@ class LRParser:
                         if symbol == '.' and index == len(item) - 1:
                             temp_item = item.copy()
                             temp_item.pop(index)
+                            
+                            if temp_item == []:
+                                temp_item = ['']
 
                             # if '⊣' in temp_item:
                             #     if state not in action_dict:
