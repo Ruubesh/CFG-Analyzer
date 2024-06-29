@@ -818,6 +818,10 @@ class LRParser:
                                         if rule == ['']:
                                             rule = ['ε']
                                         action_dict[(state, lk_ahead)].add(f'{nonterminal} → {"".join(rule)}')
+                                elif lhs == grammar.initial_nonterminal:
+                                    if (state, look_ahead) not in action_dict:
+                                        action_dict[(state, look_ahead)] = set()
+                                    action_dict[(state, look_ahead)].add(f'Accept')
                         elif symbol == '.':
                             symbol_after_dot = item[index + 1]
                             if symbol_after_dot in grammar.terminals:

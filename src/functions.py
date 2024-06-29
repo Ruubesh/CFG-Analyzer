@@ -890,6 +890,7 @@ def is_lr0(window, file):
 
 def is_lr1(window, file):
     grammar = create_augmented_grammar(file)
+    # grammar.rules[grammar.initial_nonterminal][0].append('⊣')
 
     # instances
     states_dict = {}
