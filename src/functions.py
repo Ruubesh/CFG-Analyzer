@@ -1543,8 +1543,9 @@ def recognize(result_str, entry_str, grammar, sentential_str, sentential_canvas,
 
     # add end marker to input string
     tokens.append('⊣')
+    first_dict, _ = LLParser().compute_first(grammar)
 
-    state_sets, final_state, pointers_dict = Recognizer().parse(grammar, tokens)
+    state_sets, final_state, pointers_dict = Recognizer().parse(grammar, tokens, first_dict)
 
     final_state_number = len(state_sets) - 1
     if state_sets[(final_state_number, '')] == [final_state]:

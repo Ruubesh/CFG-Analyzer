@@ -24,7 +24,26 @@ class Recognizer:
 
         return state_sets, final_state
 
-    def predict(self, rhs, dot, look_ahead, state_number, grammar, states):
+    def get_lookahead(self, look_ahead, rhs, dot, first_dict, grammar):
+        lk_set = set()
+        for index, symbol in enumerate(rhs[dot + 1:]):
+            if symbol in grammar.nonterminals:
+                first_set = first_dict[symbol]
+                for terminal in first_set:
+                    if terminal != 'epsilon':
+                        lk_set.add(terminal)
+                if 'epsilon' in first_set:
+                    if index == len(rhs) - 1:
+                        lk_set.add(look_ahead)
+                else:
+                    break
+            else:
+                lk_set.add(symbol)
+                break
+
+        return lk_set
+
+    def predict(self, rhs, dot, look_ahead, state_number, grammar, states, first_dict):
         symbol_after_dot = rhs[dot]
         for rule in grammar.rules[symbol_after_dot]:
             if rule == ['']:
@@ -32,12 +51,16 @@ class Recognizer:
 
             if dot == len(rhs) - 1:
                 new_state = (symbol_after_dot, rule, 0, look_ahead, state_number)
-            else:
-                lk_ahead = rhs[dot + 1]
-                new_state = (symbol_after_dot, rule, 0, lk_ahead, state_number)
 
-            if new_state not in states:
-                states.append(new_state)
+                if new_state not in states:
+                    states.append(new_state)
+            else:
+                lk_set = self.get_lookahead(look_ahead, rhs, dot, first_dict, grammar)
+                for lk_ahead in lk_set:
+                    new_state = (symbol_after_dot, rule, 0, lk_ahead, state_number)
+
+                    if new_state not in states:
+                        states.append(new_state)
 
     def scan(self, states, state, state_number, tokens, state_sets, pointers_dict):
         lhs, rhs, dot, look_ahead, origin = state
@@ -95,7 +118,7 @@ class Recognizer:
 
                     states.append(new_state)
 
-    def parse(self, grammar, tokens):
+    def parse(self, grammar, tokens, first_dict):
         # create state sets
         state_sets, final_state = self.create_state_sets(grammar, tokens)
 
@@ -104,6 +127,9 @@ class Recognizer:
         # iterate through state sets in order
         for state_token, states in state_sets.items():
             state_number, token = state_token[0], state_token[1]
+
+            if state_number == len(tokens):
+                continue
 
             for state in states:
                 lhs, rhs, dot, look_ahead, origin = state
@@ -114,7 +140,7 @@ class Recognizer:
                     if token == look_ahead:
                         self.complete(state_number, state_sets, states, state, tokens, pointers_dict)
                 elif symbol_after_dot in grammar.nonterminals:
-                    self.predict(rhs, dot, look_ahead, state_number, grammar, states)
+                    self.predict(rhs, dot, look_ahead, state_number, grammar, states, first_dict)
                 else:
                     if symbol_after_dot == token:
                         self.scan(states, state, state_number, tokens, state_sets, pointers_dict)
