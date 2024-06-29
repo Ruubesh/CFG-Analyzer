@@ -865,9 +865,9 @@ def is_slr(window, file):
 
     # display FOLLOW sets below grammar
     config = CFG().read_config(file)
-    config.add_section('FOLLOW')
+    config.add_section('FOLLOW Sets')
     for nonterminal, follow in follow_dict.items():
-        config.set('FOLLOW', nonterminal, ','.join(follow))
+        config.set('FOLLOW Sets', f'FOLLOW({nonterminal})', f"{{{','.join(follow)}}}")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp:
         temp_file = temp.name
