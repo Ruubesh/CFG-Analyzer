@@ -910,6 +910,9 @@ class LRParser:
                         rhs = item.copy()
                         rhs.pop(-1)
 
+                        if '⊣' in rhs:
+                            continue
+
                         la_key = (state, lhs, tuple(rhs))
                         if la_key not in la_dict:
                             la_dict[la_key] = set()

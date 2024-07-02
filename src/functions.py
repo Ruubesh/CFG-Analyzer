@@ -987,6 +987,13 @@ def is_lalr(window, file):
     for node, terminals in follow.items():
         config.set('Follow', f"({node[0]}, {node[1]})", f"{{{','.join(terminals)}}}")
 
+    config.add_section('Look-ahead')
+    for node, terminals in la_sets.items():
+        state, lhs, rhs = node
+        if rhs == ():
+            rhs = ['ε']
+        config.set('Look-ahead', f"LA({state}, {lhs} → {''.join(rhs)})", f"{{{','.join(terminals)}}}")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp:
         temp_file = temp.name
         CFG().write_to_config(config, temp_file)
