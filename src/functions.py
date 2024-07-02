@@ -1,3 +1,4 @@
+import copy
 from tkinter import filedialog, ttk
 from cfg import CFG, main, Stack, Transform, LLParser, LRParser
 import tkinter as tk
@@ -923,6 +924,78 @@ def is_lr1(window, file):
     create_table_window(window, file, rules_num_dict, action_dict, goto_dict, states_dict, 'LR(1)')
 
 
+def is_lalr(window, file):
+    # get lr0 items
+    states_dict, rules_num_dict, grammar = get_lr0_items(file)
+    grammar.terminals.append('⊣')
+
+    # find nullable nonterminals
+    config = CFG().read_config(file)
+    null_nt = set()
+    Transform().remove_epsilon_rules(file, config, Stack(), null_nt, [], '\u2080')
+
+    # create lalr state set
+    lalr_states = {}
+    read_graph = {}
+    includes_graph = {}
+    for start_state, instance in states_dict.items():
+        for symbol, end_state in instance.transitions.items():
+            if symbol in grammar.nonterminals:
+                key = (start_state, symbol)
+
+                # compute direct reads
+                lalr_states[key] = set()
+                LRParser().compute_direct_reads(grammar, end_state, states_dict, lalr_states[key])
+
+                direct_reads = copy.deepcopy(lalr_states)
+
+                # compute read graph
+                read_graph[key] = set()
+                LRParser().compute_read_graph(grammar, end_state, states_dict, read_graph[key], null_nt)
+
+                # compute includes (Follow graph)
+                LRParser().compute_includes(grammar, includes_graph, key, null_nt, states_dict)
+
+    # compute reads
+    LRParser().digraph(read_graph, lalr_states)
+
+    reads = copy.deepcopy(lalr_states)
+
+    # compute follow
+    LRParser().digraph(includes_graph, lalr_states)
+
+    follow = copy.deepcopy(lalr_states)
+
+    # compute look-ahead sets
+    la_sets = LRParser().compute_la_sets(lalr_states, states_dict)
+
+    # compute action and goto table
+    action_dict = LRParser().compute_lalr_action_table(states_dict, la_sets, grammar)
+    goto_dict = LRParser().compute_lr0_goto_table(states_dict)
+
+    # display sets below grammar
+    config = CFG().read_config(file)
+    config.add_section('Direct Reads')
+    for node, terminals in direct_reads.items():
+        config.set('Direct Reads', f"({node[0]}, {node[1]})", f"{{{','.join(terminals)}}}")
+
+    config.add_section('Reads')
+    for node, terminals in reads.items():
+        config.set('Reads', f"({node[0]}, {node[1]})", f"{{{','.join(terminals)}}}")
+
+    config.add_section('Follow')
+    for node, terminals in follow.items():
+        config.set('Follow', f"({node[0]}, {node[1]})", f"{{{','.join(terminals)}}}")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp:
+        temp_file = temp.name
+        CFG().write_to_config(config, temp_file)
+
+        create_table_window(window, temp_file, rules_num_dict, action_dict, goto_dict, states_dict, 'LALR(1)')
+        temp.close()
+        os.remove(temp_file)
+
+
 def map_table_rows(table):
     row_map = {}
     for row_id in table.get_children():
@@ -998,6 +1071,8 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, st
     grammar_frame.pack_propagate(0)
     grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
+
+    create_text_scrollbar(grammar_text_widget)
 
     result = f"This grammar is {win_title}"
     num_states = len(states_dict)
@@ -1511,7 +1586,6 @@ def get_tokens(string, grammar):
 
 def derive_automatically(grammar, tokens, state_sets, pointers_dict, sentential_str, sentential_canvas, canvas,
                          state_number, state_index):
-
     states = state_sets[(state_number, tokens[state_number])]
     state = states[state_index]
     lhs, rhs, _, _, _ = state

@@ -229,6 +229,10 @@ def load_transform_page(listbox, file_error):
                                 command=lambda: functions.is_slr(window, file_variable.get()))
             slr_btn.grid(row=0, column=5, padx=10)
 
+            lalr_btn = tk.Button(master=transform_frame, text="LALR(1)", width=20,
+                                 command=lambda: functions.is_lalr(window, file_variable.get()))
+            lalr_btn.grid(row=1, column=5, padx=10)
+
             # grammar frame
             grammar_frame = tk.LabelFrame(master=transform_page_frame, text="Grammar")
             grammar_frame.pack(fill=tk.BOTH, expand=1)

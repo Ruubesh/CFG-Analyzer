@@ -834,6 +834,125 @@ class LRParser:
 
         return action_dict
 
+    def compute_direct_reads(self, grammar, state, states_dict, lalr_states):
+        instance = states_dict[state]
+        for symbol, end_state in instance.transitions.items():
+            if symbol in grammar.terminals:
+                lalr_states.add(symbol)
+
+    def digraph(self, graph_dict, lalr_dict):
+        while True:
+            temp_dict = deepcopy(lalr_dict)
+            for start_node, end_nodes in graph_dict.items():
+                for end_node in end_nodes:
+                    for terminal in lalr_dict[end_node]:
+                        lalr_dict[start_node].add(terminal)
+
+            if temp_dict == lalr_dict:
+                break
+
+    def compute_read_graph(self, grammar, state, states_dict, read_graph, null_nt):
+        instance = states_dict[state]
+        for symbol, end_state in instance.transitions.items():
+            if symbol in grammar.nonterminals and symbol in null_nt:
+                read_graph.add((state, symbol))
+
+    def relate(self, grammar, includes_graph, start_node, null_nt, states_dict, rule):
+        start_state, _ = start_node
+        if rule[-1] in grammar.nonterminals:
+            for index, symbol in enumerate(rule):
+                if index == len(rule) - 1:
+                    current_node = (start_state, symbol)
+                    if current_node not in includes_graph:
+                        includes_graph[current_node] = set()
+                    includes_graph[current_node].add(start_node)
+                    if symbol in null_nt and len(rule) > 1:
+                        rule.pop(index)
+                        self.relate(grammar, includes_graph, start_node, null_nt, states_dict, rule)
+
+                instance = states_dict[start_state]
+                if symbol in instance.transitions:
+                    start_state = instance.transitions[symbol]
+
+    def compute_includes(self, grammar, includes_graph, start_node, null_nt, states_dict):
+        start_state, start_symbol = start_node
+        for rule in grammar.rules[start_symbol]:
+            temp_rule = rule.copy()
+            self.relate(grammar, includes_graph, start_node, null_nt, states_dict, temp_rule)
+
+    def lookback(self, la_dict, la_key, lalr_states, states_dict):
+        state, lhs, rhs = la_key
+        for state_symbol, terminals in lalr_states.items():
+            start_state, start_symbol = state_symbol
+            if start_symbol == lhs:
+                current_state = start_state
+
+                if rhs == () and current_state == state:
+                    for terminal in terminals:
+                        la_dict[la_key].add(terminal)
+
+                for index, symbol in enumerate(rhs):
+                    instance = states_dict[current_state]
+                    if symbol in instance.transitions:
+                        current_state = instance.transitions[symbol]
+
+                    if index == len(rhs) - 1 and current_state == state:
+                        for terminal in terminals:
+                            la_dict[la_key].add(terminal)
+
+    def compute_la_sets(self, lalr_states, states_dict):
+        la_dict = {}
+        for state, instance in states_dict.items():
+            for lhs, items in instance.items.items():
+                for item in items:
+                    if item[-1] == '.':
+                        # remove dot
+                        rhs = item.copy()
+                        rhs.pop(-1)
+
+                        la_key = (state, lhs, tuple(rhs))
+                        if la_key not in la_dict:
+                            la_dict[la_key] = set()
+
+                        self.lookback(la_dict, la_key, lalr_states, states_dict)
+
+        return la_dict
+
+    def compute_lalr_action_table(self, states_dict, la_sets, grammar):
+        action_dict = {}
+        for state, instance in states_dict.items():
+            for lhs, rhs in instance.items.items():
+                for item in rhs:
+                    for index, symbol in enumerate(item):
+                        if symbol == '.' and index == len(item) - 1:
+                            temp_item = item.copy()
+                            if temp_item == ['.']:
+                                temp_item = []
+                            else:
+                                temp_item.pop(index)
+
+                            if '⊣' in temp_item:
+                                if (state, '⊣') not in action_dict:
+                                    action_dict[(state, '⊣')] = set()
+                                action_dict[(state, '⊣')].add('Accept')
+                                continue
+
+                            key = (state, lhs, tuple(temp_item))
+                            for look_ahead in la_sets[key]:
+                                if (state, look_ahead) not in action_dict:
+                                    action_dict[(state, look_ahead)] = set()
+                                if temp_item == []:
+                                    temp_item = ['ε']
+                                action_dict[(state, look_ahead)].add(f'{lhs} → {"".join(temp_item)}')
+                        elif symbol == '.':
+                            symbol_after_dot = item[index + 1]
+                            if symbol_after_dot in grammar.terminals:
+                                if (state, symbol_after_dot) not in action_dict:
+                                    action_dict[(state, symbol_after_dot)] = set()
+                                action_dict[(state, symbol_after_dot)].add('Shift')
+
+        return action_dict
+
 
 class Stack:
     def __init__(self):
@@ -992,11 +1111,9 @@ class CFG:
                                 if rule == 'epsilon':
                                     rule = '\u03B5'
                                 grammar_text += f"{rule}|"
+                grammar_text += '\n\n\n'
             else:
-                if section == 'input':
-                    grammar_text += f"[{section}]\n"
-                else:
-                    grammar_text += f"\n\n\n\n[{section}]\n"
+                grammar_text += f"[{section}]\n"
                 for key, value in config.items(section):
                     grammar_text += f"{key} = {value}\n"
                 grammar_text += '\n'
