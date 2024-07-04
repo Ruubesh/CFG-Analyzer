@@ -49,8 +49,12 @@ def update_options(combobox, options):
 
 def open_files(listbox, listbox_items, file_error, listbox_dict):
     file_error.config(text='')
+
+    # Get the current working directory
+    initial_dir = os.getcwd()
+
     filenames = filedialog.askopenfilenames(
-        initialdir="/Users/ruube/PycharmProjects/Thesis",
+        initialdir=initial_dir,
         title="Select A File",
         filetypes=(("Text files", "*.txt"), ("All files", "*.*"))
     )
@@ -190,9 +194,12 @@ def highlight_text(text_widget):
 
 
 def save_as_transformed_grammar(config, popup_window, listbox_items, filename):
+    # Get the current working directory
+    initial_dir = os.getcwd()
+
     file = filedialog.asksaveasfilename(parent=popup_window,
                                         defaultextension=".*",
-                                        initialdir="/Users/ruube/PycharmProjects/Thesis",
+                                        initialdir=initial_dir,
                                         initialfile=filename,
                                         title="Save File",
                                         filetypes=(("Text files", "*.txt"), ("All files", "*.*"))

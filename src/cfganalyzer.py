@@ -254,6 +254,7 @@ def load_transform_page(listbox, file_error):
             CreateToolTip(lr0_btn, "Check if the grammar is LR(0)")
             CreateToolTip(lr1_btn, "Check if the grammar is LR(1)")
             CreateToolTip(slr_btn, "Check if the grammar is SLR(1)")
+            CreateToolTip(lalr_btn, "Check if the grammar is LALR(1)")
     except Exception as e:
         load_initial_page(f"Invalid grammar file format.\nerror: {e}")
 
