@@ -332,7 +332,7 @@ def reduce(window, file_variable, listbox_items):
     Transform().reduce_phase1(file_variable, config, grammar, stack_transformation, set_t, set_list, '\u2080')
 
     grammar_text = CFG().generate_grammar_text(file_variable, {})
-    transform_text = f"\nT = {set_list}"
+    transform_text = f"\nT = {{{', '.join(set_list)}}}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": ''})
 
     update_reduction_rules(config, grammar, file_variable, set_t, stack_transformation)
@@ -342,13 +342,13 @@ def reduce(window, file_variable, listbox_items):
     set_d = set()
     set_d.add(grammar.initial_nonterminal)
     grammar_text = CFG().generate_grammar_text(file_variable, {})
-    reduction_text = f"D\u2080 = {set_list}"
+    reduction_text = f"D\u2080 = {{{', '.join(set_list)}}}"
     explain_text = f"{grammar.initial_nonterminal} is the initial nonterminal"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                "explain_text": explain_text})
     Transform().reduce_phase2(file_variable, config, grammar, stack_transformation, set_t, set_d, set_list, '\u2081')
 
-    transform_text = f"\nD = {set_list}"
+    transform_text = f"\nD = {{{', '.join(set_list)}}}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": ''})
 
     update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
@@ -374,8 +374,8 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
     set_list = []
     Transform().remove_epsilon_rules(file_variable, config, stack_transformation, set_e, set_list, '\u2080')
 
-    transform_text = f"\n\u2107 = {set_list}"
-    explain_text = f"Nonterminals {set_list} can generate epsilon"
+    transform_text = f"\n\u2107 = {{{', '.join(set_list)}}}"
+    explain_text = f"Nonterminals {{{', '.join(set_list)}}} can generate epsilon"
     stack_transformation.push(
         {"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": explain_text})
 
@@ -405,7 +405,7 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
         config.set('rules', nonterminal, ','.join(new_production_rules))
 
     if grammar.initial_nonterminal in set_e:
-        new_init_nt = 'Φ'
+        new_init_nt = f"<{grammar.initial_nonterminal}'>"
         CFG().add_value(config, 'nonterminals', new_init_nt, file_variable, overwrite=False)
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
         config.set('input', 'initial_nonterminal', new_init_nt)
@@ -414,7 +414,7 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
         for nonterminal, production_rules in grammar.rules.items():
             for rule in production_rules:
                 if grammar.initial_nonterminal in rule:
-                    new_init_nt = 'Φ'
+                    new_init_nt = f"<{grammar.initial_nonterminal}'>"
                     CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
                     new_init_rule = [grammar.initial_nonterminal]
                     config.set('input', 'initial_nonterminal', new_init_nt)
@@ -470,7 +470,7 @@ def remove_unit_rules(listbox_items, window, file, other_stack=None, other_trans
 
         set_nt.add(nonterminal)
         set_list.append(nonterminal)
-        transformation_text = f"N({nonterminal})\u2080 = {set_list}"
+        transformation_text = f"N({nonterminal})\u2080 = {{{', '.join(set_list)}}}"
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                    "explain_text": ''})
         Transform().remove_unit_rules(file, config, stack_transformation, set_nt, set_list, '\u2081')
@@ -479,7 +479,7 @@ def remove_unit_rules(listbox_items, window, file, other_stack=None, other_trans
 
     transformation_text = ''
     for key, value in transform_sets.items():
-        transformation_text += f"N({key}) = {value}\n"
+        transformation_text += f"N({key}) = {{{', '.join(value)}}}\n"
 
         new_rules = []
         for val in value:

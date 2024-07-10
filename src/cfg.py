@@ -36,7 +36,7 @@ class Transform:
         if set_temp != set_t:
             grammar_text = grammar.generate_grammar_text(file, rules)
             grammar.set_to_list(set_t, set_list)
-            reduction_text = f"T{i} = {set_list}"
+            reduction_text = f"T{i} = {{{', '.join(set_list)}}}"
             reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                   "explain_text": explain_text})
             i_int = ord(i) + 1
@@ -58,7 +58,7 @@ class Transform:
         if set_temp != set_d:
             grammar_text = grammar.generate_grammar_text(file, rules)
             grammar.set_to_list(set_d, set_list)
-            reduction_text = f"D{i} = {set_list}"
+            reduction_text = f"D{i} = {{{', '.join(set_list)}}}"
             explain_text = f"Nonterminals that can be reached from {grammar.initial_nonterminal}\n{set_d - set_temp}"
             reduction_stack.push({"grammar_text": grammar_text, "transform_text": reduction_text,
                                   "explain_text": explain_text})
@@ -99,7 +99,7 @@ class Transform:
         if set_temp != set_e:
             grammar_text = CFG().generate_grammar_text(file, rules)
             CFG().set_to_list(set_e, set_list)
-            transformation_text = f"\u2107{i} = {set_list}"
+            transformation_text = f"\u2107{i} = {{{', '.join(set_list)}}}"
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
             i_int = ord(i) + 1
@@ -124,7 +124,7 @@ class Transform:
         if set_temp != set_nt:
             grammar_text = CFG().generate_grammar_text(file, rules)
             CFG().set_to_list(set_nt, set_list)
-            transformation_text = f"N({set_list[0]}){i} = {set_list}"
+            transformation_text = f"N({set_list[0]}){i} = {{{', '.join(set_list)}}}"
             stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                        "explain_text": explain_text})
             i_int = ord(i) + 1
@@ -1270,13 +1270,24 @@ class CFG:
 
     def check_value(self, inputs, val):
         check = ''
-        for inp in inputs:
-            if val in inp:
-                check = f"'{val}' is a substring of '{inp}'.\n Please enclose '{val}' within '<>'. i.e: <{val}>"
-                return check
-            elif inp in val:
-                check = f"'{val}' is a superstring of '{inp}'.\n Please enclose '{val}' within '<>'. i.e: <{val}>"
-                return check
+
+        if len(val) > 1:
+            if val.startswith('<') and val.endswith('>'):
+                temp = val[1:-1]
+                if '<' in temp or '>' in temp:
+                    check = "Using '<' or '>' as inputs is not allowed"
+                else:
+                    check = ''
+            else:
+                check = f"Please enclose '{val}' within '<>'"
+            return check
+
+        # for inp in inputs:
+        #     if val in inp:
+        #         if inp.startswith('<') and inp.endswith('>'):
+        #
+        #         # check = f"'{val}' is a substring of '{inp}'.\n Please enclose '{val}' within '<>'. i.e: <{val}>"
+        #         return check
 
         return check
 

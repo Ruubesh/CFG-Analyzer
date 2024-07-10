@@ -1,0 +1,12 @@
+[input]
+nonterminals = A,B,C,D,E,F
+terminals = a,b,c,d
+initial_nonterminal = A
+
+[rules]
+A = aB,Bd,CA
+B = epsilon,bA,Dd
+C = cC,aD,aB,E
+D = dA,bF,CF
+E = e,aC,b,F
+F = f,bE,C,d

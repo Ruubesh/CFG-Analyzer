@@ -17,12 +17,11 @@ def back_without_saving(filename, error_label):
         shutil.copy(temp_file, new_file_path)
 
         listbox_dict[filename] = new_file_path
-        if filename not in listbox_items:
+        if new_file_path not in listbox_items:
             listbox_items.append(new_file_path)
+            load_initial_page()
         else:
             error_label.config(text="FileName already exists")
-
-        load_initial_page()
 
 
 def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry):
@@ -567,7 +566,7 @@ def load_page2():
 
     # run
     undo_tree = {'just': 'temp'}
-    functions.execute(grammar, grammar.initial_nonterminal, input_frame, rule_frame, sentential_str, sentential_canvas,
+    functions.execute(grammar, [grammar.initial_nonterminal], input_frame, rule_frame, sentential_str, sentential_canvas,
                       canvas, undo_btn, redo_btn, undo_tree)
 
 

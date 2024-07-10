@@ -1,0 +1,17 @@
+[input]
+nonterminals = S,A,B,C,D,E,F,G,H,I,J
+terminals = a,b,c,d,e,f,g,h,i,j,k,l
+initial_nonterminal = S
+
+[rules]
+S = aA,bB,cC,dD,epsilon
+A = AE,fF,gG,hH,iI,I
+B = jJ,kK,lL,aS,bA
+C = cC,dD,E,fF,gG
+D = hH,iI,GJ,kK,lL
+E = aA,bB,cC,dD,eE,A
+F = AgfF,gG,AH,iI,jJ
+G = kK,lL,aS,bA,cC
+H = dD,eDFE,fF,gG,hH
+I = iI,jJ,kK,lL,aA,D
+J = bB,cC,dD,eE,fF
