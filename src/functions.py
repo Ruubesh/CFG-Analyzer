@@ -314,6 +314,9 @@ def update_reduction_rules(config, grammar, file_variable, set_transformation, s
 
     text = generate_rules_text(config)
 
+    if not not_set_t:
+        not_set_t = None
+
     grammar_text = CFG().generate_grammar_text(file_variable, {})
     explain_text = f"Remove all nonterminals that are not in\n" \
                    f"{set_transformation}\n" \
@@ -375,7 +378,10 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
     Transform().remove_epsilon_rules(file_variable, config, stack_transformation, set_e, set_list, '\u2080')
 
     transform_text = f"\n\u2107 = {{{', '.join(set_list)}}}"
-    explain_text = f"Nonterminals {{{', '.join(set_list)}}} can generate epsilon"
+    if set_list:
+        explain_text = f"Nonterminals {{{', '.join(set_list)}}} can generate epsilon"
+    else:
+        explain_text = "None of the nonterminals can generate epsilon"
     stack_transformation.push(
         {"grammar_text": grammar_text, "transform_text": transform_text, "explain_text": explain_text})
 
@@ -422,10 +428,11 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
                     break
 
     transformation_text = generate_rules_text(config)
-    explain_text = f"Remove all epsilon rules and replace every other A --> \u03B1 \nwith a set of rules obtained by " \
-                   f"all possible rules of the form A --> \u03B1\u2032 \nwhere \u03B1\u2032 is obtained from \u03B1 by " \
-                   f"possible ommitting of \n(some) occurrences of nonterminals from set\n" \
-                   f"{set_e}"
+    if set_e:
+        explain_text = f"Remove all epsilon rules and replace every other A --> \u03B1 \nwith a set of rules obtained by " \
+                       f"all possible rules of the form A --> \u03B1\u2032 \nwhere \u03B1\u2032 is obtained from \u03B1 by " \
+                       f"possible ommitting of \n(some) occurrences of nonterminals from set\n" \
+                       f"{set_e}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
