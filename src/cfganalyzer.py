@@ -19,9 +19,10 @@ def back_without_saving(filename, error_label):
         listbox_dict[filename] = new_file_path
         if new_file_path not in listbox_items:
             listbox_items.append(new_file_path)
-            load_initial_page()
-        else:
-            error_label.config(text="FileName already exists")
+        # else:
+        #     error_label.config(text="FileName already exists")
+
+        load_initial_page()
 
 
 def execute_submit(grammar_str, init_combo, rule_combo, rules, file_error, rule_entry):
