@@ -1,6 +1,6 @@
 [input]
 nonterminals = A,B,C,D,E,F
-terminals = a,b,c,d
+terminals = a,b,c,d,e,f
 initial_nonterminal = A
 
 [rules]
