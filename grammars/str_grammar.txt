@@ -1,0 +1,14 @@
+[input]
+nonterminals = S,<NP>,<VP>,<Det>,N,V,<Adj>
+terminals = <the>,a,<dog>,<cat>,<bird>,<fish>,<chases>,<eats>,<sees>,<small>,<big>,<brown>
+initial_nonterminal = S
+
+[rules]
+S = <NP><VP>
+<NP> = <Det><Adj>N,<Det>N
+<VP> = V<NP>
+<Det> = <the>,a
+<Adj> = <small>,<big>,<brown>
+N = <dog>,<cat>,<bird>,<fish>
+V = <chases>,<eats>,<sees>
+

@@ -359,6 +359,16 @@ def reduce(window, file_variable, listbox_items):
     create_popup_window(window, stack_transformation, config, file_variable, 'Reduction', listbox_items)
 
 
+def get_new_init_nt(val):
+    if val.startswith('<') and val.endswith('>'):
+        temp = val[1:-1]
+        new_val = f"<{temp}'>"
+    else:
+        new_val = f"<{val}'>"
+
+    return new_val
+
+
 def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None, other_transform=False):
     grammar_text = CFG().generate_grammar_text(file_variable, {})
     if other_transform:
@@ -411,7 +421,7 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
         config.set('rules', nonterminal, ','.join(new_production_rules))
 
     if grammar.initial_nonterminal in set_e:
-        new_init_nt = f"<{grammar.initial_nonterminal}'>"
+        new_init_nt = get_new_init_nt(grammar.initial_nonterminal)
         CFG().add_value(config, 'nonterminals', new_init_nt, file_variable, overwrite=False)
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
         config.set('input', 'initial_nonterminal', new_init_nt)
@@ -420,7 +430,7 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
         for nonterminal, production_rules in grammar.rules.items():
             for rule in production_rules:
                 if grammar.initial_nonterminal in rule:
-                    new_init_nt = f"<{grammar.initial_nonterminal}'>"
+                    new_init_nt = get_new_init_nt(grammar.initial_nonterminal)
                     CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
                     new_init_rule = [grammar.initial_nonterminal]
                     config.set('input', 'initial_nonterminal', new_init_nt)
@@ -1090,7 +1100,7 @@ def create_table_window(window, file, rules_num_dict, action_dict, goto_dict, st
     grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=400)
     grammar_frame.pack(side="left", fill=tk.Y)
     grammar_frame.pack_propagate(0)
-    grammar_text_widget = tk.Text(master=grammar_frame, width=15, bg="#d3d3d3")
+    grammar_text_widget = tk.Text(master=grammar_frame, wrap=tk.NONE, width=15, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
 
     create_text_scrollbar(grammar_text_widget)

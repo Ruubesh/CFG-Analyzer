@@ -1453,7 +1453,7 @@ class CFG:
 
 def main(file_variable):
     config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
-    config.read(file_variable)
+    config.read(file_variable, encoding='utf-8')
     grammar = CFG()
     grammar.nonterminals = (config['input']['nonterminals']).split(',')
     grammar.terminals = (config['input']['terminals']).split(',')
