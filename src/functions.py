@@ -216,7 +216,7 @@ def on_popup_window_close(window, config, file):
     window.destroy()
 
 
-def create_popup_window(window, stack_transformation, config, file, win_title, listbox_items):
+def create_popup_window(window, stack_transformation, config, file, win_title, listbox_items, og_file):
     popup_window = tk.Toplevel(window)
     popup_window.protocol("WM_DELETE_WINDOW", lambda: on_popup_window_close(popup_window, config, file))
     popup_window.title(win_title)
@@ -247,13 +247,26 @@ def create_popup_window(window, stack_transformation, config, file, win_title, l
                                                               transform_canvas))
     forward_btn.pack(side=tk.LEFT, padx=20)
 
-    grammar_frame = tk.LabelFrame(master=popup_window, text="Grammar", width=popup_window.winfo_width() / 3)
+    grammar_frame = tk.Frame(master=popup_window, width=popup_window.winfo_width() / 3)
     grammar_frame.pack(side="left", fill="both", expand=1)
     grammar_frame.pack_propagate(0)
-    grammar_text_widget = tk.Text(master=grammar_frame, wrap=tk.NONE, width=15, bg="#d3d3d3")
+
+    current_grammar_frame = tk.LabelFrame(master=grammar_frame, text="Intermediate Grammar")
+    current_grammar_frame.pack(fill="both", expand=1)
+    current_grammar_frame.pack_propagate(0)
+    grammar_text_widget = tk.Text(master=current_grammar_frame, wrap=tk.NONE, bg="#d3d3d3")
     grammar_text_widget.pack(fill="both", expand=1)
+    grammar_text_widget.pack_propagate(0)
+
+    og_grammar_frame = tk.LabelFrame(master=grammar_frame, text="Original Grammar")
+    og_grammar_frame.pack(fill="both", expand=1)
+    og_grammar_frame.pack_propagate(0)
+    og_grammar_text_widget = tk.Text(master=og_grammar_frame, wrap=tk.NONE, bg="#d3d3d3")
+    og_grammar_text_widget.pack(fill="both", expand=1)
+    og_grammar_text_widget.pack_propagate(0)
 
     create_text_scrollbar(grammar_text_widget)
+    create_text_scrollbar(og_grammar_text_widget)
 
     transform_frame = tk.LabelFrame(master=popup_window, text="Transformation Steps",
                                     width=popup_window.winfo_width() / 3)
@@ -274,6 +287,10 @@ def create_popup_window(window, stack_transformation, config, file, win_title, l
     index.set(0)
 
     grammar_text, transform_text, explain_text = get_stack_transformation_data(index, stack_transformation)
+
+    og_grammar = CFG().generate_grammar_text(og_file, {})
+    og_grammar_text_widget.insert("1.0", og_grammar)
+    og_grammar_text_widget.config(state=tk.DISABLED)
 
     grammar_text_widget.insert("1.0", grammar_text)
     grammar_text_widget.tag_configure("highlight", foreground="red")
@@ -326,6 +343,8 @@ def update_reduction_rules(config, grammar, file_variable, set_transformation, s
 
 
 def reduce(window, file_variable, listbox_items):
+    og_file = file_variable
+
     stack_transformation = Stack()
     grammar = main(file_variable)
     config = CFG().read_config(file_variable)
@@ -356,7 +375,7 @@ def reduce(window, file_variable, listbox_items):
 
     update_reduction_rules(config, grammar, file_variable, set_d, stack_transformation)
 
-    create_popup_window(window, stack_transformation, config, file_variable, 'Reduction', listbox_items)
+    create_popup_window(window, stack_transformation, config, file_variable, 'Reduction', listbox_items, og_file)
 
 
 def get_new_init_nt(val):
@@ -387,6 +406,8 @@ def insert_rule_to_top(config, new_nt, new_rules):
 
 
 def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None, other_transform=False):
+    og_file = file_variable
+
     grammar_text = CFG().generate_grammar_text(file_variable, {})
     if other_transform:
         stack_transformation = other_stack
@@ -480,10 +501,13 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
     else:
         CFG().write_to_config_copy(config, file_variable)
 
-        create_popup_window(window, stack_transformation, config, file_variable, 'Remove Epsilon Rules', listbox_items)
+        create_popup_window(window, stack_transformation, config, file_variable, 'Remove Epsilon Rules', listbox_items,
+                            og_file)
 
 
 def remove_unit_rules(listbox_items, window, file, other_stack=None, other_transform=False):
+    og_file = file
+
     grammar_text = CFG().generate_grammar_text(file, {})
     config = CFG().read_config(file)
     epsilon = False
@@ -502,11 +526,13 @@ def remove_unit_rules(listbox_items, window, file, other_stack=None, other_trans
                     remove_epsilon_rules(listbox_items, window, file, Stack(), other_transform=True)
                     epsilon = True
 
-        config = CFG().read_config(file)
-        transform_text = generate_rules_text(config)
-        explain_text = "Grammar after removing epsilon rules"
-        stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
-                                   "explain_text": explain_text})
+        if epsilon:
+            config = CFG().read_config(file)
+            transform_text = generate_rules_text(config)
+            explain_text = "Grammar after removing epsilon rules"
+            explain_text += f"\n\nInitial nonterminal is changed to {config['input']['initial_nonterminal']}"
+            stack_transformation.push({"grammar_text": grammar_text, "transform_text": transform_text,
+                                       "explain_text": explain_text})
 
     grammar_text = CFG().generate_grammar_text(file, {})
     transform_sets = {}
@@ -549,15 +575,17 @@ def remove_unit_rules(listbox_items, window, file, other_stack=None, other_trans
     if other_transform:
         CFG().write_to_config(config, file)
     elif epsilon:
+        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules', listbox_items, og_file)
         os.remove(file)
-        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules', listbox_items)
     else:
         CFG().write_to_config_copy(config, file)
 
-        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules', listbox_items)
+        create_popup_window(window, stack_transformation, config, file, 'Remove Unit Rules', listbox_items, og_file)
 
 
 def chomsky_normal_form(window, file, listbox_items):
+    og_file = file
+
     stack_transformation = Stack()
     config = CFG().read_config(file)
     grammar = main(file)
@@ -632,10 +660,12 @@ def chomsky_normal_form(window, file, listbox_items):
 
     CFG().write_to_config(config, copy_file)
 
-    create_popup_window(window, stack_transformation, config, file, 'Chomsky Normal Form', listbox_items)
+    create_popup_window(window, stack_transformation, config, file, 'Chomsky Normal Form', listbox_items, og_file)
 
 
 def greibach_normal_form(window, file, listbox_items):
+    og_file = file
+
     config = CFG().read_config(file)
     copy_file = CFG().write_to_config_copy(config, file)
     stack_transformation = Stack()
@@ -738,10 +768,12 @@ def greibach_normal_form(window, file, listbox_items):
 
     CFG().write_to_config_copy(config, file)
 
-    create_popup_window(window, stack_transformation, config, file, 'Greibach Normal Form', listbox_items)
+    create_popup_window(window, stack_transformation, config, file, 'Greibach Normal Form', listbox_items, og_file)
 
 
 def compute_first_and_follow(window, file):
+    og_file = file
+
     stack_transformation = Stack()
     config = CFG().read_config(file)
     grammar = main(file)
@@ -786,10 +818,12 @@ def compute_first_and_follow(window, file):
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
-    create_popup_window(window, stack_transformation, config, file, 'First and Follow', None)
+    create_popup_window(window, stack_transformation, config, file, 'First and Follow', None, og_file)
 
 
 def is_ll1(window, file):
+    og_file = file
+
     grammar = main(file)
     stack_transformation = Stack()
     config = CFG().read_config(file)
@@ -844,7 +878,7 @@ def is_ll1(window, file):
         stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
                                    "explain_text": explain_text})
 
-    create_popup_window(window, stack_transformation, config, file, 'LL(1)', None)
+    create_popup_window(window, stack_transformation, config, file, 'LL(1)', None, og_file)
 
 
 def create_augmented_grammar(file):
