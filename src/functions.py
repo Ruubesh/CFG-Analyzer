@@ -369,6 +369,23 @@ def get_new_init_nt(val):
     return new_val
 
 
+def insert_rule_to_top(config, new_nt, new_rules):
+    # add new rule
+    modified_rules = {new_nt: new_rules}
+
+    # add existing rules
+    for key in config['rules']:
+        modified_rules[key] = config['rules'][key]
+
+    # create new rules section
+    config.remove_section('rules')
+    config.add_section('rules')
+
+    # add the modified rules back to the config
+    for key, value in modified_rules.items():
+        config.set('rules', key, value)
+
+
 def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None, other_transform=False):
     grammar_text = CFG().generate_grammar_text(file_variable, {})
     if other_transform:
@@ -425,8 +442,13 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
         CFG().add_value(config, 'nonterminals', new_init_nt, file_variable, overwrite=False)
         new_init_rule = [grammar.initial_nonterminal, 'epsilon']
         config.set('input', 'initial_nonterminal', new_init_nt)
-        config.set('rules', new_init_nt, ','.join(new_init_rule))
+        insert_rule_to_top(config, new_init_nt, ','.join(new_init_rule))
+
+        explain_text = f"Initial nonterminal is changed to {new_init_nt}"
+        stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
+                                   "explain_text": explain_text})
     elif other_transform:
+        appeared = False
         for nonterminal, production_rules in grammar.rules.items():
             for rule in production_rules:
                 if grammar.initial_nonterminal in rule:
@@ -434,8 +456,15 @@ def remove_epsilon_rules(listbox_items, window, file_variable, other_stack=None,
                     CFG().add_value(config, 'nonterminals', new_init_nt, file_variable)
                     new_init_rule = [grammar.initial_nonterminal]
                     config.set('input', 'initial_nonterminal', new_init_nt)
-                    config.set('rules', new_init_nt, ','.join(new_init_rule))
+                    insert_rule_to_top(config, new_init_nt, ','.join(new_init_rule))
+
+                    explain_text = f"Initial nonterminal is changed to {new_init_nt}"
+                    stack_transformation.push({"grammar_text": grammar_text, "transform_text": '',
+                                               "explain_text": explain_text})
+                    appeared = True
                     break
+            if appeared:
+                break
 
     transformation_text = generate_rules_text(config)
     if set_e:
@@ -597,6 +626,7 @@ def chomsky_normal_form(window, file, listbox_items):
                    "of some rule A → α where |α| = 2 introduce a new nonterminal N\u2090,\n" \
                    "replace occurrences of 'a' on such right-hand sides\n" \
                    "with N\u2090, and add N\u2090 → a as a new rule"
+    explain_text += "\n\nThe grammar is now in Chomsky Normal Form"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 
@@ -627,6 +657,7 @@ def greibach_normal_form(window, file, listbox_items):
 
     transformation_text = generate_rules_text(config)
     explain_text = "Grammar after removing unit rules and epsilon rules"
+    explain_text += f"\n\nInitial nonterminal is changed to {config['input']['initial_nonterminal']}"
     stack_transformation.push({"grammar_text": grammar_text, "transform_text": transformation_text,
                                "explain_text": explain_text})
 

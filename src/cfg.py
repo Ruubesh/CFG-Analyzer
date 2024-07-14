@@ -1455,9 +1455,14 @@ def main(file_variable):
     config = CaseSensitiveConfigParser(interpolation=configparser.ExtendedInterpolation())
     config.read(file_variable, encoding='utf-8')
     grammar = CFG()
-    grammar.nonterminals = (config['input']['nonterminals']).split(',')
-    grammar.terminals = (config['input']['terminals']).split(',')
     grammar.initial_nonterminal = config['input']['initial_nonterminal']
+    grammar.nonterminals = (config['input']['nonterminals']).split(',')
+
+    # move initial nonterminal to front
+    grammar.nonterminals.remove(grammar.initial_nonterminal)
+    grammar.nonterminals.insert(0, grammar.initial_nonterminal)
+
+    grammar.terminals = (config['input']['terminals']).split(',')
     grammar.create_class(grammar.nonterminals)
     grammar.create_class(grammar.terminals)
     for nt in grammar.nonterminals:
