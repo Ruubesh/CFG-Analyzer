@@ -33,7 +33,9 @@ class Recognizer:
                     if terminal != 'epsilon':
                         lk_set.add(terminal)
                 if 'epsilon' in first_set:
-                    if index == len(rhs) - 1:
+                    start_index = dot + 1
+                    current_index = start_index + index
+                    if current_index == len(rhs) - 1:
                         lk_set.add(look_ahead)
                 else:
                     break
